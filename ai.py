@@ -108,7 +108,7 @@ class AIDaemon(Daemon):
             self.ai(source_file, prepared_file)
     
     def run(self):
-        signal.signal(signal.SIGCHLD, self.SIG_IGN)
+        signal.signal(signal.SIGCHLD, signal.SIG_IGN)
         while True:
             self.queue()
             time.sleep(1.0)

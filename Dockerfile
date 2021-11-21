@@ -23,7 +23,7 @@ RUN chmod +x /opt/app/api.py
 RUN chmod +x /opt/app/entry.sh
 
 ### INSTALLING OTHER REQUIRED PACKAGES ###
-RUN python3 -m pip install --upgrade pip 
+RUN python3 -m pip install --upgrade pip
 RUN python3 -m pip install -r /opt/app/requirements.txt
 
 ### RUNNING THE SCRIPT ###
