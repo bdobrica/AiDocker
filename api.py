@@ -36,7 +36,7 @@ def put_image():
         prepared_file = Path(PREPARED_PATH) / (image_token + '.png')
     else:
         return Response(json.dumps({'error': 'unknown image format'}), status = 400, mimetype='application/json')
-    
+
     if not (staged_file.is_file() or source_file.is_file() or prepared_file.is_file()):
         with staged_file.open('wb') as fp:
             fp.write(image_data)
@@ -64,7 +64,7 @@ def get_image():
         return Response(json.dumps({'error': 'unknown image format'}), status = 400, mimetype='application/json')
 
     if prepared_file.is_file():
-        with output_path.open('rb') as fp:
+        with prepared_file.open('rb') as fp:
             image_data = fp.read()
         if staged_file.is_file():
             staged_file.unlink()
@@ -72,11 +72,11 @@ def get_image():
             source_file.unlink()
         prepared_file.unlink()
 
-        return send_file(BytesIO(image_data), mimetype = 'image/png', as_attachment = True, download_name = output_path.name)
-    
+        return send_file(BytesIO(image_data), mimetype = 'image/png', as_attachment = True, download_name = prepared_file.name)
+
     if staged_file.is_file():
         return Response(json.dumps({'wait': 'true', 'status': 'not queued'}), status = 200, mimetype = 'application/json')
-    
+
     if source_file.is_file():
         return Response(json.dumps({'wait': 'true', 'status': 'processing'}), status = 200, mimetype = 'application/json')
 

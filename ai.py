@@ -1,15 +1,19 @@
+#!/usr/bin/env python3
+import sys
 import os
 import time
+import signal
 from pathlib import Path
 from daemon import Daemon
 import cv2
 import numpy as np
+import onnx
 import onnxruntime
 
 class AIDaemon(Daemon):
     def ai(self, source_file, prepared_file):
-        newpid = os.fork()
-        if newpid != 0:
+        pid = os.fork()
+        if pid != 0:
             return
 
         try:
@@ -56,9 +60,11 @@ class AIDaemon(Daemon):
             im = np.swapaxes(im, 1, 2)
             im = np.expand_dims(im, axis = 0).astype('float32')
 
-            input_name = self.session.get_inputs()[0].name
-            output_name = self.session.get_outputs()[0].name
-            result = self.session.run([output_name], {input_name: im})
+            MODEL_PATH = os.environ.get("MODEL_PATH", "/opt/app/modnet_photographic_portrait_matting.onnx")
+            session = onnxruntime.InferenceSession(MODEL_PATH, None)
+            input_name = session.get_inputs()[0].name
+            output_name = session.get_outputs()[0].name
+            result = session.run([output_name], {input_name: im})
 
             matte = (np.squeeze(result[0]) * 255).astype('uint8')
             matte = cv2.resize(matte, dsize=(im_w, im_h), interpolation = cv2.INTER_AREA)
@@ -68,9 +74,11 @@ class AIDaemon(Daemon):
             out_im[:,:,:3] = out_im[:,:,:3] * np.repeat(out_im[:,:,3].reshape(out_im.shape[:2] + (1,)) / 255.0, 3, axis = 2)
 
             cv2.imwrite(str(prepared_file), out_im.astype('uint8'))
-        finally:
-            source_file.unlink()
-            os._exit(os.EX_OK)
+        except Exception as e:
+            pass
+        
+        source_file.unlink()
+        sys.exit()
 
     def queue(self):
         STAGED_PATH = os.environ.get("STAGED_PATH", "/tmp/ai/staged")
@@ -81,32 +89,26 @@ class AIDaemon(Daemon):
 
         staged_files = { f for f in Path(STAGED_PATH).glob("*") if f.is_file() }
         source_files = { f for f in Path(SOURCE_PATH).glob("*") if f.is_file() }
-        prepared_file = Path(PREPARED_PATH) / source_file.name
-
         source_files_count = len(source_files)
 
         while source_files_count < MAX_FORK and staged_files:
+            source_files_count += 1
             staged_file = staged_files.pop()
             source_file = Path(SOURCE_PATH) / staged_file.name
-            src_fp = staged_file.open("rb")
-            dst_fp = source_file.open("wb")
+            prepared_file = Path(PREPARED_PATH) / (staged_file.stem + '.png')
 
-            while True:
-                try:
-                    dst_fp.write(src_fp.read(CHUNK_SIZE))
-                finally:
-                    break
-
-            dst_fp.close()
-            src_fp.close()
+            with staged_file.open('rb') as src_fp, source_file.open('wb') as dst_fp:
+                while True:
+                    chunk = src_fp.read(CHUNK_SIZE)
+                    if not chunk:
+                        break
+                    dst_fp.write(chunk)
 
             staged_file.unlink()
             self.ai(source_file, prepared_file)
-            
+    
     def run(self):
-        MODEL_PATH = os.environ.get("MODEL_PATH", "/opt/app/modnet_photographic_portrait_matting.onnx")
-        self.session = onnxruntime.InferenceSession(MODEL_PATH, None)
-        
+        signal.signal(signal.SIGCHLD, self.SIG_IGN)
         while True:
             self.queue()
             time.sleep(1.0)
