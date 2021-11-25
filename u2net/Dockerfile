@@ -10,13 +10,13 @@ RUN mkdir -p /tmp/ai/prepared
 RUN apt-get update && apt-get install -y python3-opencv
 
 ### COPYING FILES ###
-COPY requirements.txt /opt/app
-COPY u2net.pth /opt/app
-COPY ../daemon /opt/app/daemon
-COPY u2net /opt/app/u2net
-COPY ai.py /opt/app
-COPY ../api.py /opt/app
-COPY ../entry.sh /opt/app
+COPY u2net/requirements.txt /opt/app
+COPY u2net/u2net.pth /opt/app
+COPY u2net/u2net /opt/app/u2net
+COPY u2net/ai.py /opt/app
+COPY daemon /opt/app/daemon
+COPY api.py /opt/app
+COPY entry.sh /opt/app
 
 ### MAKING THE SCRIPTS EXECUTABLE ###
 RUN chmod +x /opt/app/ai.py

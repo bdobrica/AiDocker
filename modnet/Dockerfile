@@ -10,12 +10,12 @@ RUN mkdir -p /tmp/ai/prepared
 RUN apt-get update && apt-get install -y python3-opencv
 
 ### COPYING FILES ###
-COPY requirements.txt /opt/app
-COPY modnet_photographic_portrait_matting.onnx /opt/app
-COPY ../daemon /opt/app/daemon
-COPY ai.py /opt/app
-COPY ../api.py /opt/app
-COPY ../entry.sh /opt/app
+COPY modnet/requirements.txt /opt/app
+COPY modnet/modnet_photographic_portrait_matting.onnx /opt/app
+COPY modnet/ai.py /opt/app
+COPY daemon /opt/app/daemon
+COPY api.py /opt/app
+COPY entry.sh /opt/app
 
 ### MAKING THE SCRIPTS EXECUTABLE ###
 RUN chmod +x /opt/app/ai.py
