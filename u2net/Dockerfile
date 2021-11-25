@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y python3-opencv
 COPY requirements.txt /opt/app
 COPY u2net.pth /opt/app
 COPY ../daemon /opt/app/daemon
+COPY u2net /opt/app/u2net
 COPY ai.py /opt/app
 COPY ../api.py /opt/app
 COPY ../entry.sh /opt/app
