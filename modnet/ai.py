@@ -87,13 +87,13 @@ class AIDaemon(Daemon):
         MAX_FORK = int(os.environ.get("MAX_FORK", 8))
         CHUNK_SIZE = int(os.environ.get("CHUNK_SIZE", 4096))
 
-        staged_files = { f for f in Path(STAGED_PATH).glob("*") if f.is_file() }
-        source_files = { f for f in Path(SOURCE_PATH).glob("*") if f.is_file() }
+        staged_files = sorted([ f for f in Path(STAGED_PATH).glob("*") if f.is_file() ], lambda f : f.stat().st_mtime)
+        source_files = [ f for f in Path(SOURCE_PATH).glob("*") if f.is_file() ]
         source_files_count = len(source_files)
 
         while source_files_count < MAX_FORK and staged_files:
             source_files_count += 1
-            staged_file = staged_files.pop()
+            staged_file = staged_files.pop(0)
             source_file = Path(SOURCE_PATH) / staged_file.name
             prepared_file = Path(PREPARED_PATH) / (staged_file.stem + '.png')
 
