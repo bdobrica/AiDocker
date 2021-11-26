@@ -87,7 +87,7 @@ class AIDaemon(Daemon):
         MAX_FORK = int(os.environ.get("MAX_FORK", 8))
         CHUNK_SIZE = int(os.environ.get("CHUNK_SIZE", 4096))
 
-        staged_files = sorted([ f for f in Path(STAGED_PATH).glob("*") if f.is_file() ], lambda f : f.stat().st_mtime)
+        staged_files = sorted([ f for f in Path(STAGED_PATH).glob("*") if f.is_file() ], key = lambda f : f.stat().st_mtime)
         source_files = [ f for f in Path(SOURCE_PATH).glob("*") if f.is_file() ]
         source_files_count = len(source_files)
 
