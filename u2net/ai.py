@@ -6,7 +6,6 @@ import signal
 from pathlib import Path
 from daemon import Daemon
 
-from skimage import io
 import torch
 import torchvision
 from torch.autograd import Variable
@@ -16,7 +15,7 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 
 import numpy as np
-from PIL import Image
+import cv2
 
 from u2net import U2NET
 
@@ -27,32 +26,20 @@ class AIDaemon(Daemon):
             return
 
         try:
-            so_data = SalObjDataset(
-                img_name_list = [str(source_file)],
-                lbl_name_list = [],
-                transform = transforms.Compose([
-                    RescaleT(320),
-                    ToTensorLab(flag=0)]
-                ))
-            so_loader = DataLoader(
-                so_data,
-                batch_size = 1,
-                shuffle = False,
-                num_workers = 1
-                )
             net = U2NET(3,1)
             MODEL_PATH = os.environ.get("MODEL_PATH", "/opt/app/u2net.pth")
             net.load_state_dict(torch.load(MODEL_PATH, map_location = 'cpu'))
             net.eval()
 
-            input_image = io.imread(str(source_file))
-            input_label = np.zeros(input_image.shape[:2] + (1,), dtype=np.uint8)
+            im = cv2.imread(str(source_file))
+            out_im = cv2.cvtColor(im, cv2.COLOR_BGR2BGRA)
+            im = im[:, :, ::-1]
 
             def rescale_t(image, output_size = 320):
-                image_ = transform.resize(image, (output_size, output_size), mode='constant')
+                image_ = cv2.resize(image, dsize = (output_size, output_size), interpolation = cv2.INTER_AREA)
                 return image_
 
-            def to_tensor(image, flag = 0):
+            def to_tensor_lab(image, flag = 0):
                 image_ = image / np.max(image)
 
                 image_[:,:,0] = (image_[:,:,0]-0.485)/0.229
@@ -60,13 +47,14 @@ class AIDaemon(Daemon):
                 image_[:,:,2] = (image_[:,:,2]-0.406)/0.225
 
                 image_ = image_.transpose((2, 0, 1))
+                image_ = image_[np.newaxis, :, :, :]
                 
                 return torch.from_numpy(image_)
 
             input_data = Variable(transforms.Compose([
                 rescale_t,
                 to_tensor_lab
-            ])(input_image).type(torch.FloatTensor))
+            ])(im).type(torch.FloatTensor))
 
             output_data = net(input_data)
             pred = output_data[0][:,0,:,:]
@@ -74,9 +62,15 @@ class AIDaemon(Daemon):
             mi = torch.min(pred)
             pred = (pred-mi)/(ma-mi)
             pred_np = pred.squeeze().cpu().data.numpy()
-            pred_im = Image.fromarray(pred_np * 255).convert('RGB')
-            output_image = pred_im.resize(input_image.shape[1::-1], resample = Image.BILINEAR)
-            output_image.save(str(prepared_file))
+
+            sal_map = (pred_np * 255).astype('uint8')
+            sal_map = cv2.resize(sal_map, im.shape[1::-1], interpolation = cv2.INTER_AREA)
+            out_im[:, :, 3] = sal_map
+
+            out_im = out_im.astype(float)
+            out_im[:,:,:3] = out_im[:,:,:3] * np.repeat(out_im[:,:,3].reshape(out_im.shape[:2] + (1,)) / 255.0, 3, axis = 2)
+
+            cv2.imwrite(str(prepared_file), out_im.astype('uint8'))
         except Exception as e:
             pass
         

@@ -20,7 +20,7 @@ class REBNCONV(nn.Module):
 ## upsample tensor 'src' to have the same spatial size with tensor 'tar'
 def _upsample_like(src,tar):
 
-    src = F.upsample(src,size=tar.shape[2:],mode='bilinear')
+    src = F.interpolate(src,size=tar.shape[2:],mode='bilinear',align_corners=True)
 
     return src
 
@@ -417,4 +417,6 @@ class U2NET(nn.Module):
 
         d0 = self.outconv(torch.cat((d1,d2,d3,d4,d5,d6),1))
 
-        return F.sigmoid(d0), F.sigmoid(d1), F.sigmoid(d2), F.sigmoid(d3), F.sigmoid(d4), F.sigmoid(d5), F.sigmoid(d6)
+        sig = nn.Sigmoid()
+
+        return sig(d0), sig(d1), sig(d2), sig(d3), sig(d4), sig(d5), sig(d6)
