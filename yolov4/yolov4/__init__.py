@@ -2,8 +2,9 @@ from pathlib import Path
 import numpy as np
 import torch
 import torchvision
+from torch import nn
 
-from layers import ScaleChannel, ScaleSpatial
+from .layers import ScaleChannel, ScaleSpatial
 
 def create_modules(module_defs, img_size, cfg):
     # Constructs module list of layer blocks from module configuration in module_defs
