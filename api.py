@@ -82,5 +82,49 @@ def get_image():
 
     return Response(json.dumps({'error': 'unknown token'}), status = 400, mimetype = 'application/json')
 
+@app.route('/get/json', methods=['POST'])
+def get_image():
+    image_token = request.json.get('token')
+    image_type = request.json.get('mime')
+
+    STAGED_PATH = os.environ.get("STAGED_PATH", "/tmp/ai/staged")
+    SOURCE_PATH = os.environ.get("SOURCE_PATH", "/tmp/ai/source")
+    PREPARED_PATH = os.environ.get("PREPARED_PATH", "/tmp/ai/prepared")
+
+    if image_type == 'image/png':
+        staged_file = Path(STAGED_PATH) / (image_token + '.png')
+        source_file = Path(SOURCE_PATH) / (image_token + '.png')
+        prepared_file = Path(PREPARED_PATH) / (image_token + '.json')
+    elif image_type == 'image/jpeg':
+        staged_file = Path(STAGED_PATH) / (image_token + '.jpg')
+        source_file = Path(SOURCE_PATH) / (image_token + '.jpg')
+        prepared_file = Path(PREPARED_PATH) / (image_token + '.json')
+    else:
+        return Response(json.dumps({'error': 'unknown image format'}), status = 400, mimetype='application/json')
+
+    if prepared_file.is_file():
+        with prepared_file.open('rb') as fp:
+            json_data = json.load(fp)
+        if staged_file.is_file():
+            staged_file.unlink()
+        if source_file.is_file():
+            source_file.unlink()
+        prepared_file.unlink()
+
+        if not isinstance(json_data, dict):
+            return Response(json.dumps({'error': 'invalid model output'}), status = 400, mimetype='application/json')
+        
+        json_data.update({'token': image_token, 'mime': image_type, 'status': 'success'})
+
+        return Response(json.dumps(json_data), status = 200, mimetype='application/json')
+
+    if staged_file.is_file():
+        return Response(json.dumps({'wait': 'true', 'status': 'not queued'}), status = 200, mimetype = 'application/json')
+
+    if source_file.is_file():
+        return Response(json.dumps({'wait': 'true', 'status': 'processing'}), status = 200, mimetype = 'application/json')
+
+    return Response(json.dumps({'error': 'unknown token'}), status = 400, mimetype = 'application/json')
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)
