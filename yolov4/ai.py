@@ -106,22 +106,22 @@ class AIDaemon(Daemon):
                         color = [random.randint(0, 255) for _ in range(3)]
                         cv2.rectangle(
                             img_copy,
-                            (int(det_x), int(det_y)),
-                            (int(det_x + det_w), int(det_y + det_h)),
+                            (int(det_x - det_w / 2.0), int(det_y - det_h / 2.0)),
+                            (int(det_x + det_w / 2.0), int(det_y + det_h / 2.0)),
                             color,
                             thickness=2)
                         
                         text_size = cv2.getTextSize(names[int(class_id)], 0, fontScale=0.5, thickness=1)[0]
                         cv2.rectangle(
                             img_copy,
-                            (int(det_x), int(det_y)),
-                            (int(det_x + text_size[0]), int(det_y - text_size[1] - 3)),
+                            (int(det_x - det_w / 2.0), int(det_y - det_h / 2.0)),
+                            (int(det_x - det_w / 2.0 + text_size[0]), int(det_y - det_h / 2.0 - text_size[1] - 3)),
                             color,
                             -1)
                         cv2.putText(
                             img_copy,
                             names[int(class_id)],
-                            (int(det_x), int(det_y - 2)),
+                            (int(det_x - det_w / 2.0), int(det_y - det_h / 2.0 - 2)),
                             0,
                             fontScale = 0.5,
                             color = (255, 255, 255),
