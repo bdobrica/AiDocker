@@ -131,7 +131,7 @@ class AIDaemon(Daemon):
             results.sort(key = lambda x : x.get('area') or 0.0, reverse = True)
 
             with prepared_file.open('w') as f:
-                json.dump(results, f)
+                json.dump({'results':results}, f)
             
             cv2.imwrite(str(prepared_file.parent / (prepared_file.stem + '.png')), img_copy)
         except Exception as e:
