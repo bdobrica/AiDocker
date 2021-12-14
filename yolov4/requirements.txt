@@ -1,3 +1,4 @@
+flask
 numpy==1.17
 opencv-python
 torch==1.7.1

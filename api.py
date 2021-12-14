@@ -30,10 +30,12 @@ def put_image():
         staged_file = Path(STAGED_PATH) / (image_token + '.png')
         source_file = Path(SOURCE_PATH) / (image_token + '.png')
         prepared_file = Path(PREPARED_PATH) / (image_token + '.png')
+        json_file = Path(PREPARED_PATH) / (image_token + '.json')
     elif image_type == 'image/jpeg':
         staged_file = Path(STAGED_PATH) / (image_token + '.jpg')
         source_file = Path(SOURCE_PATH) / (image_token + '.jpg')
         prepared_file = Path(PREPARED_PATH) / (image_token + '.png')
+        json_file = Path(PREPARED_PATH) / (image_token + '.json')
     else:
         return Response(json.dumps({'error': 'unknown image format'}), status = 400, mimetype='application/json')
 
@@ -56,10 +58,12 @@ def get_image():
         staged_file = Path(STAGED_PATH) / (image_token + '.png')
         source_file = Path(SOURCE_PATH) / (image_token + '.png')
         prepared_file = Path(PREPARED_PATH) / (image_token + '.png')
+        json_file = Path(PREPARED_PATH) / (image_token + '.json')
     elif image_type == 'image/jpeg':
         staged_file = Path(STAGED_PATH) / (image_token + '.jpg')
         source_file = Path(SOURCE_PATH) / (image_token + '.jpg')
         prepared_file = Path(PREPARED_PATH) / (image_token + '.png')
+        json_file = Path(PREPARED_PATH) / (image_token + '.json')
     else:
         return Response(json.dumps({'error': 'unknown image format'}), status = 400, mimetype='application/json')
 
@@ -70,6 +74,8 @@ def get_image():
             staged_file.unlink()
         if source_file.is_file():
             source_file.unlink()
+        if json_file.is_file():
+            json_file.unlink()
         prepared_file.unlink()
 
         return send_file(BytesIO(image_data), mimetype = 'image/png', as_attachment = True, download_name = prepared_file.name)
@@ -83,7 +89,7 @@ def get_image():
     return Response(json.dumps({'error': 'unknown token'}), status = 400, mimetype = 'application/json')
 
 @app.route('/get/json', methods=['POST'])
-def get_image():
+def get_json():
     image_token = request.json.get('token')
     image_type = request.json.get('mime')
 
@@ -94,22 +100,26 @@ def get_image():
     if image_type == 'image/png':
         staged_file = Path(STAGED_PATH) / (image_token + '.png')
         source_file = Path(SOURCE_PATH) / (image_token + '.png')
-        prepared_file = Path(PREPARED_PATH) / (image_token + '.json')
+        prepared_file = Path(PREPARED_PATH) / (image_token + '.png')
+        json_file = Path(PREPARED_PATH) / (image_token + '.json')
     elif image_type == 'image/jpeg':
         staged_file = Path(STAGED_PATH) / (image_token + '.jpg')
         source_file = Path(SOURCE_PATH) / (image_token + '.jpg')
-        prepared_file = Path(PREPARED_PATH) / (image_token + '.json')
+        prepared_file = Path(PREPARED_PATH) / (image_token + '.png')
+        json_file = Path(PREPARED_PATH) / (image_token + '.json')
     else:
         return Response(json.dumps({'error': 'unknown image format'}), status = 400, mimetype='application/json')
 
-    if prepared_file.is_file():
-        with prepared_file.open('rb') as fp:
+    if json_file.is_file():
+        with json_file.open('rb') as fp:
             json_data = json.load(fp)
         if staged_file.is_file():
             staged_file.unlink()
         if source_file.is_file():
             source_file.unlink()
-        prepared_file.unlink()
+        if prepared_file.is_file():
+            prepared_file.unlink()
+        json_file.unlink()
 
         if not isinstance(json_data, dict):
             return Response(json.dumps({'error': 'invalid model output'}), status = 400, mimetype='application/json')

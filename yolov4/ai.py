@@ -3,6 +3,8 @@ import sys
 import os
 import time
 import signal
+import json
+import random
 from pathlib import Path
 from daemon import Daemon
 
@@ -29,7 +31,7 @@ class AIDaemon(Daemon):
             device = torch.device('cpu')
 
             # Load model
-            model = Darknet(cfg, IMAGE_SIZE).cpu()
+            model = Darknet(None, IMAGE_SIZE).cpu()
             try:
                 model.load_state_dict(torch.load(MODEL_PATH, map_location=device)['model'])
             except:
@@ -46,11 +48,11 @@ class AIDaemon(Daemon):
             shape = img_orig.shape[:2]  # current shape [height, width]
             new_shape = (IMAGE_SIZE, IMAGE_SIZE)  # desired new shape [height, width]
             # Scale ratio (new / old)
-            ratio = min(new_shape[0] / shape[0], new_shape[1] / shape[1])
+            ratio_ = min(new_shape[0] / shape[0], new_shape[1] / shape[1])
     
             # Resize the image with padded border
-            ratio = ratio, ratio # width, height ratios
-            new_unpad = int(round(shape[1] * r)), int(round(shape[0] * r))
+            ratio = ratio_, ratio_ # width, height ratios
+            new_unpad = int(round(shape[1] * ratio_)), int(round(shape[0] * ratio_))
             dw, dh = new_shape[1] - new_unpad[0], new_shape[0] - new_unpad[1] # wh padding
             dw, dh = np.mod(dw, AUTO_SIZE), np.mod(dh, AUTO_SIZE) # wh padding
             dw /= 2 # divide padding into 2 sides
@@ -75,33 +77,63 @@ class AIDaemon(Daemon):
             pred = model(img, augment = False)[0]
 
             # Do non-maximum suppression
-            pred = non_max_suppression(pred, conf_thres=0.4, iou_thres=0.5, classes=classes, agnostic=True)
+            pred = non_max_suppression(pred, conf_thres=0.4, iou_thres=0.5, classes=None, agnostic=True)
 
             results = []
 
+            img_copy = img_orig.copy()
             for i, det in enumerate(pred):  # detections per image
-                gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]
+                gn = torch.tensor(img_orig.shape)[[1, 0, 1, 0]]
                 if det is not None and len(det):
-                    det[:, :4] = scale_coords(img.shape[2:], det[:, :4], img.shape).round()
+                    det[:, :4] = scale_coords(img.shape[2:], det[:, :4], img_orig.shape).round()
 
                     for *xyxy, conf, class_id in det:
-                        det_x = (xyxy[:, 0] + xyxy[:, 2]) / 2  # x center
-                        det_y = (xyxy[:, 1] + xyxy[:, 3]) / 2  # y center
-                        det_w = xyxy[:, 2] - xyxy[:, 0]  # width
-                        det_h = xyxy[:, 3] - xyxy[:, 1]  # height
+                        det_x = float((xyxy[0] + xyxy[2]) / 2)  # x center
+                        det_y = float((xyxy[1] + xyxy[3]) / 2)  # y center
+                        det_w = float(xyxy[2] - xyxy[0])  # width
+                        det_h = float(xyxy[3] - xyxy[1])  # height
 
                         results.append({
                             'class': names[int(class_id)],
-                            'conf': conf,
+                            'conf': float(conf),
                             'x': det_x,
                             'y': det_y,
                             'w': det_w,
                             'h': det_h,
-                            'area': det_w * det_h,
+                            'area': det_w * det_h / (img_orig.shape[0] * img_orig.shape[1]),
                         })
+
+                        color = [random.randint(0, 255) for _ in range(3)]
+                        cv2.rectangle(
+                            img_copy,
+                            (int(det_x), int(det_y)),
+                            (int(det_x + det_w), int(det_y + det_h)),
+                            color,
+                            thickness=2)
+                        
+                        text_size = cv2.getTextSize(names[int(class_id)], 0, fontScale=0.5, thickness=1)[0]
+                        cv2.rectangle(
+                            img_copy,
+                            (int(det_x), int(det_y)),
+                            (int(det_x + text_size[0]), int(det_y - text_size[1] - 3)),
+                            color,
+                            -1)
+                        cv2.putText(
+                            img_copy,
+                            names[int(class_id)],
+                            (int(det_x), int(det_y - 2)),
+                            0,
+                            font_scale = 0.5,
+                            color = (255, 255, 255),
+                            thickness = 1,
+                            lineType = cv2.LINE_AA)
+
+            results.sort(key = lambda x : x.get('area') or 0.0, reverse = True)
 
             with prepared_file.open('w') as f:
                 json.dump(results, f)
+            
+            cv2.imwrite(str(prepared_file.parent / (prepared_file.stem + '.png')), img_copy)
         except Exception as e:
             pass
         
