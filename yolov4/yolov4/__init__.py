@@ -191,7 +191,7 @@ def create_modules(module_defs, img_size, cfg):
         elif mdef['type'] == 'yolo':
             yolo_index += 1
             stride = [8, 16, 32, 64, 128]  # P3, P4, P5, P6, P7 strides
-            if any(x in cfg for x in ['yolov4-tiny', 'fpn', 'yolov3']):  # P5, P4, P3 strides
+            if any(x == cfg.stem for x in ['yolov4-tiny', 'fpn', 'yolov3']):  # P5, P4, P3 strides
                 stride = [32, 16, 8]
             layers = mdef['from'] if 'from' in mdef else []
             modules = YOLOLayer(anchors=mdef['anchors'][mdef['mask']],  # anchor list
@@ -224,7 +224,7 @@ def create_modules(module_defs, img_size, cfg):
         elif mdef['type'] == 'jde':
             yolo_index += 1
             stride = [8, 16, 32, 64, 128]  # P3, P4, P5, P6, P7 strides
-            if any(x in cfg for x in ['yolov4-tiny', 'fpn', 'yolov3']):  # P5, P4, P3 strides
+            if any(x == cfg.stem for x in ['yolov4-tiny', 'fpn', 'yolov3']):  # P5, P4, P3 strides
                 stride = [32, 16, 8]
             layers = mdef['from'] if 'from' in mdef else []
             modules = JDELayer(anchors=mdef['anchors'][mdef['mask']],  # anchor list
@@ -258,10 +258,7 @@ def create_modules(module_defs, img_size, cfg):
         routs_binary[i] = True
     return module_list, routs_binary
 
-def parse_model_cfg(path = None):
-    if path is None:
-        path = Path(__file__).parent / 'yolov4.cfg'
-    
+def parse_model_cfg(path = None):    
     with path.open('r') as f:
         lines = f.read().split('\n')
     lines = [x for x in lines if x and not x.startswith('#')]
@@ -479,6 +476,9 @@ class Darknet(nn.Module):
 
     def __init__(self, cfg = None, img_size=(416, 416), verbose=False):
         super(Darknet, self).__init__()
+
+        if cfg is None:
+            cfg = Path(__file__).parent / 'yolov4.cfg'
 
         self.module_defs = parse_model_cfg(cfg)
         self.module_list, self.routs = create_modules(self.module_defs, img_size, cfg)

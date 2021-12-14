@@ -123,7 +123,7 @@ class AIDaemon(Daemon):
                             names[int(class_id)],
                             (int(det_x), int(det_y - 2)),
                             0,
-                            font_scale = 0.5,
+                            fontScale = 0.5,
                             color = (255, 255, 255),
                             thickness = 1,
                             lineType = cv2.LINE_AA)
