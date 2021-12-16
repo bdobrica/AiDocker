@@ -43,6 +43,8 @@ Where `{container_id}` is the Container ID that appears in `docker ps` output. T
 
 # Using the container
 
+## Image Segmentation ##
+
 To extract the background from an image, do the following:
 
 ```sh
@@ -62,6 +64,46 @@ curl -X POST http://localhost:5000/get/image -H 'Content-Type: application/json'
 ```
 
 If the container is busy processing other files, the `output.png` file will contain the following string `{"wait":"true"}`. Otherwise, it will be a normal PNG image in which the background was removed.
+
+## Object Detection ##
+
+To detect the objects inside an image, do the following:
+
+```sh
+curl -F 'image=@/path/to/image.jpg' http://localhost:5000/put/image
+```
+
+This will place the `image.jpg` in the processing queue. The supported image types are `image/jpeg` and `image/png`. More can be easily added. The output of the command will produce the following:
+
+```
+{"token": "1a4d524ad2c21a7f50dc64ce4ee3a345e28972961c16513465d5161a8c0a3d1b", "mime": "image/jpeg"}
+```
+
+Here, the `token` can be used to retrieve the result by calling the `get/json` endpoint. To retrieve the result, use the output of the first command and run the following:
+
+```sh
+curl -X POST http://localhost:5000/get/json -H 'Content-Type: application/json' -d '{"token": "1a4d524ad2c21a7f50dc64ce4ee3a345e28972961c16513465d5161a8c0a3d1b", "mime": "image/jpeg"}' --output /path/to/output.json
+```
+
+The result is a JSON response that contains the following keys:
+* results: this is an array of detected objects, sorted by the percentage of the image that the image covers; an object has the following keys:
+    * class: this is the name of the detected object; can be: person bicycle car motorcycle airplane bus train truck boat trafficlight firehydrant stopsign parkingmeter bench bird cat dog horse sheep cow elephant bear zebra giraffe backpack umbrella handbag tie suitcase frisbee skis snowboard sportsball kite baseballbat baseballglove skateboard surfboard tennisracket bottle wineglass cup fork knife spoon bowl banana apple sandwich orange broccoli carrot hotdog pizza donut cake chair couch pottedplant bed diningtable toilet tv laptop mouse remote keyboard cellphone microwave oven toaster sink refrigerator book clock vase scissors teddybear hairdrier toothbrush; the list is available in yolov4/coco.names file;
+    * conf: this is the confidence level of the object's detection - a number between 0 and 1, 0 = no confidence (actually the threshold is set to 0.5) and 1.0 = 100% sure;
+    * x: the center of the object's bounding box on the horizontal, starting from the left, in pixels;
+    * y: the center of the object's bounding box on the vertical, starting from the top, in pixels;
+    * w: the width of the object's bounding box in pixels;
+    * h: the height of the object's bounding box in pixels;
+    * area: the percentage of the image covered by the object - 0 = 0%, 1.0 = 100%
+* status: can be one of the following:
+    * "not queued": the image is not yet placed in the processing queue; in this case, in the JSON output you'll find "wait": "true"
+    * "processing": the image is in the processing queue, but still being processed; in this case, in the JSON output you'll find "wait": "true"
+    * "success": the image was successfully processed and the result key is present in the JSON output;
+* error: present if an error has happened and it will contain an error message
+    * "unknown image format": if the image is not PNG or JPG
+    * "invalid model output": the model has not produced correctly formated JSON data
+    * "unknown token": the token used to get the output most likely expired (or didn't existed in the first place) and the image requires resubmission;
+
+For ease of testing, you can use the old `get/image` endpoint to get an image that has the object bounding boxes drawn on top of the original image, to check that the detection works.
 
 # Error Handling
 
