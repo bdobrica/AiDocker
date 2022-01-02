@@ -16,11 +16,13 @@ COPY yolov4/coco.names /opt/app
 COPY yolov4/yolov4 /opt/app/yolov4
 COPY yolov4/ai.py /opt/app
 COPY daemon /opt/app/daemon
+COPY cleaner.py /opt/app
 COPY api.py /opt/app
 COPY entry.sh /opt/app
 
 ### MAKING THE SCRIPTS EXECUTABLE ###
 RUN chmod +x /opt/app/ai.py
+RUN chmod +x /opt/app/cleaner.py
 RUN chmod +x /opt/app/api.py
 RUN chmod +x /opt/app/entry.sh
 

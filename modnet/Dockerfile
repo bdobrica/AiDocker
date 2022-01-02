@@ -14,11 +14,13 @@ COPY modnet/requirements.txt /opt/app
 COPY modnet/modnet_photographic_portrait_matting.onnx /opt/app
 COPY modnet/ai.py /opt/app
 COPY daemon /opt/app/daemon
+COPY cleaner.py /opt/app
 COPY api.py /opt/app
 COPY entry.sh /opt/app
 
 ### MAKING THE SCRIPTS EXECUTABLE ###
 RUN chmod +x /opt/app/ai.py
+RUN chmod +x /opt/app/cleaner.py
 RUN chmod +x /opt/app/api.py
 RUN chmod +x /opt/app/entry.sh
 
