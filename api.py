@@ -77,6 +77,8 @@ def get_image():
     token_expired = staged_file.is_file() and (staged_file.stat().st_mtime + lifetime < time.time())
 
     if prepared_file.is_file() and not token_expired:
+        with prepared_file.open('rb') as fp:
+            image_data = fp.read()
         if staged_file.is_file():
             staged_file.unlink()
         if source_file.is_file():
