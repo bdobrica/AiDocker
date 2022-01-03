@@ -6,6 +6,7 @@ from pathlib import Path
 from hashlib import md5, sha256
 import base64
 import json
+import time
 
 app = Flask(__name__)
 
@@ -73,7 +74,7 @@ def get_image():
     else:
         return Response(json.dumps({'error': 'unknown image format'}), status = 400, mimetype='application/json')
 
-    token_expired = staged_file.stat().st_mtime + lifetime < time.time()
+    token_expired = staged_file.is_file() and (staged_file.stat().st_mtime + lifetime < time.time())
 
     if prepared_file.is_file() and not token_expired:
         if staged_file.is_file():
@@ -131,7 +132,7 @@ def get_json():
     else:
         return Response(json.dumps({'error': 'unknown image format'}), status = 400, mimetype='application/json')
     
-    token_expired = staged_file.stat().st_mtime + lifetime < time.time()
+    token_expired = staged_file.is_file() and (staged_file.stat().st_mtime + lifetime < time.time())
 
     if json_file.is_file() and not token_expired:
         with json_file.open('rb') as fp:
