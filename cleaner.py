@@ -15,26 +15,50 @@ class Cleaner(Daemon):
         PREPARED_PATH = os.environ.get("PREPARED_PATH", "/tmp/ai/prepared")
         FILE_LIFETIME = os.environ.get('API_CLEANER_FILE_LIFETIME', '1800.0')
 
+        files_to_clean = []
         lifetime = 1.1 * float(FILE_LIFETIME)
-        staged_files = filter(
-            lambda f: f.is_file() and f.stat().st_mtime + lifetime > time.time(),
-            Path(STAGED_PATH).glob('*'))
+        for meta_file in Path(STAGED_PATH).glob('*.json'):
+            with meta_file.open('r') as fp:
+                try:
+                    image_metadata = json.load(fp)
+                except:
+                    image_metadata = {}
+        
+            if image_metadata.get('upload_time', 0) < time.time() - lifetime:
+                staged_file = meta_file.with_suffix(
+                    image_metadata.get('extension', '.jpg'))
+                if staged_file.is_file():
+                    files_to_clean.append(staged_file)
 
-        for staged_file in staged_files:
-            for source_file in Path(SOURCE_PATH).glob(staged_file.stem + '.*'):
+        staged_files += list(filter(
+            lambda f: f.is_file() and f.stat().st_mtime + lifetime > time.time(),
+            Path(STAGED_PATH).glob('*')))
+
+        for staged_file in set(staged_files):
+            meta_file = staged_file.with_suffix('.json')
+            source_file = Path(SOURCE_PATH) / staged_file.name
+            prepared_file = Path(PREPARED_PATH) / staged_file.name
+
+            if meta_file.is_file():
+                try:
+                    meta_file.unlink()
+                except:
+                    pass
+            if source_file.is_file():
                 try:
                     source_file.unlink()
                 except:
                     pass
-            for prepared_file in Path(PREPARED_PATH).glob(staged_file.stem + '.*'):
+            if prepared_file.is_file():
                 try:
                     prepared_file.unlink()
                 except:
                     pass
-            try:
-                staged_file.unlink()
-            except:
-                pass
+            if staged_file.is_file():
+                try:
+                    staged_file.unlink()
+                except:
+                    pass
 
     def run(self):
         signal.signal(signal.SIGCHLD, signal.SIG_IGN)

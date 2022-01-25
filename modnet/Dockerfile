@@ -15,6 +15,7 @@ COPY modnet/modnet_photographic_portrait_matting.onnx /opt/app
 COPY modnet/ai.py /opt/app
 COPY daemon /opt/app/daemon
 COPY cleaner.py /opt/app
+COPY mimetypes.json /opt/app
 COPY api.py /opt/app
 COPY entry.sh /opt/app
 

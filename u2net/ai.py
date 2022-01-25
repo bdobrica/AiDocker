@@ -20,7 +20,7 @@ import cv2
 from u2net import U2NET
 
 class AIDaemon(Daemon):
-    def ai(self, source_file, prepared_file):
+    def ai(self, source_file, prepared_file, **metadata):
         pid = os.fork()
         if pid != 0:
             return
@@ -66,9 +66,45 @@ class AIDaemon(Daemon):
             sal_map = (pred_np * 255).astype('uint8')
             sal_map = cv2.resize(sal_map, im.shape[1::-1], interpolation = cv2.INTER_AREA)
             out_im[:, :, 3] = sal_map
-
             out_im = out_im.astype(float)
-            out_im[:,:,:3] = out_im[:,:,:3] * np.repeat(out_im[:,:,3].reshape(out_im.shape[:2] + (1,)) / 255.0, 3, axis = 2)
+
+            background = metadata.get('background', '')
+            color_re = re.compile(r'^[A-Za-z0-9]{8}$')
+            background_alpha = 0
+            if background.starts_with('http://') or\
+                background.starts_with('https://'):
+                try:
+                    req = urllib.urlopen(background_)
+                    arr = np.asarray(bytearray(req.read()), dtype=np.uint8)
+                    background_im = cv2.imdecode(arr, cv2.IMREAD_UNCHANGED)
+                    background_im = cv2.resize(background_im,
+                        dsize=(im_w, im_h), interpolation = cv2.INTER_AREA)
+                    if background_im.shape[2] == 4:
+                        background_im = background_im.astype(float)
+                        background_im = background_im[:,:,:3] * np.repeat(
+                            background_im[:,:,3].reshape(
+                                out_im.shape[:2] + (1,)) / 255.0, 3, axis = 2)
+                    background_alpha = 255
+                except:
+                    background_im = None
+            elif color_re.match(background):
+                red, green, blue, alpha = [
+                    int(background[i:i+2], 16) for i in range(0, 8, 2)]
+                background_alpha = alpha / 255.0
+                background_im = np.full((im_h, im_w, 3),
+                    [blue * background_alpha,
+                    green * background_alpha,
+                    red * background_alpha],
+                    dtype=np.float32)
+            
+            alpha_mask = np.repeat(
+                out_im[:,:,3].reshape(
+                    out_im.shape[:2] + (1,)) / 255.0, 3, axis = 2)
+            out_im[:,:,:3] = out_im[:,:,:3] * alpha_mask
+
+            if background_im is not None:
+                out_im[:,:,:3] = out_im[:,:,:3] + background_im[:,:,:3] *\
+                    background_alpha * (1.0 - alpha_mask)
 
             cv2.imwrite(str(prepared_file), out_im.astype('uint8'))
         except Exception as e:
@@ -91,10 +127,28 @@ class AIDaemon(Daemon):
         while source_files_count < MAX_FORK and staged_files:
             source_files_count += 1
             staged_file = staged_files.pop(0)
-            source_file = Path(SOURCE_PATH) / staged_file.name
-            prepared_file = Path(PREPARED_PATH) / (staged_file.stem + '.png')
 
-            with staged_file.open('rb') as src_fp, source_file.open('wb') as dst_fp:
+            meta_file = staged_file.with_suffix('.json')
+            if meta_file.is_file():
+                with meta_file.open('r') as fp:
+                    try:
+                        image_metadata = json.load(fp)
+                    except:
+                        image_metadata = {}
+            image_metadata = {
+                **{
+                    'extension': staged_file.suffix,
+                    'background': '',
+                },
+                **image_metadata
+            }
+
+            source_file = Path(SOURCE_PATH) / staged_file.name
+            prepared_file = Path(PREPARED_PATH) /\
+                (staged_file.stem + image_metadata['extension'])
+
+            with staged_file.open('rb') as src_fp,\
+                source_file.open('wb') as dst_fp:
                 while True:
                     chunk = src_fp.read(CHUNK_SIZE)
                     if not chunk:
@@ -102,7 +156,7 @@ class AIDaemon(Daemon):
                     dst_fp.write(chunk)
 
             staged_file.unlink()
-            self.ai(source_file, prepared_file)
+            self.ai(source_file, prepared_file, **image_metadata)
     
     def run(self):
         signal.signal(signal.SIGCHLD, signal.SIG_IGN)

@@ -16,6 +16,7 @@ COPY u2net/u2net /opt/app/u2net
 COPY u2net/ai.py /opt/app
 COPY daemon /opt/app/daemon
 COPY cleaner.py /opt/app
+COPY mimetypes.json /opt/app
 COPY api.py /opt/app
 COPY entry.sh /opt/app
 
