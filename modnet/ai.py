@@ -5,7 +5,7 @@ import re
 import time
 import signal
 import json
-import urllib
+from urllib import request
 from pathlib import Path
 from daemon import Daemon
 import cv2
@@ -77,10 +77,11 @@ class AIDaemon(Daemon):
             background = metadata.get('background', '')
             color_re = re.compile(r'^[A-Za-z0-9]{8}$')
             background_alpha = 0
-            if background.starts_with('http://') or\
-                background.starts_with('https://'):
+            background_im = None
+            if background.startswith('http://') or\
+                background.startswith('https://'):
                 try:
-                    req = urllib.urlopen(background_)
+                    req = request.urlopen(background)
                     arr = np.asarray(bytearray(req.read()), dtype=np.uint8)
                     background_im = cv2.imdecode(arr, cv2.IMREAD_UNCHANGED)
                     background_im = cv2.resize(background_im,
@@ -90,7 +91,7 @@ class AIDaemon(Daemon):
                         background_im = background_im[:,:,:3] * np.repeat(
                             background_im[:,:,3].reshape(
                                 out_im.shape[:2] + (1,)) / 255.0, 3, axis = 2)
-                    background_alpha = 255
+                    background_alpha = 1.0
                 except:
                     background_im = None
             elif color_re.match(background):
@@ -127,7 +128,8 @@ class AIDaemon(Daemon):
         CHUNK_SIZE = int(os.environ.get("CHUNK_SIZE", 4096))
 
         staged_files = sorted([ f for f in Path(STAGED_PATH).glob("*")\
-            if f.is_file() ], key = lambda f : f.stat().st_mtime)
+            if f.is_file() and f.suffix != '.json'],
+            key = lambda f : f.stat().st_mtime)
         source_files = [ f for f in Path(SOURCE_PATH).glob("*") if f.is_file() ]
         source_files_count = len(source_files)
 

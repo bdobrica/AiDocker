@@ -25,7 +25,7 @@ def file_paths(image_token, image_extension = None):
         image_extension = image_meta.get('extension', None)
 
     json_file = PREPARED_PATH / (image_token + '.json')
-    if image_extension is None:
+    if image_extension is not None:
         staged_file = STAGED_PATH / (image_token + image_extension)
         source_file = SOURCE_PATH / (image_token + image_extension)
         prepared_file = PREPARED_PATH / (image_token + image_extension)
@@ -42,14 +42,16 @@ def file_paths(image_token, image_extension = None):
         'prepared_file': prepared_file
     }
 
-def clean_files(image_token):
-    paths = file_paths(image_token)
+def clean_files(image_token, image_extension = None):
+    paths = file_paths(image_token, image_extension)
     for path in paths.values():
         if isinstance(path, Path):
-            path.unlink()
+            if path.is_file():
+                path.unlink()
         else:
             for path_ in path:
-                path_.unlink()
+                if path_.is_file():
+                    path_.unlink()
 
 def clean_expired(image_token = None):
     STAGED_PATH = Path(os.environ.get("STAGED_PATH", "/tmp/ai/staged"))
@@ -77,6 +79,8 @@ def put_image():
     
     image_background = request.form.get('background', '')
     image_background = image_background.strip('#')
+    if len(image_background) == 6:
+        image_background = image_background.lower() + 'ff'
 
     image_type = image_file.mimetype
     image_data = image_file.read()
@@ -113,8 +117,10 @@ def put_image():
         status = 200,
         mimetype='application/json')
 
-@app.route('/get/image/<image_token>')
-def get_image(image_token):
+@app.route('/get/image/<image_file>', methods=['GET'])
+def get_image(image_file):
+    image_file_path = Path(image_file)
+    image_token = image_file_path.stem
     clean_expired(image_token)
 
     paths = file_paths(image_token)
@@ -141,7 +147,7 @@ def get_image(image_token):
                 image_metadata = {}
 
     image_type = image_metadata.get('type', 'image/jpeg')
-    image_extension = image_metadata.get('extension', '.jpg')
+    image_extension = image_metadata.get('extension', image_file_path.suffix)
     
     clean_files(image_token, image_extension)
 
@@ -227,9 +233,13 @@ def get_json():
             source_file.unlink()
         
         return Response(
-            json.dumps({'url': '/get/image/{image_token}'.format(
-                image_token = image_token
-            )}),
+            json.dumps({
+                'url': '/get/image/{image_token}.{image_extension}'.format(
+                    image_token = image_token,
+                    image_extension = prepared_file.suffix[1:],
+                ),
+                'status': 'success'
+            }),
             status = 200,
             mimetype = 'application/json'
         )
