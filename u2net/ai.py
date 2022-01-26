@@ -71,6 +71,8 @@ class AIDaemon(Daemon):
             out_im[:, :, 3] = sal_map
             out_im = out_im.astype(float)
 
+            im_h, im_w = out_im.shape[:2]
+
             background = metadata.get('background', '')
             color_re = re.compile(r'^[A-Za-z0-9]{8}$')
             background_alpha = 0
