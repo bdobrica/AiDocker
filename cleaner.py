@@ -15,7 +15,7 @@ class Cleaner(Daemon):
         PREPARED_PATH = os.environ.get("PREPARED_PATH", "/tmp/ai/prepared")
         FILE_LIFETIME = os.environ.get('API_CLEANER_FILE_LIFETIME', '1800.0')
 
-        files_to_clean = []
+        staged_files = []
         lifetime = 1.1 * float(FILE_LIFETIME)
         for meta_file in Path(STAGED_PATH).glob('*.json'):
             with meta_file.open('r') as fp:
@@ -28,7 +28,7 @@ class Cleaner(Daemon):
                 staged_file = meta_file.with_suffix(
                     image_metadata.get('extension', '.jpg'))
                 if staged_file.is_file():
-                    files_to_clean.append(staged_file)
+                    staged_files.append(staged_file)
 
         staged_files += list(filter(
             lambda f: f.is_file() and f.stat().st_mtime + lifetime > time.time(),
