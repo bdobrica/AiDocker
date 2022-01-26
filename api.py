@@ -107,10 +107,12 @@ def put_image():
     paths = file_paths(image_token, image_extension)
 
     meta_file = paths['meta_file']
-
-    if not meta_file.is_file():
-        with meta_file.open('w') as fp:
-            json.dump(image_metadata, fp)
+    with meta_file.open('w') as fp:
+        json.dump(image_metadata, fp)
+    
+    staged_file = paths['staged_file']
+    with staged_file.open('wb') as fp:
+        fp.write(image_data)
 
     return Response(
         json.dumps({'token': image_token}),
