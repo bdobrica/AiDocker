@@ -31,13 +31,14 @@ class Cleaner(Daemon):
                     staged_files.append(staged_file)
 
         staged_files += list(filter(
-            lambda f: f.is_file() and f.stat().st_mtime + lifetime > time.time(),
+            lambda f: f.is_file() and f.stat().st_mtime < time.time() - lifetime,
             Path(STAGED_PATH).glob('*')))
 
         for staged_file in set(staged_files):
             meta_file = staged_file.with_suffix('.json')
             source_file = Path(SOURCE_PATH) / staged_file.name
             prepared_file = Path(PREPARED_PATH) / staged_file.name
+            json_file = prepared_file.with_suffix('.json')
 
             if meta_file.is_file():
                 try:
@@ -52,6 +53,11 @@ class Cleaner(Daemon):
             if prepared_file.is_file():
                 try:
                     prepared_file.unlink()
+                except:
+                    pass
+            if json_file.is_file():
+                try:
+                    json_file.unlink()
                 except:
                     pass
             if staged_file.is_file():
