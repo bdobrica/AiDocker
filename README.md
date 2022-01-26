@@ -51,19 +51,50 @@ To extract the background from an image, do the following:
 curl -F 'image=@/path/to/image.jpg' http://localhost:5000/put/image
 ```
 
-This will place the `image.jpg` in the processing queue. The supported image types are `image/jpeg` and `image/png`. More can be easily added. The output of the command will produce the following:
+This will place the `image.jpg` in the processing queue. The supported image types are `image/jpeg` and `image/png`. More can be easily added. The output of the command will produce the following (the token is an example token, expect different tokens for different images):
 
 ```
-{"token": "1a4d524ad2c21a7f50dc64ce4ee3a345e28972961c16513465d5161a8c0a3d1b", "mime": "image/jpeg"}
+{"token": "1a4d524ad2c21a7f50dc64ce4ee3a345e28972961c16513465d5161a8c0a3d1b"}
 ```
 
 Here, the `token` can be used to retrieve the result. To retrieve the result, use the output of the first command and run the following:
 
 ```sh
-curl -X POST http://localhost:5000/get/image -H 'Content-Type: application/json' -d '{"token": "1a4d524ad2c21a7f50dc64ce4ee3a345e28972961c16513465d5161a8c0a3d1b", "mime": "image/jpeg"}' --output /path/to/output.png
+curl -X POST http://localhost:5000/get/json -H 'Content-Type: application/json' -d '{"token": "1a4d524ad2c21a7f50dc64ce4ee3a345e28972961c16513465d5161a8c0a3d1b"}'
+```
+
+No need to pass the mimetype. This is stored internally by the container and the output will always follow the same mimetype as the input image.
+This will produce a response depending on the container. For the segmentation containers, the output json will look like this:
+
+```json
+{"url": "/get/image/1a4d524ad2c21a7f50dc64ce4ee3a345e28972961c16513465d5161a8c0a3d1b.jpg", "status": "success"}
 ```
 
 If the container is busy processing other files, the `output.png` file will contain the following string `{"wait":"true"}`. Otherwise, it will be a normal PNG image in which the background was removed.
+
+In order to get the image, just do the `curl` command on the output URL (don't forget to append the absolute path):
+
+```sh
+curl http://localhost:5000/get/image/1a4d524ad2c21a7f50dc64ce4ee3a345e28972961c16513465d5161a8c0a3d1b.jpg --output out.jpg
+```
+
+Remember that the localhost and the 5000 port are the ones outside from the container. This is because the container is not aware of what runs outside.
+
+## Custom Background ##
+
+You can customize the background via the `background` parameter:
+
+```sh
+curl -F 'background=#ffffff' -F 'image=@/path/to/image.jpg' http://localhost:5000/put/image
+```
+
+Will put a white background image behind the detected object. Any 6-hex digit color code is supported. Default is black.
+
+```sh
+curl -F 'background=https://picsum.photos/200' -F 'image=@/path/to/image.jpg' http://localhost:5000/put/image
+```
+
+Will put a lorem ipsum image behind the detected object.
 
 ## Object Detection ##
 
