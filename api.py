@@ -92,7 +92,7 @@ def put_image():
     image_hash.update(image_data)
     image_token = image_hash.hexdigest()
 
-    with open('mimetypes.json', 'r') as fp:
+    with open('/opt/app/mimetypes.json', 'r') as fp:
         image_extension = json.load(fp).get(image_type, '.jpg')
 
     image_metadata = {
