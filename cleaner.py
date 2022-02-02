@@ -24,14 +24,16 @@ class Cleaner(Daemon):
                 except:
                     image_metadata = {}
         
-            if image_metadata.get('upload_time', 0) < time.time() - lifetime:
+            if float(image_metadata.get('upload_time', 0)) +\
+                lifetime < time.time():
                 staged_file = meta_file.with_suffix(
                     image_metadata.get('extension', '.jpg'))
                 if staged_file.is_file():
                     staged_files.append(staged_file)
 
         staged_files += list(filter(
-            lambda f: f.is_file() and f.stat().st_mtime < time.time() - lifetime,
+            lambda f:\
+                f.is_file() and f.stat().st_mtime + lifetime < time.time(),
             Path(STAGED_PATH).glob('*')))
 
         for staged_file in set(staged_files):
