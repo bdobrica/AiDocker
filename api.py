@@ -137,7 +137,7 @@ def get_image(image_file):
         image_data = fp.read()
     if not image_data:
         return Response(
-            'image not found',
+            'image output is empty',
             status = 404)
 
     meta_file = paths['meta_file']
@@ -171,7 +171,7 @@ def get_json():
     if not meta_file.is_file():
         clean_files(image_token)
         return Response(
-            json.dumps({'error': 'unknown token'}),
+            json.dumps({'error': 'missing file metadata'}),
             status = 400,
             mimetype = 'application/json')
     
@@ -201,7 +201,7 @@ def get_json():
     json_file = paths['json_file']
     prepared_file = paths['prepared_file']
 
-    if json_file.is_file() and not prepared_file.is_file():
+    if json_file.is_file():
         with json_file.open('r') as fp:
             try:
                 json_data = json.load(fp)
@@ -228,11 +228,9 @@ def get_json():
     staged_file = paths['staged_file']
     source_file = paths['source_file']
 
-    if prepared_file.is_file() and not json_file.is_file():
+    if prepared_file.is_file():
         if staged_file.is_file():
             staged_file.unlink()
-        if source_file.is_file():
-            source_file.unlink()
         
         return Response(
             json.dumps({
