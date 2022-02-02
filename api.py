@@ -53,21 +53,6 @@ def clean_files(image_token, image_extension = None):
                 if path_.is_file():
                     path_.unlink()
 
-def clean_expired(image_token = None):
-    STAGED_PATH = Path(os.environ.get("STAGED_PATH", "/tmp/ai/staged"))
-    lifetime = float(os.environ.get('API_CLEANER_FILE_LIFETIME', '1800.0'))
-
-    for meta_file in STAGED_PATH.glob('*.json'):
-        if meta_file.stem == image_token:
-            continue
-        with meta_file.open() as fp:
-            try:
-                image_meta = json.load(fp)
-            except:
-                image_meta = {}
-        if image_meta.get('upload_time', 0) + lifetime < time.time():
-            clean_files(meta_file.stem)
-
 @app.route('/put/image', methods=['POST'])
 def put_image():
     image_file = request.files.get('image')
@@ -123,9 +108,9 @@ def put_image():
 def get_image(image_file):
     image_file_path = Path(image_file)
     image_token = image_file_path.stem
-    clean_expired(image_token)
+    image_extension = image_file_path.suffix
 
-    paths = file_paths(image_token)
+    paths = file_paths(image_token, image_extension)
     prepared_file = paths['prepared_file']
 
     if not prepared_file.is_file():
@@ -149,7 +134,6 @@ def get_image(image_file):
                 image_metadata = {}
 
     image_type = image_metadata.get('type', 'image/jpeg')
-    image_extension = image_metadata.get('extension', image_file_path.suffix)
     
     clean_files(image_token, image_extension)
 
@@ -184,7 +168,8 @@ def get_json():
             status = 400,
             mimetype = 'application/json')
     
-    if image_metadata.get('upload_time', 0) + lifetime < time.time():
+    if float(image_metadata.get('upload_time', 0)) +\
+        lifetime < time.time():
         clean_files(image_token)
         return Response(
             json.dumps({'error': 'token expired'}),
@@ -219,6 +204,7 @@ def get_json():
             'token': image_token,
             'status': 'success'
         })
+        json_file.unlink()
 
         return Response(
             json.dumps(json_data),
