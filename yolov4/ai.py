@@ -127,12 +127,13 @@ class AIDaemon(Daemon):
                             color = (255, 255, 255),
                             thickness = 1,
                             lineType = cv2.LINE_AA)
-            cv2.imwrite(str(prepared_file), img_copy)
             
             results.sort(key = lambda x : x.get('area') or 0.0, reverse = True)
             json_file = prepared_file.with_suffix('.json')
             with json_file.open('w') as f:
                 json.dump({'results':results}, f)
+
+            cv2.imwrite(str(prepared_file), img_copy)
         except Exception as e:
             pass
         
