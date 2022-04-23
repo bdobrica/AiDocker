@@ -3,14 +3,9 @@ import cv2
 import logging
 import numpy as np
 import onnxruntime
-from progressbar import progressbar
 
 from .detector_utils import preprocess_image
 from .video_utils import get_interest_frames_from_video
-
-
-def dummy(x):
-    return x
 
 CACHED_FILES = {
     "default": {
@@ -37,18 +32,18 @@ class Detector:
         checkpoint_path = Path(app_path) / CACHED_FILES[model_name]["checkpoint"]
         if not checkpoint_path.is_file():
             raise ValueError(f"Checkpoint {checkpoint_path} not found")
-            
+
         classes_path = Path(app_path) / CACHED_FILES[model_name]["classes"]
         if not classes_path.is_file():
             raise ValueError(f"Classes {classes_path} not found")
 
-        self.detection_model = onnxruntime.InferenceSession(checkpoint_path)
+        self.detection_model = onnxruntime.InferenceSession(checkpoint_path.as_posix())
 
         with open(classes_path, "r") as fp:
             self.classes = [c.strip() for c in fp.readlines() if c.strip()]
 
     def detect_video(
-        self, video_path, mode="default", min_prob=0.6, batch_size=2, show_progress=True
+        self, video_path, mode="default", min_prob=0.6, batch_size=2
     ):
         frame_indices, frames, fps, video_length = get_interest_frames_from_video(
             video_path
@@ -74,12 +69,7 @@ class Detector:
             "preds": {},
         }
 
-        progress_func = progressbar
-
-        if not show_progress:
-            progress_func = dummy
-
-        for _ in progress_func(range(int(len(frames) / batch_size) + 1)):
+        for _ in range(int(len(frames) / batch_size) + 1):
             batch = frames[:batch_size]
             batch_indices = frame_indices[:batch_size]
             frames = frames[batch_size:]
