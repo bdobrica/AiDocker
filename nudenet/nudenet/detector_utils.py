@@ -1,8 +1,6 @@
 import os
 import cv2
 import numpy as np
-from PIL import Image
-
 
 def read_image_bgr(path):
     """ Read an image in BGR format.
@@ -10,12 +8,11 @@ def read_image_bgr(path):
         path: Path to the image.
     """
     if isinstance(path, str):
-        image = np.ascontiguousarray(Image.open(path).convert("RGB"))
+        image = cv2.imread(path, CV2.IMREAD_COLOR)
     else:
-        path = cv2.cvtColor(path, cv2.COLOR_BGR2RGB)
-        image = np.ascontiguousarray(Image.fromarray(path))
+        image = path
 
-    return image[:, :, ::-1]
+    return image
 
 
 def _preprocess_image(x, mode="caffe"):

@@ -12,6 +12,11 @@ RUN apt-get update && apt-get install -y python3-opencv
 ### COPYING FILES ###
 COPY nudenet/requirements.txt /opt/app
 COPY nudenet/ai.py /opt/app
+COPY nudenet/nudenet /opt/app/nudenet
+COPY nudenet/detector_v2_default_checkpoint.onnx /opt/app
+COPY nudenet/detector_v2_default_classes /opt/app
+COPY nudenet/detector_v2_base_checkpoint.onnx /opt/app
+COPY nudenet/detector_v2_base_classes /opt/app
 COPY daemon /opt/app/daemon
 COPY cleaner.py /opt/app
 COPY mimetypes.json /opt/app

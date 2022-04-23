@@ -1,9 +1,5 @@
 flask
 numpy
 opencv-python
-dlib
-sqlalchemy
-pillow
-pydload
 scikit-image
 onnxruntime

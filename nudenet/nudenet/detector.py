@@ -1,6 +1,5 @@
-import os
+from pathlib import Path
 import cv2
-import pydload
 import logging
 import numpy as np
 import onnxruntime
@@ -13,50 +12,40 @@ from .video_utils import get_interest_frames_from_video
 def dummy(x):
     return x
 
-
-FILE_URLS = {
+CACHED_FILES = {
     "default": {
-        "checkpoint": "https://github.com/notAI-tech/NudeNet/releases/download/v0/detector_v2_default_checkpoint.onnx",
-        "classes": "https://github.com/notAI-tech/NudeNet/releases/download/v0/detector_v2_default_classes",
+        "checkpoint": "detector_v2_default_checkpoint.onnx",
+        "classes": "detector_v2_default_classes",
     },
     "base": {
-        "checkpoint": "https://github.com/notAI-tech/NudeNet/releases/download/v0/detector_v2_base_checkpoint.onnx",
-        "classes": "https://github.com/notAI-tech/NudeNet/releases/download/v0/detector_v2_base_classes",
-    },
+        "checkpoint": "detector_v2_base_checkpoint.onnx",
+        "classes": "detector_v2_base_classes",
+    }
 }
-
 
 class Detector:
     detection_model = None
     classes = None
 
-    def __init__(self, model_name="default"):
+    def __init__(self, model_name="default", app_path = "/opt/app"):
         """
         model = Detector()
         """
-        checkpoint_url = FILE_URLS[model_name]["checkpoint"]
-        classes_url = FILE_URLS[model_name]["classes"]
+        if model_name not in CACHED_FILES:
+            raise ValueError(f"Model {model_name} not found")
 
-        home = os.path.expanduser("~")
-        model_folder = os.path.join(home, f".NudeNet/")
-        if not os.path.exists(model_folder):
-            os.makedirs(model_folder)
-
-        checkpoint_name = os.path.basename(checkpoint_url)
-        checkpoint_path = os.path.join(model_folder, checkpoint_name)
-        classes_path = os.path.join(model_folder, "classes")
-
-        if not os.path.exists(checkpoint_path):
-            print("Downloading the checkpoint to", checkpoint_path)
-            pydload.dload(checkpoint_url, save_to_path=checkpoint_path, max_time=None)
-
-        if not os.path.exists(classes_path):
-            print("Downloading the classes list to", classes_path)
-            pydload.dload(classes_url, save_to_path=classes_path, max_time=None)
+        checkpoint_path = Path(app_path) / CACHED_FILES[model_name]["checkpoint"]
+        if not checkpoint_path.is_file():
+            raise ValueError(f"Checkpoint {checkpoint_path} not found")
+            
+        classes_path = Path(app_path) / CACHED_FILES[model_name]["classes"]
+        if not classes_path.is_file():
+            raise ValueError(f"Classes {classes_path} not found")
 
         self.detection_model = onnxruntime.InferenceSession(checkpoint_path)
 
-        self.classes = [c.strip() for c in open(classes_path).readlines() if c.strip()]
+        with open(classes_path, "r") as fp:
+            self.classes = [c.strip() for c in fp.readlines() if c.strip()]
 
     def detect_video(
         self, video_path, mode="default", min_prob=0.6, batch_size=2, show_progress=True
