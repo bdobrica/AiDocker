@@ -32,16 +32,16 @@ class AIDaemon(Daemon):
             results = filter(lambda item:\
                 item['score'] > os.environ.get('API_THRESHOLD', 0.5), results)
             
-            API_NUDENET_KEEP_CLASSES = os.environ\
-                .get('API_NUDENET_KEEP_CLASSES', '').split(',')
-            if API_KEEP_NUDENET_CLASSES:
+            API_NUDENET_KEEP_LABELS = os.environ\
+                .get('API_NUDENET_KEEP_LABELS', '').split(',')
+            if API_NUDENET_KEEP_LABELS:
                 results = filter(lambda item:\
-                    item['class'] in API_NUDENET_KEEP_CLASSES, results)
-            API_NUDENET_DROP_CLASSES = os.environ\
-                .get('API_NUDENET_DROP_CLASSES', '').split(',')
-            if API_DROP_NUDENET_CLASSES:
+                    item['label'] in API_NUDENET_KEEP_LABELS, results)
+            API_NUDENET_DROP_LABELS = os.environ\
+                .get('API_NUDENET_DROP_LABELS', '').split(',')
+            if API_NUDENET_DROP_LABELS:
                 results = filter(lambda item:\
-                    item['class'] not in API_NUDENET_DROP_CLASSES, results)
+                    item['label'] not in API_NUDENET_DROP_LABELS, results)
 
             # Do censoring
             img_copy = img_orig.copy()
@@ -69,7 +69,7 @@ class AIDaemon(Daemon):
             else:
                 json_file = prepared_file.with_suffix('.json')
                 with json_file.open('w') as f:
-                    json.dump({'results':results}, f)
+                    json.dump({'results':list(results)}, f)
 
         except Exception as e:
             pass
