@@ -14,6 +14,8 @@ if [ ! -f "yolov4/yolov4.weights" ]; then
     # Credits: https://github.com/kiyoshiiriemon/yolov4_darknet
     gdown https://drive.google.com/uc?id=1cewMfusmPjYWbrnuJRuKhPMwRe_b9PaT --output yolov4/yolov4.weights
 fi
+
+# due to the nature of this network, the files require authentication in order to be downloaded
 NUDENET_FILES=(
     "nudenet/detector_v2_default_checkpoint.onnx"\
     "nudenet/detector_v2_default_classes"\
@@ -25,6 +27,7 @@ for nudenet_file in "${NUDENET_FILES[@]}"; do
         wget "https://github.com/notAI-tech/NudeNet/releases/download/v0/$(basename ${nudenet_file})" -O ${nudenet_file}
     fi
 done
+
 docker build -f modnet/Dockerfile -t modnet .
 docker build -f u2net/Dockerfile -t u2net .
 docker build -f yolov4/Dockerfile -t yolov4 .

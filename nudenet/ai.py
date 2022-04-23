@@ -31,18 +31,40 @@ class AIDaemon(Daemon):
             results = model.detect(str(source_file), **kwargs)
             results = results.filter(lambda item:\
                 item['score'] > os.environ.get('API_THRESHOLD', 0.5), results)
-            results = results.filter(lambda item:\
-                item['label'] in NUDE_LABELS, results)
+            
+            API_NUDENET_KEEP_CLASSES = os.environ\
+                .get('API_NUDENET_KEEP_CLASSES', '').split(',')
+            if API_KEEP_NUDENET_CLASSES:
+                results = results.filter(lambda item:\
+                    item['class'] in API_NUDENET_KEEP_CLASSES, results)
+            API_NUDENET_DROP_CLASSES = os.environ\
+                .get('API_NUDENET_DROP_CLASSES', '').split(',')
+            if API_DROP_NUDENET_CLASSES:
+                results = results.filter(lambda item:\
+                    item['class'] not in API_NUDENET_DROP_CLASSES, results)
 
-            # Do non-maximum suppression
+            # Do censoring
             img_copy = img_orig.copy()
             if metadata.get('censor', 'no').lower() == 'yes':
+                API_NUDENET_CENSOR_TYPE = os.environ\
+                    .get('API_NUDENET_CENSOR_TYPE', 'blackbox')
                 if results:
                     for item in results:
-                        box = item['box']
-                        pass
+                        box = tuple(item['box'])
+                        if API_NUDENET_CENSOR_TYPE == 'blackbox':
+                            img_copy = cv2.rectangle(img_copy,
+                                box[:2], box[2:], (0, 0, 0), -1)
+                        elif API_NUDENET_CENSOR_TYPE == 'blur':
+                            img_box = img_copy[box[1]:box[3], box[0]:box[2], :]
+                            box_height, box_width = img_box.shape[:2]
+                            box_blur = (
+                                1 + 2 * (box_height // 2),
+                                1 + 2 * (box_width // 2)
+                            )
+                            img_box = cv2.GaussianBlur(img_box,
+                                box_blur, cv2.BORDER_DEFAULT)
+                            img_copy[box[1]:box[3], box[0]:box[2], :] = img_box
 
-            if metadata.get('censor', 'no').lower() == 'yes':
                 cv2.imwrite(str(prepared_file), img_copy)
             else:
                 json_file = prepared_file.with_suffix('.json')

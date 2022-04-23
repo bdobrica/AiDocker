@@ -8,7 +8,7 @@ def read_image_bgr(path):
         path: Path to the image.
     """
     if isinstance(path, str):
-        image = cv2.imread(path, CV2.IMREAD_COLOR)
+        image = cv2.imread(path, cv2.IMREAD_COLOR)
     else:
         image = path
 
