@@ -29,18 +29,18 @@ class AIDaemon(Daemon):
             if metadata.get('fast', 'no').lower() == 'yes':
                 kwargs['fast'] = True
             results = model.detect(str(source_file), **kwargs)
-            results = results.filter(lambda item:\
+            results = filter(lambda item:\
                 item['score'] > os.environ.get('API_THRESHOLD', 0.5), results)
             
             API_NUDENET_KEEP_CLASSES = os.environ\
                 .get('API_NUDENET_KEEP_CLASSES', '').split(',')
             if API_KEEP_NUDENET_CLASSES:
-                results = results.filter(lambda item:\
+                results = filter(lambda item:\
                     item['class'] in API_NUDENET_KEEP_CLASSES, results)
             API_NUDENET_DROP_CLASSES = os.environ\
                 .get('API_NUDENET_DROP_CLASSES', '').split(',')
             if API_DROP_NUDENET_CLASSES:
-                results = results.filter(lambda item:\
+                results = filter(lambda item:\
                     item['class'] not in API_NUDENET_DROP_CLASSES, results)
 
             # Do censoring
