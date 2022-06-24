@@ -23,7 +23,6 @@ class AIDaemon(Daemon):
         try:
             # Load model
             model = NudeDetector()
-
             img_orig = cv2.imread(str(source_file))
 
             # Inference

@@ -67,6 +67,8 @@ def put_image():
     if len(image_background) == 6:
         image_background = image_background.lower() + 'ff'
 
+    censor = request.form.get('censor', '').strip().lower()
+
     image_type = image_file.mimetype
     image_data = image_file.read()
 
@@ -83,6 +85,7 @@ def put_image():
     image_metadata = {
         'token': image_token,
         'background': image_background,
+        'censor': censor,
         'type': image_type,
         'extension': image_extension,
         'upload_time': time.time(),
