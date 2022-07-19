@@ -12,6 +12,7 @@ if [ ! -f "u2net/u2net.pth" ]; then
 fi
 if [ ! -f "yolov4/yolov4.weights" ]; then
     # Credits: https://github.com/kiyoshiiriemon/yolov4_darknet
+    wget https://raw.githubusercontent.com/kiyoshiiriemon/yolov4_darknet/master/data/coco.names -O yolov4/coco.names
     gdown https://drive.google.com/uc?id=1cewMfusmPjYWbrnuJRuKhPMwRe_b9PaT --output yolov4/yolov4.weights
 fi
 docker build -f modnet/Dockerfile -t modnet .
