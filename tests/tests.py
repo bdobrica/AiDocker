@@ -1,4 +1,5 @@
 import mimetypes
+import time
 from pathlib import Path
 
 import requests
@@ -23,16 +24,34 @@ def put_image(url: str, image_path: Path, parameters: dict = None) -> dict:
         files=[("image", (image_path.name, image_path.open("rb"), image_type))],
     )
 
-    return response
+    return response.json()
 
 
-def get_image(url: str, image_path: Path) -> bool:
+def get_json(url: str, image_token: str) -> dict:
+    start_time = time.time()
+    wait = True
+
+    while wait:
+        response = requests.request(
+            "POST",
+            url,
+            headers={"Content-Type": "application/json"},
+            data={"token": image_token},
+        )
+        response_obj = response.json()
+        wait = time.time() - start_time < 10.0
+        if response_obj.get("wait") == "true":
+            continue
+
+    return response_obj
+
+
+def get_image(url: str) -> bytes:
     response = requests.request("GET", url)
     if response.status_code != 200:
-        return False
+        return None
 
-    with image_path.open("wb") as fp:
-        fp.write(response.content)
+    return response.content
 
 
 def detect_model_urls(run_file: Path) -> dict:
@@ -62,5 +81,12 @@ if __name__ == "__main__":
 
             # upload image
             response = put_image(f"{url}/put/image", image_file, parameters)
+            image_token = response.get("token")
 
-            print(response)
+            json_response = get_json(f"{url}/get/json", image_token)
+            if json_response.get("status") != "success":
+                print(f"test fail for {model}!")
+
+            if json_response.get("url"):
+                image_url = json_response.get("url")
+                image_content = get_image(f"{url}/{image_url}")
