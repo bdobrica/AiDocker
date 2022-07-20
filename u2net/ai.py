@@ -133,6 +133,7 @@ class AIDaemon(Daemon):
                 background_im = np.full(
                     (im_h, im_w, 3), [255.0, 255.0, 255.0], dtype=np.float32
                 )
+                background_alpha = 1.0
 
             if background_im is not None:
                 out_im[:, :, :3] = out_im[:, :, :3] + background_im[
