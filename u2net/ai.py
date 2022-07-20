@@ -131,7 +131,7 @@ class AIDaemon(Daemon):
                 and metadata.get("type", "") != "image/png"
             ):
                 background_im = np.full(
-                    (im_h, im_w, 3), [blue, green, red], dtype=np.float32
+                    (im_h, im_w, 3), [255.0, 255.0, 255.0], dtype=np.float32
                 )
 
             if background_im is not None:

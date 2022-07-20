@@ -1,3 +1,4 @@
+import json
 import mimetypes
 import time
 from pathlib import Path
@@ -14,6 +15,8 @@ TESTS = {
 
 
 def put_image(url: str, image_path: Path, parameters: dict = None) -> dict:
+    print(f"upload image {str(image_path)} to {url}")
+
     image_type, _ = mimetypes.guess_type(str(image_path))
 
     response = requests.request(
@@ -28,6 +31,8 @@ def put_image(url: str, image_path: Path, parameters: dict = None) -> dict:
 
 
 def get_json(url: str, image_token: str) -> dict:
+    print(f"get response from {url} with token {image_token}")
+
     start_time = time.time()
     wait = True
 
@@ -36,7 +41,7 @@ def get_json(url: str, image_token: str) -> dict:
             "POST",
             url,
             headers={"Content-Type": "application/json"},
-            data={"token": image_token},
+            data=json.dumps({"token": image_token}),
         )
         response_obj = response.json()
         wait = time.time() - start_time < 10.0
@@ -47,6 +52,8 @@ def get_json(url: str, image_token: str) -> dict:
 
 
 def get_image(url: str) -> bytes:
+    print(f"download image from {url}")
+
     response = requests.request("GET", url)
     if response.status_code != 200:
         return None
@@ -71,7 +78,7 @@ def detect_model_urls(run_file: Path) -> dict:
 
 if __name__ == "__main__":
     urls = detect_model_urls(Path("../run.sh"))
-    for model, tests in TESTS:
+    for model, tests in TESTS.items():
         url = urls.get(model)
         if url is None:
             # no tests for this model
