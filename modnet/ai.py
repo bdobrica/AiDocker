@@ -6,8 +6,6 @@ import signal
 import sys
 import time
 from pathlib import Path
-from tkinter import image_types
-from turtle import back
 from urllib import request
 
 import cv2
@@ -16,7 +14,7 @@ import onnxruntime
 
 from daemon import Daemon
 
-__version__ = "0.8.1"
+__version__ = "0.8.2"
 
 
 class AIDaemon(Daemon):

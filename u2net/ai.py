@@ -11,16 +11,13 @@ from urllib import request
 import cv2
 import numpy as np
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
 from torch.autograd import Variable
-from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
 
 from daemon import Daemon
 from u2net import U2NET
 
-__version__ = "0.8.1"
+__version__ = "0.8.2"
 
 
 class AIDaemon(Daemon):
