@@ -17,7 +17,7 @@ from torchvision import transforms
 from daemon import Daemon
 from u2net import U2NET
 
-__version__ = "0.8.2"
+__version__ = "0.8.3"
 
 
 class AIDaemon(Daemon):
