@@ -111,11 +111,13 @@ def warn(message: str):
 
 
 def error(message: str):
+    global FAILED
     print(f"[{Colors.FAIL} ERROR {Colors.ENDC}] {message}")
     FAILED += 1
 
 
 def ok(message: str):
+    global PASSED
     print(f"[{Colors.OKGREEN} OK {Colors.ENDC}] {message}")
     PASSED += 1
 
