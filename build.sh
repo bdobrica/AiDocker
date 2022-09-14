@@ -10,8 +10,11 @@ if [ ! -f "u2net/u2net.pth" ]; then
     # Credits: https://github.com/xuebinqin/U-2-Net
     gdown https://drive.google.com/uc?id=1ao1ovG1Qtx4b7EoskHXmi2E9rp5CHLcZ --output u2net/u2net.pth
 fi
-if [ ! -f "yolov4/yolov4.weights" ]; then
+if [ ! -f "yolov4/coco.names" ]; then
     # Credits: https://github.com/kiyoshiiriemon/yolov4_darknet
+    wget https://raw.githubusercontent.com/kiyoshiiriemon/yolov4_darknet/master/data/coco.names -O yolov4/coco.names
+fi
+if [ ! -f "yolov4/yolov4.weights" ]; then
     gdown https://drive.google.com/uc?id=1cewMfusmPjYWbrnuJRuKhPMwRe_b9PaT --output yolov4/yolov4.weights
 fi
 

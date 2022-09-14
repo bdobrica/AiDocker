@@ -10,13 +10,14 @@ from pathlib import Path
 import cv2
 import numpy as np
 import torch
-import torchvision
 
-from daemon import Daemon
+from daemon import ImageDaemon
 from yolov4 import Darknet, non_max_suppression, scale_coords
 
+__version__ = "0.9.0"
 
-class AIDaemon(Daemon):
+
+class AIDaemon(ImageDaemon):
     def ai(self, source_file, prepared_file, **metadata):
         pid = os.fork()
         if pid != 0:
@@ -52,13 +53,18 @@ class AIDaemon(Daemon):
 
             # Resize image to a 32-pixel-multiple rectangle https://github.com/ultralytics/yolov3/issues/232
             shape = img_orig.shape[:2]  # current shape [height, width]
-            new_shape = (IMAGE_SIZE, IMAGE_SIZE)  # desired new shape [height, width]
+            new_shape = (
+                IMAGE_SIZE,
+                IMAGE_SIZE,
+            )  # desired new shape [height, width]
             # Scale ratio (new / old)
             ratio_ = min(new_shape[0] / shape[0], new_shape[1] / shape[1])
 
             # Resize the image with padded border
             ratio = ratio_, ratio_  # width, height ratios
-            new_unpad = int(round(shape[1] * ratio_)), int(round(shape[0] * ratio_))
+            new_unpad = int(round(shape[1] * ratio_)), int(
+                round(shape[0] * ratio_)
+            )
             dw, dh = (
                 new_shape[1] - new_unpad[0],
                 new_shape[0] - new_unpad[1],
@@ -67,13 +73,21 @@ class AIDaemon(Daemon):
             dw /= 2  # divide padding into 2 sides
             dh /= 2
             if shape[::-1] != new_unpad:  # resize
-                img = cv2.resize(img_orig, new_unpad, interpolation=cv2.INTER_LINEAR)
+                img = cv2.resize(
+                    img_orig, new_unpad, interpolation=cv2.INTER_LINEAR
+                )
             else:
                 img = img_orig.copy()
             top, bottom = int(round(dh - 0.1)), int(round(dh + 0.1))
             left, right = int(round(dw - 0.1)), int(round(dw + 0.1))
             img = cv2.copyMakeBorder(
-                img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=BORDER_COLOR
+                img,
+                top,
+                bottom,
+                left,
+                right,
+                cv2.BORDER_CONSTANT,
+                value=BORDER_COLOR,
             )  # add border
 
             # Convert the image to the expected format
@@ -125,8 +139,14 @@ class AIDaemon(Daemon):
                         color = [random.randint(0, 255) for _ in range(3)]
                         cv2.rectangle(
                             img_copy,
-                            (int(det_x - det_w / 2.0), int(det_y - det_h / 2.0)),
-                            (int(det_x + det_w / 2.0), int(det_y + det_h / 2.0)),
+                            (
+                                int(det_x - det_w / 2.0),
+                                int(det_y - det_h / 2.0),
+                            ),
+                            (
+                                int(det_x + det_w / 2.0),
+                                int(det_y + det_h / 2.0),
+                            ),
                             color,
                             thickness=2,
                         )
@@ -136,7 +156,10 @@ class AIDaemon(Daemon):
                         )[0]
                         cv2.rectangle(
                             img_copy,
-                            (int(det_x - det_w / 2.0), int(det_y - det_h / 2.0)),
+                            (
+                                int(det_x - det_w / 2.0),
+                                int(det_y - det_h / 2.0),
+                            ),
                             (
                                 int(det_x - det_w / 2.0 + text_size[0]),
                                 int(det_y - det_h / 2.0 - text_size[1] - 3),
@@ -147,7 +170,10 @@ class AIDaemon(Daemon):
                         cv2.putText(
                             img_copy,
                             names[int(class_id)],
-                            (int(det_x - det_w / 2.0), int(det_y - det_h / 2.0 - 2)),
+                            (
+                                int(det_x - det_w / 2.0),
+                                int(det_y - det_h / 2.0 - 2),
+                            ),
                             0,
                             fontScale=0.5,
                             color=(255, 255, 255),
@@ -167,64 +193,6 @@ class AIDaemon(Daemon):
 
         source_file.unlink()
         sys.exit()
-
-    def queue(self):
-        STAGED_PATH = os.environ.get("STAGED_PATH", "/tmp/ai/staged")
-        SOURCE_PATH = os.environ.get("SOURCE_PATH", "/tmp/ai/source")
-        PREPARED_PATH = os.environ.get("PREPARED_PATH", "/tmp/ai/prepared")
-        MAX_FORK = int(os.environ.get("MAX_FORK", 8))
-        CHUNK_SIZE = int(os.environ.get("CHUNK_SIZE", 4096))
-
-        staged_files = sorted(
-            [
-                f
-                for f in Path(STAGED_PATH).glob("*")
-                if f.is_file() and f.suffix != ".json"
-            ],
-            key=lambda f: f.stat().st_mtime,
-        )
-        source_files = [f for f in Path(SOURCE_PATH).glob("*") if f.is_file()]
-        source_files_count = len(source_files)
-
-        while source_files_count < MAX_FORK and staged_files:
-            source_files_count += 1
-            staged_file = staged_files.pop(0)
-
-            meta_file = staged_file.with_suffix(".json")
-            if meta_file.is_file():
-                with meta_file.open("r") as fp:
-                    try:
-                        image_metadata = json.load(fp)
-                    except:
-                        image_metadata = {}
-            image_metadata = {
-                **{
-                    "extension": staged_file.suffix,
-                    "background": "",
-                },
-                **image_metadata,
-            }
-
-            source_file = Path(SOURCE_PATH) / staged_file.name
-            prepared_file = Path(PREPARED_PATH) / (
-                staged_file.stem + image_metadata["extension"]
-            )
-
-            with staged_file.open("rb") as src_fp, source_file.open("wb") as dst_fp:
-                while True:
-                    chunk = src_fp.read(CHUNK_SIZE)
-                    if not chunk:
-                        break
-                    dst_fp.write(chunk)
-
-            staged_file.unlink()
-            self.ai(source_file, prepared_file, **image_metadata)
-
-    def run(self):
-        signal.signal(signal.SIGCHLD, signal.SIG_IGN)
-        while True:
-            self.queue()
-            time.sleep(1.0)
 
 
 if __name__ == "__main__":
