@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: rabbitmq-pod
+spec:
+  containers:
+  - name: rabbitmq-container
+    image: rabbitmq:latest
+    ports:
+    - containerPort: 5672
+      name: rabbitmq-port
+    - containerPort: 15672
+      name: rabbitmq-management-port

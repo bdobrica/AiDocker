@@ -1,0 +1,5 @@
+flask
+numpy
+pytorch>=1.7.1
+opencv-python
+pixellib
