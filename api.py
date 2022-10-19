@@ -12,7 +12,7 @@ from flask import Flask, Response, request, send_file
 app = Flask(__name__)
 
 
-__version__ = "0.8.3"
+__version__ = "0.8.4"
 
 
 def file_paths(image_token, image_extension=None):
@@ -79,11 +79,6 @@ def put_image():
             mimetype="application/json",
         )
 
-    image_background = request.form.get("background", "")
-    image_background = image_background.strip("#")
-    if len(image_background) == 6:
-        image_background = image_background.lower() + "ff"
-
     image_type = image_file.mimetype
     image_data = image_file.read()
 
@@ -100,12 +95,13 @@ def put_image():
         image_extension = json.load(fp).get(image_type, ".jpg")
 
     image_metadata = {
-        "token": image_token,
-        "background": image_background,
-        "type": image_type,
-        "extension": image_extension,
-        "upload_time": time.time(),
-        "processed": "false",
+        **request.form,
+        **{
+            "type": image_type,
+            "extension": image_extension,
+            "upload_time": time.time(),
+            "processed": "false",
+        },
     }
 
     paths = file_paths(image_token, image_extension)

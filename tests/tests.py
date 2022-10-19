@@ -99,6 +99,28 @@ TESTS = {
             "0a5829c8339b0a3acd919404255c83dea8b77af3d254a4a7b39a7167671b9e7b",
         ),
     ],
+    "nudenet": [
+        (
+            "horses.jpg",
+            None,
+            "",
+        ),
+        (
+            "hentai.jpg",
+            None,
+            "",
+        ),
+        (
+            "horses.jpg",
+            {"censor": "yes"},
+            "",
+        ),
+        {
+            "hentai.jpg",
+            {"censor": "yes"},
+            "",
+        },
+    ],
 }
 
 
