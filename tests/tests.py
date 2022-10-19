@@ -103,22 +103,22 @@ TESTS = {
         (
             "horses.jpg",
             None,
-            "",
+            "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
         ),
         (
             "hentai.jpg",
             None,
-            "",
+            "f06c5dabb5d2476015e88fefafdcd986777a492d248acb3b67de2379ac90dc73",
         ),
         (
             "horses.jpg",
             {"censor": "yes"},
-            "",
+            "95a93c27639cefce637fed47583b4b6876c54c5e1b388bfb7a1af0e50a9271f5",
         ),
         (
             "hentai.jpg",
             {"censor": "yes"},
-            "",
+            "d5cbfd6e5997a7f6feaa7bdc82f753d5ef2dc4ce6d6fda08ee6d415f9df8b457",
         ),
     ],
 }
