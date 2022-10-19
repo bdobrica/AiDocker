@@ -17,8 +17,6 @@ fi
 if [ ! -f "yolov4/yolov4.weights" ]; then
     gdown https://drive.google.com/uc?id=1cewMfusmPjYWbrnuJRuKhPMwRe_b9PaT --output yolov4/yolov4.weights
 fi
-
-# due to the nature of this network, the files require authentication in order to be downloaded
 NUDENET_FILES=(
     "nudenet/detector_v2_default_checkpoint.onnx"\
     "nudenet/detector_v2_default_classes"\
@@ -27,7 +25,7 @@ NUDENET_FILES=(
 )
 for nudenet_file in "${NUDENET_FILES[@]}"; do
     if [ ! -f "${nudenet_file}" ]; then
-        wget "https://github.com/notAI-tech/NudeNet/releases/download/v0/$(basename ${nudenet_file})" -O ${nudenet_file}
+        wget "https://ublo.ro/wp-content/mirror/${nudenet_file}" -O ${nudenet_file}
     fi
 done
 
