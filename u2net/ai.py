@@ -78,7 +78,7 @@ class AIDaemon(Daemon):
 
             im_h, im_w = out_im.shape[:2]
 
-            background = metadata.get("background", "")
+            background = metadata.get("background", "").strip(" #")
             color_re = re.compile(r"(^[A-Za-z0-9]{6}$)|(^[A-Za-z0-9]{8}$)")
             background_alpha = 0
             background_im = None

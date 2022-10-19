@@ -83,7 +83,7 @@ class AIDaemon(Daemon):
             out_im[:, :, 3] = matte
             out_im = out_im.astype(float)
 
-            background = metadata.get("background", "")
+            background = metadata.get("background", "").strip(" #")
             color_re = re.compile(r"(^[A-Za-z0-9]{6}$)|(^[A-Za-z0-9]{8}$)")
             background_alpha = 0
             background_im = None
