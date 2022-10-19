@@ -84,6 +84,8 @@ class AIDaemon(Daemon):
             out_im = out_im.astype(float)
 
             background = metadata.get("background", "").strip(" #")
+            if len(background) == 6:
+                background = background.lower() + "ff"
             color_re = re.compile(r"(^[A-Za-z0-9]{6}$)|(^[A-Za-z0-9]{8}$)")
             background_alpha = 0
             background_im = None
