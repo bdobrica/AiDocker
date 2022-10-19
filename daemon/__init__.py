@@ -5,7 +5,7 @@ import time
 from pathlib import Path
 from signal import SIGTERM
 
-__version__ = "0.8.3"
+__version__ = "0.8.4"
 
 
 class Daemon:

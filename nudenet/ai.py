@@ -13,6 +13,8 @@ import numpy as np
 from daemon import Daemon
 from nudenet import NudeDetector
 
+__version__ = "0.8.4"
+
 
 class AIDaemon(Daemon):
     def ai(self, source_file, prepared_file, **metadata):
