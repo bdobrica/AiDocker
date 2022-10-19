@@ -115,11 +115,11 @@ TESTS = {
             {"censor": "yes"},
             "",
         ),
-        {
+        (
             "hentai.jpg",
             {"censor": "yes"},
             "",
-        },
+        ),
     ],
 }
 
