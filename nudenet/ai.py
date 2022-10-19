@@ -40,7 +40,7 @@ class AIDaemon(Daemon):
 
             API_NUDENET_KEEP_LABELS = os.environ.get(
                 "API_NUDENET_KEEP_LABELS", ""
-            ).split(",")
+            )
             if API_NUDENET_KEEP_LABELS:
                 results = filter(
                     lambda item: item["label"]
@@ -49,7 +49,7 @@ class AIDaemon(Daemon):
                 )
             API_NUDENET_DROP_LABELS = os.environ.get(
                 "API_NUDENET_DROP_LABELS", ""
-            ).split(",")
+            )
             if API_NUDENET_DROP_LABELS:
                 results = filter(
                     lambda item: item["label"]
