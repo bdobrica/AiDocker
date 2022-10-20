@@ -121,6 +121,13 @@ TESTS = {
             "d5cbfd6e5997a7f6feaa7bdc82f753d5ef2dc4ce6d6fda08ee6d415f9df8b457",
         ),
     ],
+    "agenet": [
+        (
+            "birthday.jpg",
+            None,
+            "",
+        )
+    ],
 }
 
 
@@ -245,6 +252,7 @@ if __name__ == "__main__":
                 continue
 
             json_response = get_json(f"{url}/get/json", image_token)
+            info(f"JSON response: {json_response}")
             if json_response.get("status") != "success":
                 error(
                     "Could not correctly retrieve the info"
@@ -261,7 +269,9 @@ if __name__ == "__main__":
                 image_content = get_image(f"{url}/{image_url}")
                 h = hashlib.sha256()
                 h.update(image_content)
-                if h.hexdigest() != output:
+                h = h.hexdigest()
+                info(f"Image hash: {h}")
+                if h != output:
                     error(
                         f"Failed testing model {model} with {str(image_file)}"
                         f" using parameters {str(parameters)}."
@@ -277,7 +287,9 @@ if __name__ == "__main__":
                     response_content = json_response["results"]
                     h = hashlib.sha256()
                     h.update(str(response_content).encode("utf-8"))
-                    if h.hexdigest() != output:
+                    h = h.hexdigest()
+                    info(f"JSON hash: {h}")
+                    if h != output:
                         error(
                             f"Failed testing model {model} with"
                             f" {str(image_file)} using parameters"

@@ -28,8 +28,12 @@ for nudenet_file in "${NUDENET_FILES[@]}"; do
         wget "https://ublo.ro/wp-content/mirror/${nudenet_file}" -O ${nudenet_file}
     fi
 done
+if [ ! -f "agenet/EfficientNetB3_224_weights.11-3.44.hdf5" ]; then
+    wget "https://ublo.ro/wp-content/mirror/agenet/EfficientNetB3_224_weights.11-3.44.hdf5" -O agenet/EfficientNetB3_224_weights.11-3.44.hdf5
+fi
 
 docker build -f modnet/Dockerfile -t modnet .
 docker build -f u2net/Dockerfile -t u2net .
 docker build -f yolov4/Dockerfile -t yolov4 .
 docker build -f nudenet/Dockerfile -t nudenet .
+docker build -f agenet/Dockerfile -t agenet .
