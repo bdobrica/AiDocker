@@ -1,4 +1,14 @@
+### USE A BUILDER STAGE TO BUILD DLIB ###
+FROM python:3.7-slim-bullseye as builder
+
+RUN apt-get update && apt-get install -y build-essential cmake
+RUN python3 -m pip install --upgrade pip
+RUN python3 -m pip install dlib
+
 FROM python:3.7-slim-bullseye
+
+### COPY DLIB ###
+COPY --from=builder /usr/local/lib/python3.7/site-packages/*dlib* /usr/local/lib/python3.7/site-packages/
 
 ### CREATING FOLDERS ###
 RUN mkdir -p /opt/app/run
