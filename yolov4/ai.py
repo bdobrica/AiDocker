@@ -14,7 +14,7 @@ import torch
 from daemon import Daemon
 from yolov4 import Darknet, non_max_suppression, scale_coords
 
-__version__ = "0.8.4"
+__version__ = "0.8.5"
 
 
 class AIDaemon(Daemon):
