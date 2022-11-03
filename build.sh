@@ -31,9 +31,20 @@ done
 if [ ! -f "agenet/EfficientNetB3_224_weights.11-3.44.hdf5" ]; then
     wget "https://ublo.ro/wp-content/mirror/agenet/EfficientNetB3_224_weights.11-3.44.hdf5" -O agenet/EfficientNetB3_224_weights.11-3.44.hdf5
 fi
+if [ ! -f "gfm34b2tt/gfm_r34_2b_tt.pth" ]; then
+    wget "https://ublo.ro/wp-content/mirror/gfm/gfm_r34_2b_tt.pth" -O gfm34b2tt/gfm_r34_2b_tt.pth
+fi
+if [ ! -f "gfm34b2tt/resnet34-b627a593.pth" ]; then
+    wget "https://ublo.ro/wp-content/mirror/pytorch/resnet34-b627a593.pth" -O gfm34b2tt/resnet34-b627a593.pth
+fi
+if [ ! -f "isnet/isnet-general-use.pth" ]; then
+    wget "https://ublo.ro/wp-content/mirror/isnet/isnet-general-use.pth" -O isnet/isnet-general-use.pth
+fi
 
 docker build -f modnet/Dockerfile -t modnet .
 docker build -f u2net/Dockerfile -t u2net .
 docker build -f yolov4/Dockerfile -t yolov4 .
 docker build -f nudenet/Dockerfile -t nudenet .
 docker build -f agenet/Dockerfile -t agenet .
+docker build -f gfm34b2tt/Dockerfile -t gfm34b2tt .
+docker build -f isnet/Dockerfile -t isnet .
