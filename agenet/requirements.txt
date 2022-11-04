@@ -1,5 +1,5 @@
 flask
 opencv-python
 numpy
-tensorflow
+tensorflow-cpu
 keras
