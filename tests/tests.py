@@ -125,7 +125,7 @@ TESTS = {
         (
             "birthday.jpg",
             None,
-            "",
+            "04076a4b1659b0944a7c2ffb09140e7ec344f864cdd88fb617d05f007ef50d33",
         )
     ],
 }
