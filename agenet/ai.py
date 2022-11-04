@@ -28,6 +28,9 @@ class AIDaemon(Daemon):
             MODEL_PATH = os.environ.get(
                 "MODEL_PATH", "/opt/app/EfficientNetB3_224_weights.11-3.44.hdf5"
             )
+            EFFICIENTNETB3_PATH = os.environ.get(
+                "EFFICIENTNETB3_PATH", "/opt/app/efficientnetb3_notop.h5"
+            )
             IMAGE_SIZE = 224
             MARGIN = 0.4
 
@@ -36,6 +39,7 @@ class AIDaemon(Daemon):
                 include_top=False,
                 input_shape=(IMAGE_SIZE, IMAGE_SIZE, 3),
                 pooling="avg",
+                weights=EFFICIENTNETB3_PATH,
             )
             features = base_model.output
             pred_gender = Dense(
@@ -89,9 +93,9 @@ class AIDaemon(Daemon):
                     )
 
                 prediction = model.predict(faces)
-                predicted_genders = prediction[0]
+                predicted_genders = prediction[0].astype(float)
                 ages = np.arange(0, 101).reshape(101, 1)
-                predicted_ages = prediction[1].dot(ages).flatten()
+                predicted_ages = prediction[1].astype(float).dot(ages).flatten()
 
                 for i, result in enumerate(results):
                     result["female"] = predicted_genders[i, 0]
