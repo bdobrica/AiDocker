@@ -4,11 +4,16 @@ FROM python:3.7-slim-bullseye as builder
 RUN apt-get update && apt-get install -y build-essential cmake
 RUN python3 -m pip install --upgrade pip
 RUN python3 -m pip install dlib
+WORKDIR /usr/local/lib/python3.7/site-packages/
+RUN find . -name "*dlib*" -exec tar -rf dlib.tar {} \;
 
 FROM python:3.7-slim-bullseye
 
 ### COPY DLIB ###
-COPY --from=builder /usr/local/lib/python3.7/site-packages/*dlib* /usr/local/lib/python3.7/site-packages/
+WORKDIR /usr/local/lib/python3.7/site-packages/
+COPY --from=builder /usr/local/lib/python3.7/site-packages/dlib.tar .
+RUN tar -xf dlib.tar
+WORKDIR /
 
 ### CREATING FOLDERS ###
 RUN mkdir -p /opt/app/run
