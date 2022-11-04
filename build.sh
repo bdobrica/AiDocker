@@ -32,7 +32,7 @@ if [ ! -f "agenet/EfficientNetB3_224_weights.11-3.44.hdf5" ]; then
     wget "https://ublo.ro/wp-content/mirror/agenet/EfficientNetB3_224_weights.11-3.44.hdf5" -O agenet/EfficientNetB3_224_weights.11-3.44.hdf5
 fi
 if [ ! -f "agenet/efficientnetb3_notop.h5" ]; then
-    wget "https://ublo.ro/wp-content/mirror/agenet/efficientnetb3_notop.h5" -O agenet/efficientnetb3_notop.h5
+    wget "https://ublo.ro/wp-content/mirror/keras/efficientnetb3_notop.h5" -O agenet/efficientnetb3_notop.h5
 fi
 if [ ! -f "gfm34b2tt/gfm_r34_2b_tt.pth" ]; then
     wget "https://ublo.ro/wp-content/mirror/gfm/gfm_r34_2b_tt.pth" -O gfm34b2tt/gfm_r34_2b_tt.pth
