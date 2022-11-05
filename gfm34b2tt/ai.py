@@ -32,9 +32,7 @@ class AIDaemon(Daemon):
                 "MODEL_PATH",
                 "/opt/app/gfm_r34_2b_tt.pth",
             )
-            ckpt = torch.load(
-                MODEL_PATH.as_posix(), map_location=torch.device("cpu")
-            )
+            ckpt = torch.load(MODEL_PATH, map_location=torch.device("cpu"))
             model.load_state_dict(ckpt, strict=True)
             _ = model.eval()
 
@@ -54,7 +52,7 @@ class AIDaemon(Daemon):
             # Inference
             _, _, mask = inference(model, im)
 
-            out_im[:, :, 3] = mask
+            out_im[:, :, 3] = mask.T
             out_im = out_im.astype(float)
 
             background = metadata.get("background", "").strip(" #")

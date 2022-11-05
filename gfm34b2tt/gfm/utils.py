@@ -1,6 +1,7 @@
-import numpy as np
 import cv2
+import numpy as np
 import torch
+from skimage.transform import resize
 
 MAX_SIZE_H = 1600
 MAX_SIZE_W = 1600
@@ -38,6 +39,7 @@ def get_masked_local_from_global_test(global_result, local_result):
         global_result * (1.0 - weighted_global) / 255
         + local_result * weighted_global
     )
+    fusion_result = (fusion_result * 255).astype(np.uint8)
     return fusion_result
 
 
@@ -52,16 +54,16 @@ def inference(model, img):
     resize_w = int(w * global_ratio)
     new_h = min(MAX_SIZE_H, resize_h - (resize_h % 32))
     new_w = min(MAX_SIZE_W, resize_w - (resize_w % 32))
-    scale_img = cv2.resize(img, (new_h, new_w)) * 255.0
+    scale_img = resize(img, (new_h, new_w)) * 255.0
     pred_glance_1, _, _ = inference_img_scale(model, scale_img)
-    pred_glance_1 = cv2.resize(pred_glance_1, (h, w)) * 255.0
+    pred_glance_1 = resize(pred_glance_1, (h, w)) * 255.0
     resize_h = int(h * local_ratio)
     resize_w = int(w * local_ratio)
     new_h = min(MAX_SIZE_H, resize_h - (resize_h % 32))
     new_w = min(MAX_SIZE_W, resize_w - (resize_w % 32))
-    scale_img = cv2.resize(img, (new_h, new_w)) * 255.0
+    scale_img = resize(img, (new_h, new_w)) * 255.0
     _, pred_focus_2, _ = inference_img_scale(model, scale_img)
-    pred_focus_2 = cv2.resize(pred_focus_2, (h, w))
+    pred_focus_2 = resize(pred_focus_2, (h, w))
     pred_fusion = get_masked_local_from_global_test(pred_glance_1, pred_focus_2)
 
     return pred_glance_1, pred_focus_2, pred_fusion

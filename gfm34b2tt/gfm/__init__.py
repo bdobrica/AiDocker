@@ -158,7 +158,7 @@ class PSPModule(nn.Module):
     def forward(self, feats):
         h, w = feats.size(2), feats.size(3)
         priors = [
-            F.upsample(
+            F.interpolate(
                 input=stage(feats),
                 size=(h, w),
                 mode="bilinear",
@@ -200,7 +200,7 @@ class GFM(nn.Module):
         )
         self.resnet = models.resnet34(weights=None)
         chkp = torch.load(RESNET34_PATH)
-        self.resnet.load_state_dict(chkp["model_state_dict"])
+        self.resnet.load_state_dict(chkp)
 
         self.encoder0 = nn.Sequential(
             nn.Conv2d(3, 64, 3, padding=1),
@@ -276,7 +276,7 @@ class GFM(nn.Module):
 
         d0_g = self.decoder0_g(d1_g)
 
-        glance_sigmoid = F.sigmoid(d0_g)
+        glance_sigmoid = torch.sigmoid(d0_g)
 
         bb = self.bridge_block(e6)
         d6_f = self.decoder6_f(torch.cat((bb, e6), 1))
@@ -288,7 +288,7 @@ class GFM(nn.Module):
         d1_f = self.decoder1_f(torch.cat((d2_f, e1), 1))
 
         d0_f = self.decoder0_f(d1_f)
-        focus_sigmoid = F.sigmoid(d0_f)
+        focus_sigmoid = torch.sigmoid(d0_f)
 
         fusion_sigmoid = collaborative_matting(glance_sigmoid, focus_sigmoid)
         return glance_sigmoid, focus_sigmoid, fusion_sigmoid
