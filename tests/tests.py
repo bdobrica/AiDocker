@@ -160,6 +160,38 @@ TESTS = {
             "d08fce262f543892b09d11c6076dc555a81ccad213d0bb23f8437ea69bec66ec",
         ),
     ],
+    "isnet": [
+        (
+            "valeria-lungu.jpg",
+            None,
+            "9d83cad44cadefeab7beba646ffe34ef9a9f00b58fd725d6c8eb9406de5691f0",
+        ),
+        (
+            "valeria-lungu.jpg",
+            {"background": "#ffcc00"},
+            "a9aec95c0dbc5a93b67d3652a2d2dcaaea1231b626cfc7aa8e1e597d3a3a267b",
+        ),
+        (
+            "valeria-lungu.jpg",
+            {"background": "https://picsum.photos/id/1019/400"},
+            "0f99b5a4ff23bca088f4feee0ea1dd93d91fbd62fb29a673ef8c13a3c42c4c6b",
+        ),
+        (
+            "valeria-lungu.png",
+            None,
+            "76a58a0942f1052db6c18b3690fac98c996b07544c83853d32612a4c426194d8",
+        ),
+        (
+            "valeria-lungu.png",
+            {"background": "#ffcc00"},
+            "f11585d2cced035eb3d22d697d76f30483398eefbd5b73bbcc1f2457da93c06e",
+        ),
+        (
+            "valeria-lungu.png",
+            {"background": "https://picsum.photos/id/1019/400"},
+            "877bea22f1ca7a826719857657a403be5817016bec51f4b8cbf721486a4539ee",
+        ),
+    ],
 }
 
 
