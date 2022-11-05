@@ -32,9 +32,7 @@ class AIDaemon(Daemon):
                 "MODEL_PATH",
                 "/opt/app/isnet-general-use.pth",
             )
-            ckpt = torch.load(
-                MODEL_PATH.as_posix(), map_location=torch.device("cpu")
-            )
+            ckpt = torch.load(MODEL_PATH, map_location=torch.device("cpu"))
             model.load_state_dict(ckpt, strict=True)
             _ = model.eval()
 
