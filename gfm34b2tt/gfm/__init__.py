@@ -37,7 +37,7 @@ def collaborative_matting(glance_sigmoid, focus_sigmoid):
     trimap_mask = trimap_mask.cpu()
     fg_mask = fg_mask.cpu()
     fusion_sigmoid = focus_sigmoid * trimap_mask + fg_mask
-    fusion_sigmoid = fusion_sigmoid.cuda()
+    fusion_sigmoid = fusion_sigmoid.cpu()
     return fusion_sigmoid
 
 

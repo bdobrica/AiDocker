@@ -52,7 +52,7 @@ class AIDaemon(Daemon):
             # Inference
             _, _, mask = inference(model, im)
 
-            out_im[:, :, 3] = mask.T
+            out_im[:, :, 3] = mask
             out_im = out_im.astype(float)
 
             background = metadata.get("background", "").strip(" #")
