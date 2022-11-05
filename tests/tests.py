@@ -128,6 +128,38 @@ TESTS = {
             "04076a4b1659b0944a7c2ffb09140e7ec344f864cdd88fb617d05f007ef50d33",
         )
     ],
+    "gfm34b2tt": [
+        (
+            "lamma.jpg",
+            None,
+            "0d899a14eeb6295652ff3cae981da1027d8203e164b490e57506cbff137d5853",
+        ),
+        (
+            "lamma.jpg",
+            {"background": "#ffcc00"},
+            "af2e94873023a4f46a2073dcab9a32545ad3b6b711a867bf7d96857cd38b565e",
+        ),
+        (
+            "lamma.jpg",
+            {"background": "https://picsum.photos/id/1019/400"},
+            "dbc9bd58469443df60ffabebbec2a8e415affbfd97a7ed8b0a186ea36ebec7bb",
+        ),
+        (
+            "whisk.png",
+            None,
+            "b703544d3f6810a5e8298d0651ffd6cec8b358f6857fef8eb72a9fbc4e11b70b",
+        ),
+        (
+            "whisk.png",
+            {"background": "#ffcc00"},
+            "83d6ed0585a09fe8aaf50fdde78daba2fa3d3acaa8a5cf5104ce0842f06ae5a8",
+        ),
+        (
+            "whisk.png",
+            {"background": "https://picsum.photos/id/1019/400"},
+            "d08fce262f543892b09d11c6076dc555a81ccad213d0bb23f8437ea69bec66ec",
+        ),
+    ],
 }
 
 
