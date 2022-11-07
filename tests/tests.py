@@ -281,7 +281,7 @@ def get_json(url: str, image_token: str) -> dict:
             response_obj = {}
         wait = (
             wait
-            and (time.time() - start_time < 10.0)
+            and (time.time() - start_time < 30.0)
             and (response_obj.get("wait") == "true")
         )
 
