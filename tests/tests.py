@@ -192,6 +192,28 @@ TESTS = {
             "877bea22f1ca7a826719857657a403be5817016bec51f4b8cbf721486a4539ee",
         ),
     ],
+    "srfbnet": [
+        (
+            "flowers.jpg",
+            None,
+            "",
+        ),
+        (
+            "flowers.jpg",
+            {"scale": 2},
+            "",
+        ),
+        (
+            "flowers.jpg",
+            {"scale": 3},
+            "",
+        ),
+        (
+            "flowers.jpg",
+            {"scale": 4},
+            "",
+        ),
+    ],
 }
 
 
