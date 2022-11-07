@@ -201,17 +201,17 @@ TESTS = {
         (
             "flowers.jpg",
             {"scale": 2},
-            "",
+            "0675e6b8eebdc90c8799a0ae544a0af5d84a6b85f9251ce1d7403a680172210b",
         ),
         (
             "flowers.jpg",
             {"scale": 3},
-            "",
+            "dcace4dd63c802c4a6a54980de08ccb8696af5c52f788bf70338845395570aae",
         ),
         (
             "flowers.jpg",
             {"scale": 4},
-            "",
+            "71ec5b09ba3cd4b80854b452fe620d25bc9573932dfdddaf87961740d71902a7",
         ),
     ],
 }
