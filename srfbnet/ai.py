@@ -50,13 +50,14 @@ class AIDaemon(Daemon):
 
             # Inference
             im = np.ascontiguousarray(im.transpose((2, 0, 1)))
-            im_t = torch.from_numpy(im).float()
+            im_t = torch.from_numpy(im[np.newaxis, :, :, :]).float()
             out_im_t = model.forward(im_t)
             if isinstance(out_im_t, list):
                 out_im_t = out_im_t[-1]
             out_im_t = out_im_t.data[0].float().cpu()
             out_im_t = out_im_t.clamp(0, 255).round()
             out_im = out_im_t.numpy().transpose((1, 2, 0))
+            out_im = out_im[:, :, ::-1]
 
             cv2.imwrite(str(prepared_file), out_im.astype(np.uint8))
         except Exception as e:
