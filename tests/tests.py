@@ -196,7 +196,7 @@ TESTS = {
         (
             "flowers.jpg",
             None,
-            "",
+            "0675e6b8eebdc90c8799a0ae544a0af5d84a6b85f9251ce1d7403a680172210b",
         ),
         (
             "flowers.jpg",
@@ -267,7 +267,7 @@ def get_json(url: str, image_token: str) -> dict:
     wait = True
 
     while wait:
-        time.sleep(0.5)
+        time.sleep(1.0)
         try:
             response = requests.request(
                 "POST",
@@ -281,7 +281,7 @@ def get_json(url: str, image_token: str) -> dict:
             response_obj = {}
         wait = (
             wait
-            and (time.time() - start_time < 30.0)
+            and (time.time() - start_time < 60.0)
             and (response_obj.get("wait") == "true")
         )
 
