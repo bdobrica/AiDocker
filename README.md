@@ -53,7 +53,7 @@ curl -F 'image=@/path/to/image.jpg' http://localhost:5000/put/image
 
 This will place the `image.jpg` in the processing queue. The supported image types are `image/jpeg` and `image/png`. More can be easily added. The output of the command will produce the following (the token is an example token, expect different tokens for different images):
 
-```
+```json
 {"token": "1a4d524ad2c21a7f50dc64ce4ee3a345e28972961c16513465d5161a8c0a3d1b"}
 ```
 
