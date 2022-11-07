@@ -36,6 +36,7 @@ class AIDaemon(Daemon):
                 MODEL_PATH.format(scale=scale), map_location=torch.device("cpu")
             )
             model.load_state_dict(ckpt, strict=True)
+            _ = model.eval()
 
             # Prepare image
             im = cv2.imread(str(source_file))
