@@ -23,7 +23,7 @@ Given an image, detect and extract human faces from the images and return the ag
     - accepted method: POST
     - encoding: application/json
     - parameters:
-        - token: token returned by /put/image
+        - `token`: token returned by `/put/image`
     - responses:
         - `{"error": "unknown token", "version": <version>}`: if there were no images uploaded with the given token
         - `{"error": "missing file metadata", "version": <version>}`: if file metadata could not be extracted
