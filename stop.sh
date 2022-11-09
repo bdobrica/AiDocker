@@ -7,3 +7,4 @@ docker ps | grep agenet | awk '{print $1}' | xargs docker stop > /dev/null 2>&1
 docker ps | grep gfm34b2tt | awk '{print $1}' | xargs docker stop > /dev/null 2>&1
 docker ps | grep isnet | awk '{print $1}' | xargs docker stop > /dev/null 2>&1
 docker ps | grep srfbnet | awk '{print $1}' | xargs docker stop > /dev/null 2>&1
+docker ps | grep vitgpt2 | awk '{print $1}' | xargs docker stop > /dev/null 2>&1

@@ -214,6 +214,23 @@ TESTS = {
             "71ec5b09ba3cd4b80854b452fe620d25bc9573932dfdddaf87961740d71902a7",
         ),
     ],
+    "vitgpt2": [
+        (
+            "friends.jpg",
+            None,
+            "",
+        ),
+        (
+            "friends.jpg",
+            {"max_length": 32},
+            "",
+        ),
+        (
+            "friends.jpg",
+            {"num_beams": 2},
+            "",
+        ),
+    ],
 }
 
 

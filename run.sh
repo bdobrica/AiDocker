@@ -7,3 +7,4 @@ docker run --rm --env-file ./docker.env -d -p 127.0.0.1:5004:5000/tcp agenet
 docker run --rm --env-file ./docker.env -d -p 127.0.0.1:5005:5000/tcp gfm34b2tt
 docker run --rm --env-file ./docker.env -d -p 127.0.0.1:5006:5000/tcp isnet
 docker run --rm --env-file ./docker.env -d -p 127.0.0.1:5007:5000/tcp srfbnet
+docker run --rm --env-file ./docker.env -d -p 127.0.0.1:5008:5000/tcp vitgpt2

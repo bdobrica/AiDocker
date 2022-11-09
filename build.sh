@@ -43,16 +43,19 @@ fi
 if [ ! -f "isnet/isnet-general-use.pth" ]; then
     wget "https://ublo.ro/wp-content/mirror/isnet/isnet-general-use.pth" -O isnet/isnet-general-use.pth
 fi
-SRFBNET_FILE=(
+SRFBNET_FILES=(
     "srfbnet/gmfn_x2.pth"\
     "srfbnet/gmfn_x3.pth"\
     "srfbnet/gmfn_x4.pth"\
 )
-for srfbnet_file in "${SRFBNET_FILE[@]}"; do
+for srfbnet_file in "${SRFBNET_FILES[@]}"; do
     if [ ! -f "${srfbnet_file}" ]; then
         wget "https://ublo.ro/wp-content/mirror/${srfbnet_file}" -O ${srfbnet_file}
     fi
 done
+if [ -f "vitgpt2/pytorch_model.bin" ]; then
+    wget "https://ublo.ro/wp-content/mirror/vitgpt2/pytorch_model.bin" -O vitgpt2/pytorch_model.bin
+fi
 
 docker build -f modnet/Dockerfile -t modnet .
 docker build -f u2net/Dockerfile -t u2net .
@@ -62,3 +65,4 @@ docker build -f agenet/Dockerfile -t agenet .
 docker build -f gfm34b2tt/Dockerfile -t gfm34b2tt .
 docker build -f isnet/Dockerfile -t isnet .
 docker build -f srfbnet/Dockerfile -t srfbnet .
+docker build -f vitgpt2/Dockerfile -t vitgpt2 .
