@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import json
 import os
+import random
 import signal
 import sys
 import time
@@ -9,7 +10,6 @@ from pathlib import Path
 import cv2
 import numpy as np
 import torch
-from PIL import Image
 from transformers import (
     AutoTokenizer,
     VisionEncoderDecoderConfig,
@@ -50,6 +50,11 @@ class AIDaemon(Daemon):
             return
 
         try:
+            # Try reproducing the results
+            torch.manual_seed(42)
+            np.random.seed(42)
+            random.seed(42)
+
             # Initialize & Load Model
             model = VisionEncoderDecoderModel(config=self.model_config)
             model.to(self.device)
