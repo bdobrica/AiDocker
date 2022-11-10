@@ -218,17 +218,17 @@ TESTS = {
         (
             "friends.jpg",
             None,
-            "4a0473b1750d076bda819d192a9f23aa1c455a6f4c3f02d16e6449ffa26bf39e",
+            "ec7c16e4da3d160e3a41c89675353f62b323085b83b853c87919b9790e2e0071",
         ),
         (
             "friends.jpg",
             {"max_length": 32},
-            "4a0473b1750d076bda819d192a9f23aa1c455a6f4c3f02d16e6449ffa26bf39e",
+            "ec7c16e4da3d160e3a41c89675353f62b323085b83b853c87919b9790e2e0071",
         ),
         (
             "friends.jpg",
             {"num_beams": 2},
-            "1fc5c5322b07200d13b2ca0229bde99f54db280c2edec2f7b9a90e6b63ec1939",
+            "1fee4c617b3c937457d4e1084b8777bc116a948843ab69ffddc14e3ce3dbc04a",
         ),
     ],
 }
