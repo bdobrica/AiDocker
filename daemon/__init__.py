@@ -23,6 +23,11 @@ class Daemon:
         self.stdout = stdout
         self.stderr = stderr
 
+        self.load()
+
+    def load(self):
+        pass
+
     def daemonize(self):
         try:
             pid = os.fork()

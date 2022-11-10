@@ -12,6 +12,7 @@ import torch
 from PIL import Image
 from transformers import (
     AutoTokenizer,
+    VisionEncoderDecoderConfig,
     VisionEncoderDecoderModel,
     ViTFeatureExtractor,
 )
@@ -22,27 +23,37 @@ __version__ = "0.8.5"
 
 
 class AIDaemon(Daemon):
+    def load(self):
+        self.device = torch.device("cpu")
+
+        MODEL_PATH = os.environ.get("MODEL_PATH", "/opt/app/vitgpt2")
+
+        # The trick is to not initialize the model outside the forked process
+        # It saves some time, but not much. At least no disk I/O
+        self.model_config = VisionEncoderDecoderConfig.from_pretrained(
+            MODEL_PATH, local_files_only=True
+        )
+        self.model_sd = torch.load(
+            os.path.join(MODEL_PATH, "pytorch_model.bin"),
+            map_location=self.device,
+        )
+        self.feature_extractor = ViTFeatureExtractor.from_pretrained(
+            MODEL_PATH, local_files_only=True
+        )
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            MODEL_PATH, local_files_only=True
+        )
+
     def ai(self, source_file, prepared_file, **metadata):
         pid = os.fork()
         if pid != 0:
             return
 
         try:
-            MODEL_PATH = os.environ.get("MODEL_PATH", "/opt/app/vitgpt2")
-
             # Initialize & Load Model
-            model = VisionEncoderDecoderModel.from_pretrained(
-                MODEL_PATH, local_files_only=True
-            )
-            feature_extractor = ViTFeatureExtractor.from_pretrained(
-                MODEL_PATH, local_files_only=True
-            )
-            tokenizer = AutoTokenizer.from_pretrained(
-                MODEL_PATH, local_files_only=True
-            )
-
-            device = torch.device("cpu")
-            model = model.to(device)
+            model = VisionEncoderDecoderModel(config=self.model_config)
+            model.to(self.device)
+            model.load_state_dict(self.model_sd)
 
             # Parameters
             max_length = metadata.get("max_length", 16)
@@ -54,12 +65,14 @@ class AIDaemon(Daemon):
 
             # Inference
             gen_kwargs = {"max_length": max_length, "num_beams": num_beams}
-            pixel_values = feature_extractor(
+            pixel_values = self.feature_extractor(
                 images=im_orig[np.newaxis, :, :, :], return_tensors="pt"
             ).pixel_values
-            pixel_values = pixel_values.to(device)
+            pixel_values = pixel_values.to(self.device)
             output_ids = model.generate(pixel_values, **gen_kwargs)
-            preds = tokenizer.batch_decode(output_ids, skip_special_tokens=True)
+            preds = self.tokenizer.batch_decode(
+                output_ids, skip_special_tokens=True
+            )
             results = [{"caption": pred.strip()} for pred in preds]
 
             json_file = prepared_file.with_suffix(".json")
