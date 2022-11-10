@@ -53,7 +53,7 @@ for srfbnet_file in "${SRFBNET_FILES[@]}"; do
         wget "https://ublo.ro/wp-content/mirror/${srfbnet_file}" -O ${srfbnet_file}
     fi
 done
-if [ -f "vitgpt2/pytorch_model.bin" ]; then
+if [ ! -f "vitgpt2/pytorch_model.bin" ]; then
     wget "https://ublo.ro/wp-content/mirror/vitgpt2/pytorch_model.bin" -O vitgpt2/pytorch_model.bin
 fi
 
