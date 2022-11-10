@@ -19,7 +19,7 @@ from transformers import (
 
 from daemon import Daemon
 
-__version__ = "0.8.5"
+__version__ = "0.8.6"
 
 
 class AIDaemon(Daemon):
