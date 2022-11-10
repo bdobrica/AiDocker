@@ -59,32 +59,32 @@ TESTS = {
         (
             "lamma.jpg",
             None,
-            "f7633bb1f0026659c8302411b8db80352ec1b7a1a0af260bfb2bbdab776de628",
+            "39de4d2625d5f7b603f9f3a677b73fe0c81acc7eff07d9d55b27c3d4774f5757",
         ),
         (
             "lamma.jpg",
             {"background": "#ffcc00"},
-            "6bb2d60714c8f7d3a28b0d19940ece404cfdb0c727d8a60650c53bf90d2a6f7d",
+            "7350e2b9043d60902843589751248566f43a2a0b95593cd26feca6c517e11049",
         ),
         (
             "lamma.jpg",
             {"background": "https://picsum.photos/id/1019/400"},
-            "fb97996895f7d3492914d8b8921d6ee81ac5d211ad189d8a75fe71b240497d5b",
+            "9b44ccc4d977289b46633189bf269f234a4cd959437f896fe7addde5e8805f28",
         ),
         (
             "whisk.png",
             None,
-            "1887cc07de872a5f1b9db60e7aa23945fd71017a775d1d12a9889b736ebbe416",
+            "e3b6083063f9210c2ef7e7323ae28c6ad643ad912317688f51661e01d381a857",
         ),
         (
             "whisk.png",
             {"background": "#ffcc00"},
-            "b794e7f561e44d133a5b2c85147d76042884e6356296a3fb9fa6b88234207b55",
+            "f5ba4f0ac6437d3dafbb2d4c301780ae022cc127f1ae4233dc5e6bbf83be5a36",
         ),
         (
             "whisk.png",
             {"background": "https://picsum.photos/id/1019/400"},
-            "67f965384b0b6f107a73c41f0b62600cc5b27386c09ffde2eda7d4306507c2be",
+            "8e226c00a733d79c92d05e378daccab836eb68227d56605a6fe845e3b5098382",
         ),
     ],
     "yolov4": [
