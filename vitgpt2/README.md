@@ -24,6 +24,8 @@ Given an image, generate a text caption for the image.
     - encoding: application/json
     - parameters:
         - `token`: token returned by `/put/image`
+        - `max_length`: maximum length of the caption; default is 16 characters
+        - `num_beams`: number of beams to use for beam search - a parameter that tells the model how "ritch" the results should be; large values are computational intensive; default is 4
     - responses:
         - `{"error": "unknown token", "version": <version>}`: if there were no images uploaded with the given token
         - `{"error": "missing file metadata", "version": <version>}`: if file metadata could not be extracted

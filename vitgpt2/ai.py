@@ -56,8 +56,8 @@ class AIDaemon(Daemon):
             model.load_state_dict(self.model_sd)
 
             # Parameters
-            max_length = metadata.get("max_length", 16)
-            num_beams = metadata.get("num_beams", 4)
+            max_length = int(metadata.get("max_length", 16))
+            num_beams = int(metadata.get("num_beams", 4))
 
             # Load image
             im_orig = cv2.imread(str(source_file))
