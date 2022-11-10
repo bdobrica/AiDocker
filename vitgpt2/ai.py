@@ -66,7 +66,7 @@ class AIDaemon(Daemon):
             # Inference
             gen_kwargs = {"max_length": max_length, "num_beams": num_beams}
             pixel_values = self.feature_extractor(
-                images=im_orig[np.newaxis, :, :, :], return_tensors="pt"
+                images=[im_orig], return_tensors="pt"
             ).pixel_values
             pixel_values = pixel_values.to(self.device)
             output_ids = model.generate(pixel_values, **gen_kwargs)
