@@ -121,6 +121,53 @@ def put_image():
     )
 
 
+@app.route("/put/text", methods=["POST"])
+def put_text():
+    text_data = request.form.get("text", "")
+    if not text_data:
+        return Response(
+            json.dumps({"error": "missing text"}),
+            status=400,
+            mimetype="application/json",
+        )
+
+    text_hash = (
+        {"MD5": md5, "SHA256": sha256}.get(
+            os.environ.get("API_TEXT_HASHER", "SHA256").upper()
+        )
+        or sha256
+    )()
+    text_hash.update(text_data.encode("utf8"))
+    text_token = text_hash.hexdigest()
+    text_extension = ".txt"
+
+    text_metadata = {
+        **request.form,
+        **{
+            "type": "text/plain",
+            "extension": text_extension,
+            "upload_time": time.time(),
+            "processed": "false",
+        },
+    }
+
+    paths = file_paths(text_token, text_extension)
+
+    meta_file = paths["meta_file"]
+    with meta_file.open("w") as fp:
+        json.dump(text_metadata, fp)
+
+    staged_file = paths["staged_file"]
+    with staged_file.open("w") as fp:
+        fp.write(text_data)
+
+    return Response(
+        json.dumps({"token": text_token, "version": __version__}),
+        status=200,
+        mimetype="application/json",
+    )
+
+
 @app.route("/get/image/<image_file>", methods=["GET"])
 def get_image(image_file):
     image_file_path = Path(image_file)

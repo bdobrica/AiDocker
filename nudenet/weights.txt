@@ -1,0 +1,4 @@
+nudenet/detector_v2_default_checkpoint.onnx
+nudenet/detector_v2_default_classes
+nudenet/detector_v2_base_checkpoint.onnx
+nudenet/detector_v2_base_classes

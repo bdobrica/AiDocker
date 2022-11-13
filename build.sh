@@ -56,6 +56,16 @@ done
 if [ ! -f "vitgpt2/pytorch_model.bin" ]; then
     wget "https://ublo.ro/wp-content/mirror/vitgpt2/pytorch_model.bin" -O vitgpt2/pytorch_model.bin
 fi
+TXT2IMG_FILES=(
+    "txt2img/stable-diffusion/text_encoder/pytorch_model.bin"\
+    "txt2img/stable-diffusion/unet/diffusion_pytorch_model.bin"\
+    "txt2img/stable-diffusion/vae/diffusion_pytorch_model.bin"\
+)
+for txt2img_file in "${TXT2IMG_FILES[@]}"; do
+    if [ ! -f "${txt2img_file}" ]; then
+        wget "https://ublo.ro/wp-content/mirror/${txt2img_file}" -O ${txt2img_file}
+    fi
+done
 
 docker build -f modnet/Dockerfile -t modnet .
 docker build -f u2net/Dockerfile -t u2net .
@@ -66,3 +76,4 @@ docker build -f gfm34b2tt/Dockerfile -t gfm34b2tt .
 docker build -f isnet/Dockerfile -t isnet .
 docker build -f srfbnet/Dockerfile -t srfbnet .
 docker build -f vitgpt2/Dockerfile -t vitgpt2 .
+docker build -f txt2img/Dockerfile -t txt2img .
