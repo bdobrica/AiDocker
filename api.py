@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import base64
 import json
 import os
 import time
@@ -7,12 +6,37 @@ from hashlib import md5, sha256
 from io import BytesIO
 from pathlib import Path
 
+from cassandra.cluster import Cluster
 from flask import Flask, Response, request, send_file
+from minio import Minio
+from minio.error import S3Error
+from pika import BlockingConnection, ConnectionParameters
+
+__version__ = "0.8.6"
 
 app = Flask(__name__)
 
+cs_host = os.environ.get("CASSANDRA_HOST", "localhost")
+cs_port = int(os.environ.get("CASSANDRA_PORT", 9042))
+cs_database = os.environ.get("CASSANDRA_DATABASE", "ai")
+cs_cluster = Cluster([cs_host], port=cs_port)
+cs_session = cs_cluster.connect(cs_database, wait_for_all_pools=True)
 
-__version__ = "0.8.6"
+pk_host = os.environ.get("RABBITMQ_HOST", "localhost")
+pk_port = int(os.environ.get("RABBITMQ_PORT", 5672))
+pk_conn = BlockingConnection(ConnectionParameters(host=pk_host, port=pk_port))
+pk_channel = pk_conn.channel()
+
+mo_host = os.environ.get("MINIO_HOST", "localhost")
+mo_port = int(os.environ.get("MINIO_PORT", 9000))
+mo_access_key = os.environ.get("MINIO_ACCESS_KEY", "minio")
+mo_secret_key = os.environ.get("MINIO_SECRET_KEY", "minio123")
+mo_bucket = os.environ.get("MINIO_BUCKET", "ai")
+mo_client = Minio(
+    "{HOST}:{PORT}".format(HOST=mo_host, PORT=mo_port),
+    access_key=mo_access_key,
+    secret_key=mo_secret_key,
+)
 
 
 def file_paths(image_token, image_extension=None):
@@ -67,6 +91,87 @@ def get_root():
         status=200,
         mimetype="application/json",
     )
+
+
+@app.route("/<model_name>/image", methods=["PUT"])
+def put_image(model_name):
+    image_file = request.files.get("image")
+    if not image_file:
+        return Response(
+            json.dumps({"error": "missing image"}),
+            status=400,
+            mimetype="application/json",
+        )
+
+    image_type = image_file.mimetype
+    image_data = image_file.read()
+
+    image_hash = (
+        {"MD5": md5, "SHA256": sha256}.get(
+            os.environ.get("API_IMAGE_HASHER", "SHA256").upper()
+        )
+        or sha256
+    )()
+    image_hash.update(image_data)
+    image_token = image_hash.hexdigest()
+
+    with open("/opt/app/mimetypes.json", "r") as fp:
+        image_extension = json.load(fp).get(image_type, ".jpg")
+
+    image_prefix = ""
+
+    image_metadata = {
+        **request.form,
+        **{
+            "token": image_token,
+            "type": image_type,
+            "url": "s3://{BUCKET}/{PREFIX}".format(
+                BUCKET=mo_bucket, PREFIX=image_prefix
+            ),
+            "extension": image_extension,
+            "upload_time": time.time(),
+            "processed": "false",
+        },
+    }
+
+    found = mo_client.bucket_exists(mo_bucket)
+    if not found:
+        mo_client.make_bucket(mo_bucket)
+    mo_client.fput_object(mo_bucket, image_prefix, BytesIO(image_data))
+
+    stmt = cs.session.prepare(
+        "INSERT INTO images({COLUMNS}) VALUES ({VALUES})".format(
+            COLUMNS=", ".join(image_metadata.keys()),
+            VALUES=", ".join(["?"] * len(image_metadata)),
+        ),
+        image_metadata.values(),
+    )
+    cs_session.execute(stmt)
+
+    pk_channel.basic_publish(
+        exchange="", routing_key=model_name, body=json.dumps(image_metadata)
+    )
+
+    return Response(
+        json.dumps({"token": image_token, "version": __version__}),
+        status=200,
+        mimetype="application/json",
+    )
+
+
+@app.route("/<model_name>/text", methods=["PUT"])
+def put_text(model_name):
+    pass
+
+
+@app.route("/<model_name>/image", methods=["GET"])
+def get_image(model_name):
+    pass
+
+
+@app.route("/<model_name>/json", methods=["GET"])
+def get_json(model_name):
+    pass
 
 
 @app.route("/put/image", methods=["POST"])

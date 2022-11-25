@@ -1,0 +1,6 @@
+cassandra-driver
+minio
+pika
+fastapi
+uvicorn
+python-multipart
