@@ -3,7 +3,7 @@ import os
 
 from datamodels import AvailableModels, ImageRequest, RootResponse, TextRequest
 from fastapi import Depends, FastAPI
-from initializers import cassandra_initialize, pika_initialize
+from initializers import cassandra_initialize, minio_initialize, pika_initialize
 
 __version__ = "0.8.6"
 
@@ -16,6 +16,9 @@ pk_channel = pika_initialize(pk_queue)
 # CASSANDRA initialization
 cs_keyspace = os.environ.get("CASSANDRA_KEYSPACE", "ai")
 cs_session = cassandra_initialize(cs_keyspace)
+
+# MINIO initialization
+minio_client = minio_initialize()
 
 
 @app.get("/", response_model=RootResponse)
