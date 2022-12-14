@@ -15,7 +15,7 @@ import torch
 from daemon import Daemon
 from srfbnet import GMFN
 
-__version__ = "0.8.6"
+__version__ = "0.8.7"
 
 
 class AIDaemon(Daemon):
