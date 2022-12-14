@@ -144,8 +144,6 @@ class AIDaemon(Daemon):
             with json_file.open("w") as f:
                 json.dump({"results": results}, f)
 
-            if os.environ.get("API_DEBUG", False):
-                cv2.imwrite(str(prepared_file), img_copy)
         except Exception as e:
             pass
 
