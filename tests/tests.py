@@ -328,7 +328,7 @@ def get_image(url: str) -> bytes:
 
 
 def detect_model_url(model: str) -> str:
-    port_file = Path(f"{model}/port.txt")
+    port_file = Path(f"../{model}/port.txt")
     if port_file.exists():
         with port_file.open("r") as fp:
             port = int(fp.read().strip())
