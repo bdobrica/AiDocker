@@ -33,7 +33,7 @@ Given an image, detect and extract human faces from the images.
         - `{"error": "invalid model output", "version": <version>}`: the model run, but did not produce any useful output
         - `{"wait": "true", "status": "processing", "version": <version>}`: the model is still processing the image; you can retry the query after a while
         - `{"wait": "true", "status": "not queued", "version": <version>}`: the model hasn't started processing the image yet; you can retry the query after a while
-        - `{"results": [{"x": <x>, "y": <y>, "w": <w>, "h": <h>, "female": <fp>, "male": <mp>, "age": <age>}, ...], "token": <token>, "status": "success", "version": <version>}`: the model has finished processing the image:
+        - `{"results": [{"x": <x>, "y": <y>, "w": <w>, "h": <h>, "conf": <conf>}, ...], "token": <token>, "status": "success", "version": <version>}`: the model has finished processing the image:
             - `token`: token of the image
             - `version`: version of the model
             - `results`: an array that contains an object for each face with the following properties:
@@ -41,9 +41,7 @@ Given an image, detect and extract human faces from the images.
                 - `y`: the center of the face on the vertical axis;
                 - `w`: the width of the face;
                 - `h`: the height of the face;
-                - `female`: the probability that the face belongs to a female;
-                - `male`: the probability that the face belongs to a male;
-                - `age`: the age of the face
+                - `conf`: the probability with which the face was detected;
     - CURL example: `curl -s -X POST -H "Content-Type: application/json" -d '{"token": <token>}' <SERVER>/get/json`
 
 ## Example Usage ##
