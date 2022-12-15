@@ -231,6 +231,18 @@ TESTS = {
             "1fee4c617b3c937457d4e1084b8777bc116a948843ab69ffddc14e3ce3dbc04a",
         ),
     ],
+    "facenet": [
+        (
+            "birthday.jpg",
+            None,
+            "",
+        ),
+        (
+            "birthday-rotated.jpg",
+            None,
+            "",
+        ),
+    ],
 }
 
 
