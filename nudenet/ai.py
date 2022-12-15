@@ -13,6 +13,8 @@ import numpy as np
 from daemon import Daemon
 from nudenet import NudeDetector
 
+__version__ = "0.8.7"
+
 
 class AIDaemon(Daemon):
     def ai(self, source_file, prepared_file, **metadata):
@@ -31,23 +33,28 @@ class AIDaemon(Daemon):
                 kwargs["fast"] = True
             results = model.detect(str(source_file), **kwargs)
             results = filter(
-                lambda item: item["score"] > os.environ.get("API_THRESHOLD", 0.5),
+                lambda item: item["score"]
+                > os.environ.get("API_THRESHOLD", 0.5),
                 results,
             )
 
             API_NUDENET_KEEP_LABELS = os.environ.get(
                 "API_NUDENET_KEEP_LABELS", ""
-            ).split(",")
+            )
             if API_NUDENET_KEEP_LABELS:
                 results = filter(
-                    lambda item: item["label"] in API_NUDENET_KEEP_LABELS, results
+                    lambda item: item["label"]
+                    in API_NUDENET_KEEP_LABELS.split(","),
+                    results,
                 )
             API_NUDENET_DROP_LABELS = os.environ.get(
                 "API_NUDENET_DROP_LABELS", ""
-            ).split(",")
+            )
             if API_NUDENET_DROP_LABELS:
                 results = filter(
-                    lambda item: item["label"] not in API_NUDENET_DROP_LABELS, results
+                    lambda item: item["label"]
+                    not in API_NUDENET_DROP_LABELS.split(","),
+                    results,
                 )
 
             # Do censoring
@@ -64,7 +71,9 @@ class AIDaemon(Daemon):
                                 img_copy, box[:2], box[2:], (0, 0, 0), -1
                             )
                         elif API_NUDENET_CENSOR_TYPE == "blur":
-                            img_box = img_copy[box[1] : box[3], box[0] : box[2], :]
+                            img_box = img_copy[
+                                box[1] : box[3], box[0] : box[2], :
+                            ]
                             box_height, box_width = img_box.shape[:2]
                             box_blur = (
                                 1 + 2 * (box_height // 2),
@@ -73,7 +82,9 @@ class AIDaemon(Daemon):
                             img_box = cv2.GaussianBlur(
                                 img_box, box_blur, cv2.BORDER_DEFAULT
                             )
-                            img_copy[box[1] : box[3], box[0] : box[2], :] = img_box
+                            img_copy[
+                                box[1] : box[3], box[0] : box[2], :
+                            ] = img_box
 
                 cv2.imwrite(str(prepared_file), img_copy)
             else:
@@ -130,7 +141,9 @@ class AIDaemon(Daemon):
                 staged_file.stem + image_metadata["extension"]
             )
 
-            with staged_file.open("rb") as src_fp, source_file.open("wb") as dst_fp:
+            with staged_file.open("rb") as src_fp, source_file.open(
+                "wb"
+            ) as dst_fp:
                 while True:
                     chunk = src_fp.read(CHUNK_SIZE)
                     if not chunk:

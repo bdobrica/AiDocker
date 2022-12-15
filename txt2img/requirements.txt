@@ -1,0 +1,7 @@
+flask
+numpy
+opencv-python
+torch
+torchvision
+transformers
+diffusers

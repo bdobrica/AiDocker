@@ -11,13 +11,13 @@ import cv2
 import numpy as np
 import torch
 
-from daemon import ImageDaemon
+from daemon import Daemon
 from yolov4 import Darknet, non_max_suppression, scale_coords
 
-__version__ = "0.9.0"
+__version__ = "0.8.7"
 
 
-class AIDaemon(ImageDaemon):
+class AIDaemon(Daemon):
     def ai(self, source_file, prepared_file, **metadata):
         pid = os.fork()
         if pid != 0:
@@ -193,6 +193,59 @@ class AIDaemon(ImageDaemon):
 
         source_file.unlink()
         sys.exit()
+
+        staged_files = sorted(
+            [
+                f
+                for f in Path(STAGED_PATH).glob("*")
+                if f.is_file() and f.suffix != ".json"
+            ],
+            key=lambda f: f.stat().st_mtime,
+        )
+        source_files = [f for f in Path(SOURCE_PATH).glob("*") if f.is_file()]
+        source_files_count = len(source_files)
+
+        while source_files_count < MAX_FORK and staged_files:
+            source_files_count += 1
+            staged_file = staged_files.pop(0)
+
+            meta_file = staged_file.with_suffix(".json")
+            if meta_file.is_file():
+                with meta_file.open("r") as fp:
+                    try:
+                        image_metadata = json.load(fp)
+                    except:
+                        image_metadata = {}
+            image_metadata = {
+                **{
+                    "extension": staged_file.suffix,
+                    "background": "",
+                },
+                **image_metadata,
+            }
+
+            source_file = Path(SOURCE_PATH) / staged_file.name
+            prepared_file = Path(PREPARED_PATH) / (
+                staged_file.stem + image_metadata["extension"]
+            )
+
+            with staged_file.open("rb") as src_fp, source_file.open(
+                "wb"
+            ) as dst_fp:
+                while True:
+                    chunk = src_fp.read(CHUNK_SIZE)
+                    if not chunk:
+                        break
+                    dst_fp.write(chunk)
+
+            staged_file.unlink()
+            self.ai(source_file, prepared_file, **image_metadata)
+
+    def run(self):
+        signal.signal(signal.SIGCHLD, signal.SIG_IGN)
+        while True:
+            self.queue()
+            time.sleep(1.0)
 
 
 if __name__ == "__main__":

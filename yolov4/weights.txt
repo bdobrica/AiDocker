@@ -1,0 +1,2 @@
+yolov4/yolov4.weights
+yolov4/coco.names

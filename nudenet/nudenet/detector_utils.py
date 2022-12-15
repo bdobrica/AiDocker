@@ -1,9 +1,9 @@
-import os
 import cv2
 import numpy as np
 
+
 def read_image_bgr(path):
-    """ Read an image in BGR format.
+    """Read an image in BGR format.
     Args
         path: Path to the image.
     """
@@ -42,7 +42,9 @@ def compute_resize_scale(image_shape, min_side=800, max_side=1333):
 
 
 def resize_image(img, min_side=800, max_side=1333):
-    scale = compute_resize_scale(img.shape, min_side=min_side, max_side=max_side)
+    scale = compute_resize_scale(
+        img.shape, min_side=min_side, max_side=max_side
+    )
 
     img = cv2.resize(img, None, fx=scale, fy=scale)
 
@@ -50,7 +52,9 @@ def resize_image(img, min_side=800, max_side=1333):
 
 
 def preprocess_image(
-    image_path, min_side=800, max_side=1333,
+    image_path,
+    min_side=800,
+    max_side=1333,
 ):
     image = read_image_bgr(image_path)
     image = _preprocess_image(image)

@@ -1,0 +1,6 @@
+flask
+numpy
+opencv-python
+torch
+torchvision
+scikit-image

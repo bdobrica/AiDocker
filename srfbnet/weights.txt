@@ -1,0 +1,3 @@
+srfbnet/gmfn_x2.pth
+srfbnet/gmfn_x3.pth
+srfbnet/gmfn_x4.pth

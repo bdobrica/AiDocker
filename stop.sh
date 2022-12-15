@@ -1,4 +1,7 @@
 #!/bin/bash
-docker ps | grep yolov4 | awk '{print $1}' | xargs docker stop > /dev/null 2>&1
-docker ps | grep modnet | awk '{print $1}' | xargs docker stop > /dev/null 2>&1
-docker ps | grep u2net | awk '{print $1}' | xargs docker stop > /dev/null 2>&1
+
+find . -type f -name "Dockerfile" | while read dockerfile; do
+  model_dir=$(dirname "${dockerfile}")
+  model_name=$(basename "${model_dir}")
+  docker ps | grep "${model_name}" | awk '{print $1}' | xargs docker stop > /dev/null 2>&1
+done

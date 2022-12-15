@@ -1,0 +1,3 @@
+txt2img/stable-diffusion/text_encoder/pytorch_model.bin
+txt2img/stable-diffusion/unet/diffusion_pytorch_model.bin
+txt2img/stable-diffusion/vae/diffusion_pytorch_model.bin

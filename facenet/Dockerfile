@@ -1,4 +1,4 @@
-FROM python:3.7-slim-bullseye
+FROM python:3.9-slim-bullseye
 
 ### CREATING FOLDERS ###
 RUN mkdir -p /opt/app/run
@@ -10,9 +10,8 @@ RUN mkdir -p /tmp/ai/prepared
 RUN apt-get update && apt-get install -y python3-opencv
 
 ### COPYING FILES ###
-COPY modnet/requirements.txt /opt/app
-COPY modnet/modnet_photographic_portrait_matting.onnx /opt/app
-COPY modnet/ai.py /opt/app
+COPY facenet/requirements.txt /opt/app
+COPY facenet/ai.py /opt/app
 COPY daemon /opt/app/daemon
 COPY cleaner.py /opt/app
 COPY mimetypes.json /opt/app
