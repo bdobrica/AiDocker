@@ -2,7 +2,7 @@
 
 max_port=5000
 find . -type f -name "Dockerfile" | while read dockerfile; do
-  model_dir=$(dirname "{$dockerfile}")
+  model_dir=$(dirname "${dockerfile}")
   model_name=$(basename "${model_dir}")
 
   if [ -f "${model_dir}/port.txt" ]; then
