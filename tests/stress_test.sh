@@ -38,6 +38,6 @@ func_upload(){
 
 rm -Rf out
 mkdir -p out
-find test/ -type f | while read image; do
+find . -type f | while read image; do
   func_upload $image &
 done

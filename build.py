@@ -31,7 +31,8 @@ def download_weights(weights_path: Path):
     with weights_path.open("r") as fp:
         for line in fp:
             line = line.strip()
-            print(line)
+            if line:
+                print(line)
 
 
 if __name__ == "__main__":
