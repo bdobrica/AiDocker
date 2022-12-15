@@ -3,9 +3,12 @@
 find . -name "Dockerfile" | while read dockerfile; do
     model_dir=$(dirname ${dockerfile})
     model_name=$(basename ${model_dir})
-    WEIGHTS_FILE="${model_dir}/weights.txt"
-    if [ -f "${WEIGHTS_FILE}" ]; then
-        cat "${WEIGHTS_FILE}" | while read line; do
+    weights_file="${model_dir}/weights.txt"
+
+    echo "Building ${model_name} ..."
+
+    if [ -f "${weights_file}" ]; then
+        cat "${weights_file}" | while read line; do
             line=$(echo ${line} | tr -d "\r" | tr -d "\n")
             if [ ! -z "${line}" ]; then
                 weight_file=${model_dir}/$(basename ${line})
