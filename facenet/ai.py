@@ -40,7 +40,7 @@ class AIDaemon(Daemon):
             results = []
             if len(detected) > 0:
                 for i, box in enumerate(detected):
-                    x1, y1, x2, y2 = box.tolist()
+                    x1, y1, x2, y2 = [float(f) for f in box]
 
                     results.append(
                         {
@@ -48,7 +48,7 @@ class AIDaemon(Daemon):
                             "y": 0.5 * (y1 + y2),
                             "w": abs(x2 - x1),
                             "h": abs(y2 - y1),
-                            "conf": confs[i],
+                            "conf": float(confs[i]),
                         }
                     )
 
