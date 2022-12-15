@@ -11,7 +11,7 @@ find . -name "Dockerfile" | while read dockerfile; do
         cat "${weights_file}" | while read line; do
             line=$(echo ${line} | tr -d "\r" | tr -d "\n")
             if [ ! -z "${line}" ]; then
-                weight_file=${model_dir}/$(basename ${line})
+                weight_file=${model_dir}/${line#*/}
                 if [ ! -f "${weight_file}" ]; then
                     wget "https://ublo.ro/wp-content/mirror/${line}" -O ${weight_file}
                 fi
