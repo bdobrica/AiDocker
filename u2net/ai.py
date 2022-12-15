@@ -150,6 +150,13 @@ class AIDaemon(Daemon):
         source_file.unlink()
         sys.exit()
 
+    def queue(self):
+        STAGED_PATH = os.environ.get("STAGED_PATH", "/tmp/ai/staged")
+        SOURCE_PATH = os.environ.get("SOURCE_PATH", "/tmp/ai/source")
+        PREPARED_PATH = os.environ.get("PREPARED_PATH", "/tmp/ai/prepared")
+        MAX_FORK = int(os.environ.get("MAX_FORK", 8))
+        CHUNK_SIZE = int(os.environ.get("CHUNK_SIZE", 4096))
+
         staged_files = sorted(
             [
                 f
