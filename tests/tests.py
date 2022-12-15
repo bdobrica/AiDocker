@@ -327,27 +327,22 @@ def get_image(url: str) -> bytes:
     return response.content
 
 
-def detect_model_urls(run_file: Path) -> dict:
-    with run_file.open("r") as fp:
-        urls = {}
-        for line in fp:
-            line = line.strip()
-            if not line.startswith("docker run"):
-                continue
-            items = line.split()
-            model = items[-1]
-            url = "http://" + ":".join(items[-2].split(":")[:-1])
-            urls[model] = url
+def detect_model_url(model: str) -> str:
+    port_file = Path(f"{model}/port.txt")
+    if port_file.exists():
+        with port_file.open("r") as fp:
+            port = int(fp.read().strip())
+    else:
+        port = 5000
 
-    return urls
+    return f"http://localhost:{port}"
 
 
 if __name__ == "__main__":
-    urls = detect_model_urls(Path("../run.sh"))
     COUNTER = 0
 
     for model, tests in TESTS.items():
-        url = urls.get(model)
+        url = detect_model_url(model)
         if url is None:
             warn(f"Could not find an active URL for model {model}. Skipping.")
             continue
