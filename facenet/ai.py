@@ -98,7 +98,7 @@ class AIDaemon(Daemon):
                 detected_ = detected[i]
                 confs_ = confs[i]
                 faces_ = []
-                if detected is not None:
+                if detected_ is not None:
                     for j, box in enumerate(detected_):
                         box = rotate_box(box, im_w, im_h, angle)
                         conf = float(confs_[j])
