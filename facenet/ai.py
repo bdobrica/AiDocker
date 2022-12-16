@@ -129,10 +129,10 @@ class AIDaemon(Daemon):
             faces.sort(key=lambda f: f["conf"], reverse=True)
             results = [
                 {
-                    "x": 0.5 * (f["box"][0] + f["box"][2]),
-                    "y": 0.5 * (f["box"][1] + f["box"][3]),
-                    "w": abs(f["box"][0] - f["box"][2]),
-                    "h": abs(f["box"][1] - f["box"][3]),
+                    "x": float(0.5 * (f["box"][0] + f["box"][2])),
+                    "y": float(0.5 * (f["box"][1] + f["box"][3])),
+                    "w": float(abs(f["box"][0] - f["box"][2])),
+                    "h": float(abs(f["box"][1] - f["box"][3])),
                     "conf": f["conf"],
                     "orientation": angles.get(f["orientation"]),
                 }
