@@ -12,7 +12,7 @@ from flask import Flask, Response, request, send_file
 app = Flask(__name__)
 
 
-__version__ = "0.8.7"
+__version__ = "0.8.8"
 
 
 def file_paths(image_token, image_extension=None):
