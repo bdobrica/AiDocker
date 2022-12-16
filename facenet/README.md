@@ -42,6 +42,7 @@ Given an image, detect and extract human faces from the images.
                 - `w`: the width of the face;
                 - `h`: the height of the face;
                 - `conf`: the probability with which the face was detected;
+                - `orientation`: the orientation of the image when the face was detected - `normal`, `90cw` (90 degrees clockwise), `90ccw` (90 degrees counter-clockwise), `180`;
     - CURL example: `curl -s -X POST -H "Content-Type: application/json" -d '{"token": <token>}' <SERVER>/get/json`
 
 ## Example Usage ##

@@ -7,6 +7,7 @@ import time
 from pathlib import Path
 
 import cv2
+import numpy as np
 import torch
 from facenet_pytorch import MTCNN
 
@@ -32,25 +33,111 @@ class AIDaemon(Daemon):
             model = MTCNN(keep_all=True, device=self.device)
 
             # Load image
-            img_orig = cv2.imread(str(source_file))
-            img_orig = cv2.cvtColor(img_orig, cv2.COLOR_BGR2RGB)
+            im = cv2.imread(str(source_file))
+            im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
+            im_h, im_w, _ = im.shape
 
-            detected, confs = model.detect(img_orig)
+            # Data engineering tools
+            def rotate_im(im: cv2.Mat, angle: int):
+                d = max(im.shape[0], im.shape[1])
+                res = np.zeros((d, d, 3), dtype=np.uint8)
+                r_im = im if angle is None else cv2.rotate(im, angle)
+                res[0 : r_im.shape[0], 0 : r_im.shape[1]] = r_im
+                return res
 
-            results = []
-            if len(detected) > 0:
-                for i, box in enumerate(detected):
-                    x1, y1, x2, y2 = [float(f) for f in box]
+            def rotate_p(x: float, y: float, im_w: int, im_h: int, angle: int):
+                if angle == cv2.ROTATE_90_CLOCKWISE:
+                    res = (y, im_h - x)
+                elif angle == cv2.ROTATE_180:
+                    res = (im_w - x, im_h - y)
+                elif angle == cv2.ROTATE_90_COUNTERCLOCKWISE:
+                    res = (im_w - y, x)
+                else:
+                    res = (x, y)
+                return res
 
-                    results.append(
-                        {
-                            "x": 0.5 * (x1 + x2),
-                            "y": 0.5 * (y1 + y2),
-                            "w": abs(x2 - x1),
-                            "h": abs(y2 - y1),
-                            "conf": float(confs[i]),
-                        }
-                    )
+            def normalize_box(box: tuple):
+                xa, ya, xb, yb = box
+                return (
+                    min(xa, xb),
+                    min(ya, yb),
+                    max(xa, xb),
+                    max(ya, yb),
+                )
+
+            def rotate_box(box: tuple, im_w: int, im_h: int, angle: int):
+                x1, y1, x2, y2 = box
+                x1, y1 = rotate_p(x1, y1, im_w, im_h, angle)
+                x2, y2 = rotate_p(x2, y2, im_w, im_h, angle)
+                return normalize_box((x1, y1, x2, y2))
+
+            def intersect_box(box_A: tuple, box_B: tuple):
+                xa, ya, xb, yb = box_A
+                xc, yc, xd, yd = box_B
+                xA = max(xa, xc)
+                yA = max(ya, yc)
+                xB = min(xb, xd)
+                yB = min(yb, yd)
+                return abs(max(0, xB - xA) * max(0, yB - yA))
+
+            # Detect faces
+            angles = {
+                None: "normal",
+                cv2.ROTATE_90_CLOCKWISE: "90cw",
+                cv2.ROTATE_180: "180",
+                cv2.ROTATE_90_COUNTERCLOCKWISE: "90ccw",
+            }
+
+            ims = [rotate_im(im, angle) for angle in angles]
+
+            detected, confs = model.detect(ims)
+
+            # Check different orientations and choose the best faces from each
+            faces = []
+            for i, angle in enumerate(angles):
+                detected_ = detected[i]
+                confs_ = confs[i]
+                faces_ = []
+                if detected is not None:
+                    for j, box in enumerate(detected_):
+                        box = rotate_box(box, im_w, im_h, angle)
+                        conf = float(confs_[j])
+
+                        swap = None
+                        for k, face in enumerate(faces):
+                            if intersect_box(box, face["box"]) > 0:
+                                swap = k
+                                break
+
+                        if swap is not None:
+                            if conf > faces[swap]["conf"]:
+                                faces[swap] = {
+                                    "box": box,
+                                    "conf": conf,
+                                    "orientation": angle,
+                                }
+                        else:
+                            faces_.append(
+                                {
+                                    "box": box,
+                                    "conf": conf,
+                                    "orientation": angle,
+                                }
+                            )
+                faces.extend(faces_)
+
+            faces.sort(key=lambda f: f["conf"], reverse=True)
+            results = [
+                {
+                    "x": 0.5 * (f["box"][0] + f["box"][2]),
+                    "y": 0.5 * (f["box"][1] + f["box"][3]),
+                    "w": abs(f["box"][0] - f["box"][2]),
+                    "h": abs(f["box"][1] - f["box"][3]),
+                    "conf": f["conf"],
+                    "orientation": angles.get(f["orientation"]),
+                }
+                for f in faces
+            ]
 
             json_file = prepared_file.with_suffix(".json")
             with json_file.open("w") as f:
