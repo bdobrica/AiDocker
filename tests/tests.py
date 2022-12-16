@@ -235,12 +235,12 @@ TESTS = {
         (
             "birthday.jpg",
             None,
-            "e0846e347fbef8367edc55eba52a6b10dbcb08a3d56fadabc2cabb0a0a1ff7e0",
+            "f149463ed23031db5fe061035805411270112ebc4437844d1ef0b19b1f7ee776",
         ),
         (
             "birthday-rotated.jpg",
             None,
-            "212bf44e34de1d049794f657fd7783eddcddf262f6fa1edf7b576af5ea12c1f2",
+            "4d0c8f24640ae599e1a7d8f5fa58d96a7467cf9be5c97819eac29cecebd1263a",
         ),
     ],
 }
