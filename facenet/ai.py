@@ -130,6 +130,7 @@ class AIDaemon(Daemon):
                 }
                 for f in faces
             ]
+            results = sorted(results, key=lambda x: x["area"], reverse=True)
 
             json_file = prepared_file.with_suffix(".json")
             with json_file.open("w") as f:
