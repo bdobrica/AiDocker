@@ -38,13 +38,6 @@ class AIDaemon(Daemon):
             im_h, im_w, _ = im.shape
 
             # Data engineering tools
-            def rotate_im(im: cv2.Mat, angle: int):
-                d = max(im.shape[0], im.shape[1])
-                res = np.zeros((d, d, 3), dtype=np.uint8)
-                r_im = im if angle is None else cv2.rotate(im, angle)
-                res[0 : r_im.shape[0], 0 : r_im.shape[1]] = r_im
-                return res
-
             def rotate_p(x: float, y: float, im_w: int, im_h: int, angle: int):
                 if angle == cv2.ROTATE_90_CLOCKWISE:
                     res = (y, im_h - x)
@@ -56,20 +49,16 @@ class AIDaemon(Daemon):
                     res = (x, y)
                 return res
 
-            def normalize_box(box: tuple):
-                xa, ya, xb, yb = box
-                return (
-                    min(xa, xb),
-                    min(ya, yb),
-                    max(xa, xb),
-                    max(ya, yb),
-                )
-
             def rotate_box(box: tuple, im_w: int, im_h: int, angle: int):
                 x1, y1, x2, y2 = box
                 x1, y1 = rotate_p(x1, y1, im_w, im_h, angle)
                 x2, y2 = rotate_p(x2, y2, im_w, im_h, angle)
-                return normalize_box((x1, y1, x2, y2))
+                return (
+                    min(x1, x2),
+                    min(y1, y2),
+                    max(x1, x2),
+                    max(y1, y2),
+                )
 
             def intersect_box(box_A: tuple, box_B: tuple):
                 xa, ya, xb, yb = box_A
@@ -83,56 +72,59 @@ class AIDaemon(Daemon):
             # Detect faces
             angles = {
                 None: "normal",
-                cv2.ROTATE_90_CLOCKWISE: "90cw",
+                # cv2.ROTATE_90_CLOCKWISE: "90cw",
                 cv2.ROTATE_180: "180",
-                cv2.ROTATE_90_COUNTERCLOCKWISE: "90ccw",
+                # cv2.ROTATE_90_COUNTERCLOCKWISE: "90ccw",
             }
-
-            ims = [rotate_im(im, angle) for angle in angles]
-
-            detected, confs = model.detect(ims)
 
             # Check different orientations and choose the best faces from each
             faces = []
-            for i, angle in enumerate(angles):
-                detected_ = detected[i]
-                confs_ = confs[i]
+            for angle, orientation in angles.items():
+                detected, confs = model.detect(
+                    im if angle is None else cv2.rotate(im, angle)
+                )
                 faces_ = []
-                if detected_ is not None:
-                    for j, box in enumerate(detected_):
+                if detected is not None:
+                    for i, box in enumerate(detected):
                         box = rotate_box(box, im_w, im_h, angle)
-                        conf = float(confs_[j])
+                        conf = float(confs[i])
 
                         swap = None
-                        for k, face in enumerate(faces):
-                            if intersect_box(box, face["box"]) > 0:
-                                swap = k
-                                break
+                        area = 0
+                        for j, face in enumerate(faces):
+                            int_area = intersect_box(box, face["box"])
+                            if int_area > area:
+                                swap = j
+                                area = int_area
 
                         if swap is not None:
                             if conf > faces[swap]["conf"]:
+                                print("conf", conf, "new!")
                                 faces[swap] = {
                                     "box": box,
                                     "conf": conf,
-                                    "orientation": angle,
+                                    "orientation": orientation,
                                 }
                         else:
                             faces_.append(
                                 {
                                     "box": box,
                                     "conf": conf,
-                                    "orientation": angle,
+                                    "orientation": orientation,
                                 }
                             )
                 faces.extend(faces_)
 
-            faces.sort(key=lambda f: f["conf"], reverse=True)
             results = [
                 {
                     "x": float(0.5 * (f["box"][0] + f["box"][2])),
                     "y": float(0.5 * (f["box"][1] + f["box"][3])),
                     "w": float(abs(f["box"][0] - f["box"][2])),
                     "h": float(abs(f["box"][1] - f["box"][3])),
+                    "area": float(
+                        abs(f["box"][0] - f["box"][2])
+                        * abs(f["box"][1] - f["box"][3])
+                    ),
                     "conf": f["conf"],
                     "orientation": angles.get(f["orientation"]),
                 }
