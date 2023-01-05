@@ -52,7 +52,8 @@ class AIDaemon(Daemon):
             )
 
             # Initialize
-            prompt = metadata.get("prompt", "")
+            with source_file.open("r") as fp:
+                prompt = fp.read().strip()
             samples = int(metadata.get("samples", 1))
             height = metadata.get("image_height", 512)
             width = metadata.get("image_width", 512)
