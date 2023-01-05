@@ -14,7 +14,7 @@ import numpy as np
 from daemon import Daemon
 from nudenet import NudeDetector
 
-__version__ = "0.8.9"
+__version__ = "0.8.10"
 
 
 class AIDaemon(Daemon):

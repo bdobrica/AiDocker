@@ -14,7 +14,7 @@ from transformers import CLIPTextModel, CLIPTokenizer
 
 from daemon import Daemon
 
-__version__ = "0.8.9"
+__version__ = "0.8.10"
 
 
 class AIDaemon(Daemon):
