@@ -2,7 +2,6 @@
 import json
 import os
 import signal
-import sys
 import time
 import traceback
 from pathlib import Path
@@ -94,7 +93,7 @@ class AIDaemon(Daemon):
             self.scheduler.set_timesteps(inference_steps)
             latents = latents * self.scheduler.init_noise_sigma
 
-            for inference_step in range(inference_steps):
+            for inference_step in self.scheduler.timesteps:
                 # expand the latents if we are doing classifier-free guidance to avoid doing two forward passes.
                 latent_model_input = torch.cat([latents] * 2)
 
@@ -134,19 +133,15 @@ class AIDaemon(Daemon):
                     + "_{0:02x}".format(idx)
                     + prepared_file.suffix
                 )
-                cv2.imwrite(str(image_file), image)
-
-            results = []
-            json_file = prepared_file.with_suffix(".json")
-            with json_file.open("w") as f:
-                json.dump({"results": results}, f)
+                cv2.imwrite(
+                    str(image_file), cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+                )
 
         except Exception as e:
             if os.environ.get("DEBUG", "false").lower() in ("true", "1", "on"):
                 print(traceback.format_exc())
 
         source_file.unlink()
-        sys.exit()
 
     def queue(self):
         STAGED_PATH = os.environ.get("STAGED_PATH", "/tmp/ai/staged")

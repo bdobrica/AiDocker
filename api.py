@@ -171,7 +171,7 @@ def put_text():
     with meta_file.open("w") as fp:
         json.dump(text_metadata, fp)
 
-    staged_file = get_metadata_path(text_token, text_extension)
+    staged_file = get_staged_path(text_token, text_extension)
     with staged_file.open("w") as fp:
         fp.write(text_data)
 
