@@ -1,63 +1,81 @@
 #!/usr/bin/env python3
-import base64
 import json
 import os
 import time
 from hashlib import md5, sha256
 from io import BytesIO
 from pathlib import Path
+from typing import List
 
 from flask import Flask, Response, request, send_file
+
+__version__ = "0.8.8"
+
+try:
+    with open("/opt/app/mimetypes.json", "r") as fp:
+        MIMETYPES = json.load(fp)
+except:
+    MIMETYPES = {}
 
 app = Flask(__name__)
 
 
-__version__ = "0.8.8"
-
-
-def file_paths(image_token, image_extension=None):
+def get_metadata_path(file_token: str) -> Path:
     STAGED_PATH = Path(os.environ.get("STAGED_PATH", "/tmp/ai/staged"))
-    SOURCE_PATH = Path(os.environ.get("SOURCE_PATH", "/tmp/ai/source"))
+    return STAGED_PATH / (file_token + ".json")
+
+
+def get_staged_path(file_token: str, file_suffix: str) -> Path:
+    STAGED_PATH = Path(os.environ.get("STAGED_PATH", "/tmp/ai/staged"))
+    return STAGED_PATH / (file_token + "." + file_suffix.strip(".").lower())
+
+
+def get_json_path(file_token: str, file_suffix: str = "json") -> Path:
     PREPARED_PATH = Path(os.environ.get("PREPARED_PATH", "/tmp/ai/prepared"))
-
-    meta_file = STAGED_PATH / (image_token + ".json")
-    if image_extension is None and meta_file.is_file():
-        with meta_file.open() as fp:
-            try:
-                image_meta = json.load(fp)
-            except:
-                image_meta = {}
-        image_extension = image_meta.get("extension", None)
-
-    json_file = PREPARED_PATH / (image_token + ".json")
-    if image_extension is not None:
-        staged_file = STAGED_PATH / (image_token + image_extension)
-        source_file = SOURCE_PATH / (image_token + image_extension)
-        prepared_file = PREPARED_PATH / (image_token + image_extension)
-    else:
-        staged_file = STAGED_PATH.glob(image_token + ".*")
-        source_file = SOURCE_PATH.glob(image_token + ".*")
-        prepared_file = PREPARED_PATH.glob(image_token + ".*")
-
-    return {
-        "meta_file": meta_file,
-        "json_file": json_file,
-        "staged_file": staged_file,
-        "source_file": source_file,
-        "prepared_file": prepared_file,
-    }
+    return PREPARED_PATH / (file_token + "." + file_suffix.strip(".").lower())
 
 
-def clean_files(image_token, image_extension=None):
-    paths = file_paths(image_token, image_extension)
-    for path in paths.values():
-        if isinstance(path, Path):
-            if path.is_file():
-                path.unlink()
-        else:
-            for path_ in path:
-                if path_.is_file():
-                    path_.unlink()
+def get_staged_paths(file_token: str) -> List[Path]:
+    STAGED_PATH = Path(os.environ.get("STAGED_PATH", "/tmp/ai/staged"))
+    return [
+        path
+        for path in STAGED_PATH.glob(file_token + "*")
+        if path.is_file() and path.suffix != ".json"
+    ]
+
+
+def get_source_paths(file_token: str) -> List[Path]:
+    SOURCE_PATH = Path(os.environ.get("SOURCE_PATH", "/tmp/ai/source"))
+    return [
+        path
+        for path in SOURCE_PATH.glob(file_token + "*")
+        if path.is_file() and path.suffix != ".json"
+    ]
+
+
+def get_prepared_paths(file_token: str) -> List[Path]:
+    PREPARED_PATH = Path(os.environ.get("PREPARED_PATH", "/tmp/ai/prepared"))
+    return [path for path in PREPARED_PATH.glob(file_token + "*")]
+
+
+def clean_files(file_token: str) -> None:
+    paths = (
+        [get_metadata_path(file_token)]
+        + get_staged_paths(file_token)
+        + get_source_paths(file_token)
+        + get_prepared_paths(file_token)
+    )
+    for path in paths:
+        if path.exists():
+            path.unlink()
+
+
+def get_url(file: Path) -> str:
+    for mimetype, suffix in MIMETYPES.items():
+        if file.suffix == suffix:
+            general_type, _ = mimetype.split("/")
+            return f"/get/{general_type}/{file.name}"
+    raise ValueError(f"Unknown file type: {file}")
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -104,13 +122,11 @@ def put_image():
         },
     }
 
-    paths = file_paths(image_token, image_extension)
-
-    meta_file = paths["meta_file"]
+    meta_file = get_metadata_path(image_token)
     with meta_file.open("w") as fp:
         json.dump(image_metadata, fp)
 
-    staged_file = paths["staged_file"]
+    staged_file = get_staged_path(image_token, image_extension)
     with staged_file.open("wb") as fp:
         fp.write(image_data)
 
@@ -151,13 +167,11 @@ def put_text():
         },
     }
 
-    paths = file_paths(text_token, text_extension)
-
-    meta_file = paths["meta_file"]
+    meta_file = get_metadata_path(text_token)
     with meta_file.open("w") as fp:
         json.dump(text_metadata, fp)
 
-    staged_file = paths["staged_file"]
+    staged_file = get_metadata_path(text_token, text_extension)
     with staged_file.open("w") as fp:
         fp.write(text_data)
 
@@ -170,38 +184,66 @@ def put_text():
 
 @app.route("/get/image/<image_file>", methods=["GET"])
 def get_image(image_file):
-    image_file_path = Path(image_file)
-    image_token = image_file_path.stem
-    image_extension = image_file_path.suffix
+    image_file = Path(image_file)
+    image_token = image_file.stem.split("_", 2)[0]
 
-    paths = file_paths(image_token, image_extension)
-    prepared_file = paths["prepared_file"]
+    prepared_files = get_prepared_paths(image_token)
 
-    if not prepared_file.is_file():
-        return Response("image not found", status=404)
+    if not prepared_files:
+        clean_files(image_token)
+        return Response(
+            json.dumps({"token": image_token, "error": "image not found"}),
+            status=404,
+            mimetype="application/json",
+        )
 
-    with prepared_file.open("rb") as fp:
+    found_file = None
+    for prepared_file in prepared_files:
+        if prepared_file.name == image_file.name:
+            found_file = prepared_file
+            break
+
+    if found_file is None:
+        clean_files(image_token)
+        return Response(
+            json.dumps({"token": image_token, "error": "image not found"}),
+            status=404,
+            mimetype="application/json",
+        )
+
+    with found_file.open("rb") as fp:
         image_data = fp.read()
+
+    found_file.unlink()
+    if len(prepared_files) == 1:
+        clean_files(image_token)
+
     if not image_data:
-        return Response("image output is empty", status=404)
+        return Response(
+            json.dumps(
+                {"token": image_token, "error": "image output is empty"}
+            ),
+            status=404,
+            mimetype="application/json",
+        )
 
-    meta_file = paths["meta_file"]
-    if meta_file.is_file():
-        with meta_file.open() as fp:
-            try:
-                image_metadata = json.load(fp)
-            except:
-                image_metadata = {}
-
-    image_type = image_metadata.get("type", "image/jpeg")
-
-    clean_files(image_token, image_extension)
+    image_type = None
+    for mimetype, suffix in MIMETYPES.items():
+        if prepared_file.suffix == suffix:
+            image_type = mimetype
+            break
+    if image_type is None:
+        return Response(
+            json.dumps({"token": image_token, "error": "unknown image type"}),
+            status=404,
+            mimetype="application/json",
+        )
 
     return send_file(
         BytesIO(image_data),
         mimetype=image_type,
         as_attachment=True,
-        download_name=image_token + image_extension,
+        download_name=image_file.name,
     )
 
 
@@ -209,12 +251,11 @@ def get_image(image_file):
 def get_json():
     lifetime = float(os.environ.get("API_CLEANER_FILE_LIFETIME", "1800.0"))
 
-    image_token = request.json.get("token")
-    paths = file_paths(image_token)
+    file_token = request.json.get("token")
 
-    meta_file = paths["meta_file"]
+    meta_file = get_metadata_path(file_token)
     if not meta_file.is_file():
-        clean_files(image_token)
+        clean_files(file_token)
         return Response(
             json.dumps(
                 {"error": "missing file metadata", "version": __version__}
@@ -224,9 +265,9 @@ def get_json():
         )
 
     try:
-        image_metadata = json.load(meta_file.open("r"))
+        file_metadata = json.load(meta_file.open("r"))
     except:
-        clean_files(image_token)
+        clean_files(file_token)
         return Response(
             json.dumps(
                 {"error": "corrupted image metadata", "version": __version__}
@@ -235,27 +276,15 @@ def get_json():
             mimetype="application/json",
         )
 
-    if float(image_metadata.get("upload_time", 0)) + lifetime < time.time():
-        clean_files(image_token)
+    if float(file_metadata.get("upload_time", 0)) + lifetime < time.time():
+        clean_files(file_token)
         return Response(
             json.dumps({"error": "token expired", "version": __version__}),
             status=400,
             mimetype="application/json",
         )
 
-    if image_metadata.get("extension") is None:
-        clean_files(image_token)
-        return Response(
-            json.dumps(
-                {"error": "invalid image extension", "version": __version__}
-            ),
-            status=400,
-            mimetype="application/json",
-        )
-
-    json_file = paths["json_file"]
-    prepared_file = paths["prepared_file"]
-
+    json_file = get_json_path(file_token)
     if json_file.is_file():
         with json_file.open("r") as fp:
             try:
@@ -264,7 +293,7 @@ def get_json():
                 json_data = {}
 
         if not json_data:
-            clean_files(image_token)
+            clean_files(file_token)
             return Response(
                 json.dumps(
                     {"error": "invalid model output", "version": __version__},
@@ -274,37 +303,32 @@ def get_json():
             )
 
         json_data.update(
-            {"token": image_token, "status": "success", "version": __version__}
+            {"token": file_token, "status": "success", "version": __version__}
         )
-        json_file.unlink()
+        clean_files(file_token)
 
         return Response(
             json.dumps(json_data), status=200, mimetype="application/json"
         )
 
-    staged_file = paths["staged_file"]
-    source_file = paths["source_file"]
-
-    if prepared_file.is_file():
-        if staged_file.is_file():
-            staged_file.unlink()
+    prepared_files = get_prepared_paths(file_token)
+    if prepared_files:
+        output = {
+            "token": file_token,
+            "status": "success",
+            "version": __version__,
+        }
+        if len(prepared_files) == 1:
+            output["url"] = get_url(prepared_files[0])
+        else:
+            output["urls"] = [get_url(file) for file in prepared_files]
 
         return Response(
-            json.dumps(
-                {
-                    "url": "/get/image/{image_token}.{image_extension}".format(
-                        image_token=image_token,
-                        image_extension=prepared_file.suffix[1:],
-                    ),
-                    "status": "success",
-                    "version": __version__,
-                }
-            ),
-            status=200,
-            mimetype="application/json",
+            json.dumps(output), status=200, mimetype="application/json"
         )
 
-    if source_file.is_file():
+    source_files = get_source_paths(file_token)
+    if source_files:
         return Response(
             json.dumps(
                 {"wait": "true", "status": "processing", "version": __version__}
@@ -313,7 +337,8 @@ def get_json():
             mimetype="application/json",
         )
 
-    if staged_file.is_file():
+    staged_files = get_staged_paths(file_token)
+    if staged_files:
         return Response(
             json.dumps(
                 {"wait": "true", "status": "not queued", "version": __version__}

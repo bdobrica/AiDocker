@@ -1,0 +1,21 @@
+name: nudenet
+description: Given an image, detect and extract body parts that are considered indecent. It can either generate a JSON with the coordinates of the detected body parts or an image with the detected body parts masked out.
+port: 5003
+weights:
+  - nudenet/detector_v2_default_checkpoint.onnx
+  - nudenet/detector_v2_default_classes
+  - nudenet/detector_v2_base_checkpoint.onnx
+  - nudenet/detector_v2_base_classes
+input:
+  endpoint: /put/image
+  required:
+    image: image
+  parameters:
+    background:
+      - color
+      - url
+output:
+  - endpoint: /get/json
+    type: json
+  - endpoint: /get/image
+    type: image

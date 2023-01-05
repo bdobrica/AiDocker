@@ -5,6 +5,7 @@ import re
 import signal
 import sys
 import time
+import traceback
 from pathlib import Path
 from urllib import request
 
@@ -145,7 +146,8 @@ class AIDaemon(Daemon):
 
             cv2.imwrite(str(prepared_file), out_im.astype("uint8"))
         except Exception as e:
-            pass
+            if os.environ.get("DEBUG", "false").lower() in ("true", "1", "on"):
+                print(traceback.format_exc())
 
         source_file.unlink()
         sys.exit()

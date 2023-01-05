@@ -29,6 +29,9 @@ class Daemon:
         pass
 
     def daemonize(self):
+        if os.environ.get("DEBUG", "false").lower() in ("true", "1", "on"):
+            return
+
         try:
             pid = os.fork()
             if pid > 0:

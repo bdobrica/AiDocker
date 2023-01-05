@@ -10,6 +10,7 @@ RUN mkdir -p /tmp/ai/prepared
 RUN apt-get update && apt-get install -y python3-opencv
 
 ### COPYING FILES ###
+COPY modnet/container.yaml /opt/app
 COPY modnet/requirements.txt /opt/app
 COPY modnet/modnet_photographic_portrait_matting.onnx /opt/app
 COPY modnet/ai.py /opt/app

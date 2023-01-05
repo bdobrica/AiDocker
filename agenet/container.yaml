@@ -1,0 +1,13 @@
+name: agenet
+description: Given an image, detect and extract human faces from the images and return the age and gender for each face.
+port: 5004
+weights:
+  - agenet/EfficientNetB3_224_weights.11-3.44.hdf5
+input:
+  endpoint: /put/image
+  required:
+    image: image
+  paramters:
+output:
+  endpoint: /get/json
+  type: json

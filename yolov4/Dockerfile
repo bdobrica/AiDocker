@@ -10,6 +10,7 @@ RUN mkdir -p /tmp/ai/prepared
 RUN apt-get update && apt-get install -y python3-opencv
 
 ### COPYING FILES ###
+COPY yolov4/container.yaml /opt/app
 COPY yolov4/requirements.txt /opt/app
 COPY yolov4/yolov4.weights /opt/app
 COPY yolov4/coco.names /opt/app

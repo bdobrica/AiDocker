@@ -4,6 +4,7 @@ import os
 import signal
 import sys
 import time
+import traceback
 from pathlib import Path
 
 import cv2
@@ -18,23 +19,24 @@ __version__ = "0.8.8"
 
 
 class AIDaemon(Daemon):
-    def initialize(self, model_path: str):
-        MODEL_DEVICE = os.environ.get("MODEL_DEVICE", "cpu")
-        if MODEL_DEVICE == "cuda" and not torch.cuda.is_available():
+    def load(self):
+        MODEL_PATH = os.environ.get("MODEL_PATH", "/opt/app/stable-diffusion")
+        MODEL_DEVICE = os.environ.get("MODEL_DEVICE", "cuda:0")
+        if MODEL_DEVICE.startswith("cuda") and not torch.cuda.is_available():
             MODEL_DEVICE = "cpu"
 
         self.device = torch.device(MODEL_DEVICE)
         self.vae = AutoencoderKL.from_pretrained(
-            model_path, subfolder="vae", local_files_only=True
+            MODEL_PATH, subfolder="vae", local_files_only=True
         ).to(self.device)
         self.tokenizer = CLIPTokenizer.from_pretrained(
-            model_path, subfolder="tokenizer", local_files_only=True
+            MODEL_PATH, subfolder="tokenizer", local_files_only=True
         )
         self.text_encoder = CLIPTextModel.from_pretrained(
-            model_path, subfolder="text_encoder", local_files_only=True
-        )
+            MODEL_PATH, subfolder="text_encoder", local_files_only=True
+        ).to(self.device)
         self.unet = UNet2DConditionModel.from_pretrained(
-            model_path, subfolder="unet", local_files_only=True
+            MODEL_PATH, subfolder="unet", local_files_only=True
         ).to(self.device)
         self.scheduler = PNDMScheduler(
             beta_start=0.00085,
@@ -46,10 +48,6 @@ class AIDaemon(Daemon):
 
     def ai(self, source_file, prepared_file, **metadata):
         try:
-            MODEL_PATH = os.environ.get(
-                "MODEL_PATH", "/opt/app/stable-diffusion"
-            )
-
             MODEL_GUIDANCE_SCALE = float(
                 os.environ.get("MODEL_GUIDANCE_SCALE", 7.5)
             )
@@ -144,7 +142,8 @@ class AIDaemon(Daemon):
                 json.dump({"results": results}, f)
 
         except Exception as e:
-            pass
+            if os.environ.get("DEBUG", "false").lower() in ("true", "1", "on"):
+                print(traceback.format_exc())
 
         source_file.unlink()
         sys.exit()
@@ -181,14 +180,15 @@ class AIDaemon(Daemon):
             image_metadata = {
                 **{
                     "extension": staged_file.suffix,
-                    "background": "",
                 },
                 **image_metadata,
             }
 
             source_file = Path(SOURCE_PATH) / staged_file.name
             prepared_file = Path(PREPARED_PATH) / (
-                staged_file.stem + image_metadata["extension"]
+                staged_file.stem
+                + "."
+                + os.environ.get("IMAGE_EXTENSION", "png").lower()
             )
 
             with staged_file.open("rb") as src_fp, source_file.open(

@@ -39,6 +39,7 @@ RUN mkdir -p /tmp/ai/prepared
 RUN apt-get update && apt-get install -y python3-opencv
 
 ### COPYING FILES ###
+COPY txt2img/container.yaml /opt/app
 COPY txt2img/requirements.txt /opt/app
 COPY txt2img/stable-diffusion /opt/app/stable-diffusion
 COPY txt2img/ai.py /opt/app

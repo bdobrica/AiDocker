@@ -5,6 +5,7 @@ import random
 import signal
 import sys
 import time
+import traceback
 from pathlib import Path
 
 import cv2
@@ -24,7 +25,10 @@ __version__ = "0.8.8"
 
 class AIDaemon(Daemon):
     def load(self):
-        self.device = torch.device("cpu")
+        MODEL_DEVICE = os.environ.get("MODEL_DEVICE", "cuda:0")
+        if MODEL_DEVICE.startswith("cuda") and not torch.cuda.is_available():
+            MODEL_DEVICE = "cpu"
+        self.device = torch.device(MODEL_DEVICE)
 
         MODEL_PATH = os.environ.get("MODEL_PATH", "/opt/app/vitgpt2")
 
@@ -85,7 +89,8 @@ class AIDaemon(Daemon):
                 json.dump({"results": results}, f)
 
         except Exception as e:
-            pass
+            if os.environ.get("DEBUG", "false").lower() in ("true", "1", "on"):
+                print(traceback.format_exc())
 
         source_file.unlink()
         sys.exit()

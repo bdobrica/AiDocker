@@ -5,6 +5,7 @@ import random
 import signal
 import sys
 import time
+import traceback
 from pathlib import Path
 
 import cv2
@@ -93,7 +94,8 @@ class AIDaemon(Daemon):
                     json.dump({"results": list(results)}, f)
 
         except Exception as e:
-            pass
+            if os.environ.get("DEBUG", "false").lower() in ("true", "1", "on"):
+                print(traceback.format_exc())
 
         source_file.unlink()
         sys.exit()

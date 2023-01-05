@@ -10,6 +10,7 @@ RUN mkdir -p /tmp/ai/prepared
 RUN apt-get update && apt-get install -y python3-opencv
 
 ### COPYING FILES ###
+COPY srfbnet/container.yaml /opt/app
 COPY srfbnet/requirements.txt /opt/app
 COPY srfbnet/srfbnet /opt/app/srfbnet
 COPY srfbnet/ai.py /opt/app

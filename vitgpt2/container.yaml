@@ -1,0 +1,13 @@
+name: yolov4
+description: Given an image, generate a text caption for the image.
+port: 5008
+weights:
+  - vitgpt2/pytorch_model.bin
+input:
+  endpoint: /put/image
+  required:
+    image: image
+  parameters:
+output:
+  endpoint: /get/json
+  type: json

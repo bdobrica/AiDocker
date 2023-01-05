@@ -10,6 +10,7 @@ RUN mkdir -p /tmp/ai/prepared
 RUN apt-get update && apt-get install -y python3-opencv
 
 ### COPYING FILES ###
+COPY gfm34b2tt/container.yaml /opt/app
 COPY gfm34b2tt/requirements.txt /opt/app
 COPY gfm34b2tt/gfm /opt/app/gfm
 COPY gfm34b2tt/ai.py /opt/app

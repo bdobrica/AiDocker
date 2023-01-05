@@ -5,6 +5,7 @@ import random
 import signal
 import sys
 import time
+import traceback
 from pathlib import Path
 
 import cv2
@@ -189,7 +190,8 @@ class AIDaemon(Daemon):
             if os.environ.get("API_DEBUG", False):
                 cv2.imwrite(str(prepared_file), img_copy)
         except Exception as e:
-            pass
+            if os.environ.get("DEBUG", "false").lower() in ("true", "1", "on"):
+                print(traceback.format_exc())
 
         source_file.unlink()
         sys.exit()

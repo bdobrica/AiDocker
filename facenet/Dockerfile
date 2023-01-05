@@ -10,6 +10,7 @@ RUN mkdir -p /tmp/ai/prepared
 RUN apt-get update && apt-get install -y python3-opencv
 
 ### COPYING FILES ###
+COPY facenet/container.yaml /opt/app
 COPY facenet/requirements.txt /opt/app
 COPY facenet/ai.py /opt/app
 COPY daemon /opt/app/daemon

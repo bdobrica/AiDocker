@@ -10,6 +10,7 @@ RUN mkdir -p /tmp/ai/prepared
 RUN apt-get update && apt-get install -y python3-opencv
 
 ### COPYING FILES ###
+COPY nudenet/container.yaml /opt/app
 COPY nudenet/requirements.txt /opt/app
 COPY nudenet/ai.py /opt/app
 COPY nudenet/nudenet /opt/app/nudenet
