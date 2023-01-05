@@ -1,82 +1,79 @@
 #!/usr/bin/env python3
 import json
 import os
-import random
 import signal
-import sys
 import time
 from pathlib import Path
+from typing import List
 
 from daemon import Daemon
 
 __version__ = "0.8.0"
 
 
+def get_metadata_path(file_token: str) -> Path:
+    STAGED_PATH = Path(os.environ.get("STAGED_PATH", "/tmp/ai/staged"))
+    return STAGED_PATH / (file_token + ".json")
+
+
+def get_metadata_paths() -> List[Path]:
+    STAGED_PATH = Path(os.environ.get("STAGED_PATH", "/tmp/ai/staged"))
+    return [path for path in STAGED_PATH.glob("*.json") if path.is_file()]
+
+
+def get_staged_paths(file_token: str) -> List[Path]:
+    STAGED_PATH = Path(os.environ.get("STAGED_PATH", "/tmp/ai/staged"))
+    return [
+        path
+        for path in STAGED_PATH.glob(file_token + "*")
+        if path.is_file() and path.suffix != ".json"
+    ]
+
+
+def get_source_paths(file_token: str) -> List[Path]:
+    SOURCE_PATH = Path(os.environ.get("SOURCE_PATH", "/tmp/ai/source"))
+    return [
+        path
+        for path in SOURCE_PATH.glob(file_token + "*")
+        if path.is_file() and path.suffix != ".json"
+    ]
+
+
+def get_prepared_paths(file_token: str) -> List[Path]:
+    PREPARED_PATH = Path(os.environ.get("PREPARED_PATH", "/tmp/ai/prepared"))
+    return [path for path in PREPARED_PATH.glob(file_token + "*")]
+
+
+def clean_files(file_token: str) -> None:
+    paths = (
+        [get_metadata_path(file_token)]
+        + get_staged_paths(file_token)
+        + get_source_paths(file_token)
+        + get_prepared_paths(file_token)
+    )
+    for path in paths:
+        if path.exists():
+            path.unlink()
+
+
 class Cleaner(Daemon):
     def clean(self):
-        STAGED_PATH = os.environ.get("STAGED_PATH", "/tmp/ai/staged")
-        SOURCE_PATH = os.environ.get("SOURCE_PATH", "/tmp/ai/source")
-        PREPARED_PATH = os.environ.get("PREPARED_PATH", "/tmp/ai/prepared")
         FILE_LIFETIME = os.environ.get("API_CLEANER_FILE_LIFETIME", "1800.0")
-
-        staged_files = []
         lifetime = 1.1 * float(FILE_LIFETIME)
-        for meta_file in Path(STAGED_PATH).glob("*.json"):
+
+        for meta_file in get_metadata_paths():
             with meta_file.open("r") as fp:
                 try:
-                    image_metadata = json.load(fp)
+                    file_metadata = json.load(fp)
                 except:
-                    image_metadata = {}
+                    file_metadata = {}
 
             if (
-                float(image_metadata.get("upload_time", 0)) + lifetime
+                float(file_metadata.get("upload_time", 0)) + lifetime
                 < time.time()
             ):
-                staged_file = meta_file.with_suffix(
-                    image_metadata.get("extension", ".jpg")
-                )
-                if staged_file.is_file():
-                    staged_files.append(staged_file)
-
-        staged_files += list(
-            filter(
-                lambda f: f.is_file()
-                and f.stat().st_mtime + lifetime < time.time(),
-                Path(STAGED_PATH).glob("*"),
-            )
-        )
-
-        for staged_file in set(staged_files):
-            meta_file = staged_file.with_suffix(".json")
-            source_file = Path(SOURCE_PATH) / staged_file.name
-            prepared_file = Path(PREPARED_PATH) / staged_file.name
-            json_file = prepared_file.with_suffix(".json")
-
-            if meta_file.is_file():
-                try:
-                    meta_file.unlink()
-                except:
-                    pass
-            if source_file.is_file():
-                try:
-                    source_file.unlink()
-                except:
-                    pass
-            if prepared_file.is_file():
-                try:
-                    prepared_file.unlink()
-                except:
-                    pass
-            if json_file.is_file():
-                try:
-                    json_file.unlink()
-                except:
-                    pass
-            if staged_file.is_file():
-                try:
-                    staged_file.unlink()
-                except:
-                    pass
+                file_token = meta_file.stem
+                clean_files(file_token)
 
     def run(self):
         signal.signal(signal.SIGCHLD, signal.SIG_IGN)
