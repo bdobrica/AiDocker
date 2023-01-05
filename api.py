@@ -9,7 +9,7 @@ from typing import List
 
 from flask import Flask, Response, request, send_file
 
-__version__ = "0.8.8"
+__version__ = "0.8.9"
 
 try:
     with open("/opt/app/mimetypes.json", "r") as fp:

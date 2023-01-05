@@ -17,7 +17,7 @@ from daemon import Daemon
 from isnet import ISNetDIS
 from isnet.utils import inference
 
-__version__ = "0.8.8"
+__version__ = "0.8.9"
 
 
 class AIDaemon(Daemon):
