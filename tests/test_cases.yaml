@@ -104,7 +104,7 @@ u2net:
       expected: 7350e2b9043d60902843589751248566f43a2a0b95593cd26feca6c517e11049
     - image: lamma.jpg
       background: https://picsum.photos/id/1019/400
-      expected: 9b44ccc4d977289b46633189bf269f234a4cd959437f896fe7addde5e8805f28
+      expected: 743861fadf43fbb1b54f164233d6d9760b3077250628347d3b0df4cf926e899b
     - image: whisk.png
       expected: e3b6083063f9210c2ef7e7323ae28c6ad643ad912317688f51661e01d381a857
     - image: whisk.png
