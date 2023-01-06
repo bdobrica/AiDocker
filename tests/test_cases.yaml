@@ -20,7 +20,7 @@ gfm34b2tt:
       expected: af2e94873023a4f46a2073dcab9a32545ad3b6b711a867bf7d96857cd38b565e
     - image: lamma.jpg
       background: https://picsum.photos/id/1019/400
-      expected: dbc9bd58469443df60ffabebbec2a8e415affbfd97a7ed8b0a186ea36ebec7bb
+      expected: 29015e58c01c4707cbe58a032c155875f945d72933e5a7a72dd0167f81b13135
     - image: whisk.png
       expected: b703544d3f6810a5e8298d0651ffd6cec8b358f6857fef8eb72a9fbc4e11b70b
     - image: whisk.png
