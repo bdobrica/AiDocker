@@ -1,7 +1,6 @@
 import hashlib
 import json
 import mimetypes
-import sys
 import time
 from pathlib import Path
 from typing import Any, Dict
@@ -39,7 +38,6 @@ def warn(message: str):
 def error(message: str):
     global FAILED
     print(f"[{Colors.FAIL} ERROR {Colors.ENDC}] {message}")
-    sys.exit(1)
     FAILED += 1
 
 
