@@ -1,0 +1,133 @@
+agenet:
+  endpoint: /put/image
+  test:
+    - image: birthday.jpg
+      expected: 04076a4b1659b0944a7c2ffb09140e7ec344f864cdd88fb617d05f007ef50d33
+facenet:
+  endpoint: /put/image
+  test:
+    - image: birthday.jpg
+      expected: f149463ed23031db5fe061035805411270112ebc4437844d1ef0b19b1f7ee776
+    - image: birthday-rotated.jpg
+      expected: 4d0c8f24640ae599e1a7d8f5fa58d96a7467cf9be5c97819eac29cecebd1263a
+gfm34b2tt:
+  endpoint: /put/image
+  test:
+    - image: lamma.jpg
+      expected: 0d899a14eeb6295652ff3cae981da1027d8203e164b490e57506cbff137d5853
+    - image: lamma.jpg
+      background: '#ffcc00'
+      expected: af2e94873023a4f46a2073dcab9a32545ad3b6b711a867bf7d96857cd38b565e
+    - image: lamma.jpg
+      background: https://picsum.photos/id/1019/400
+      expected: dbc9bd58469443df60ffabebbec2a8e415affbfd97a7ed8b0a186ea36ebec7bb
+    - image: whisk.png
+      expected: b703544d3f6810a5e8298d0651ffd6cec8b358f6857fef8eb72a9fbc4e11b70b
+    - image: whisk.png
+      background: '#ffcc00'
+      expected: 83d6ed0585a09fe8aaf50fdde78daba2fa3d3acaa8a5cf5104ce0842f06ae5a8
+    - image: whisk.png
+      background: https://picsum.photos/id/1019/400
+      expected: d08fce262f543892b09d11c6076dc555a81ccad213d0bb23f8437ea69bec66ec
+isnet:
+  endpoint: /put/image
+  test:
+    - image: valeria-lungu.jpg
+      expected: 9d83cad44cadefeab7beba646ffe34ef9a9f00b58fd725d6c8eb9406de5691f0
+    - image: valeria-lungu.jpg
+      background: '#ffcc00'
+      expected: a9aec95c0dbc5a93b67d3652a2d2dcaaea1231b626cfc7aa8e1e597d3a3a267b
+    - image: valeria-lungu.jpg
+      background: https://picsum.photos/id/1019/400
+      expected: 0f99b5a4ff23bca088f4feee0ea1dd93d91fbd62fb29a673ef8c13a3c42c4c6b
+    - image: valeria-lungu.png
+      expected: 76a58a0942f1052db6c18b3690fac98c996b07544c83853d32612a4c426194d8
+    - image: valeria-lungu.png
+      background: '#ffcc00'
+      expected: f11585d2cced035eb3d22d697d76f30483398eefbd5b73bbcc1f2457da93c06e
+    - image: valeria-lungu.png
+      background: https://picsum.photos/id/1019/400
+      expected: 877bea22f1ca7a826719857657a403be5817016bec51f4b8cbf721486a4539ee
+modnet:
+  endpoint: /put/image
+  test:
+    - image: valeria-lungu.jpg
+      expected: cc02dee408b5ef07b347d1386e6956390a941fb78c2047ccc02b7da147caa28f
+    - image: valeria-lungu.jpg
+      background: '#ffcc00'
+      expected: df0a69a4342d54f5c2f11771aab05bd9bea3189d39cf66fcbcdeadc5563b6359
+    - image: valeria-lungu.jpg
+      background: https://picsum.photos/id/1019/400
+      expected: c0de805cde11abba2382c8aa9b78a533b8b1a3e4673ca9f940d748c5cfcb67d1
+    - image: valeria-lungu.png
+      expected: a4ccd904aa31bf90d8d2b465657a6b9f2e0003a6049ba4cedb5d944cd4d02fc2
+    - image: valeria-lungu.png
+      background: '#ffcc00'
+      expected: 6662ddc7e4da0d1ce36194ab29714e44d2604554ae349de15f2168b53e9972d1
+    - image: valeria-lungu.png
+      background: https://picsum.photos/id/1019/400
+      expected: 859ee627b4aaede612c04dd7775834e7877cc1e7f1070859af83ebce14f9005f
+nudenet:
+  endpoint: /put/image
+  test:
+    - image: horses.jpg
+      expected: 4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945
+    - image: hentai.jpg
+      expected: f06c5dabb5d2476015e88fefafdcd986777a492d248acb3b67de2379ac90dc73
+    - image: horses.jpg
+      censor: 'yes'
+      expected: 95a93c27639cefce637fed47583b4b6876c54c5e1b388bfb7a1af0e50a9271f5
+    - image: hentai.jpg
+      censor: 'yes'
+      expected: d5cbfd6e5997a7f6feaa7bdc82f753d5ef2dc4ce6d6fda08ee6d415f9df8b457
+srfbnet:
+  endpoint: /put/image
+  test:
+    - image: flowers.jpg
+      expected: 0675e6b8eebdc90c8799a0ae544a0af5d84a6b85f9251ce1d7403a680172210b
+    - image: flowers.jpg
+      scale: 2
+      expected: 0675e6b8eebdc90c8799a0ae544a0af5d84a6b85f9251ce1d7403a680172210b
+    - image: flowers.jpg
+      scale: 3
+      expected: dcace4dd63c802c4a6a54980de08ccb8696af5c52f788bf70338845395570aae
+    - image: flowers.jpg
+      scale: 4
+      expected: 71ec5b09ba3cd4b80854b452fe620d25bc9573932dfdddaf87961740d71902a7
+u2net:
+  endpoint: /put/image
+  test:
+    - image: lamma.jpg
+      expected: 39de4d2625d5f7b603f9f3a677b73fe0c81acc7eff07d9d55b27c3d4774f5757
+    - image: lamma.jpg
+      background: '#ffcc00'
+      expected: 7350e2b9043d60902843589751248566f43a2a0b95593cd26feca6c517e11049
+    - image: lamma.jpg
+      background: https://picsum.photos/id/1019/400
+      expected: 9b44ccc4d977289b46633189bf269f234a4cd959437f896fe7addde5e8805f28
+    - image: whisk.png
+      expected: e3b6083063f9210c2ef7e7323ae28c6ad643ad912317688f51661e01d381a857
+    - image: whisk.png
+      background: '#ffcc00'
+      expected: f5ba4f0ac6437d3dafbb2d4c301780ae022cc127f1ae4233dc5e6bbf83be5a36
+    - image: whisk.png
+      background: https://picsum.photos/id/1019/400
+      expected: 8e226c00a733d79c92d05e378daccab836eb68227d56605a6fe845e3b5098382
+vitgpt2:
+  endpoint: /put/image
+  test:
+    - image: friends.jpg
+      expected: ec7c16e4da3d160e3a41c89675353f62b323085b83b853c87919b9790e2e0071
+    - image: friends.jpg
+      max_length: 32
+      expected: ec7c16e4da3d160e3a41c89675353f62b323085b83b853c87919b9790e2e0071
+    - image: friends.jpg
+      num_beams: 2
+      expected: 1fee4c617b3c937457d4e1084b8777bc116a948843ab69ffddc14e3ce3dbc04a
+yolov4:
+  endpoint: /put/image
+  test:
+    - image: horses.jpg
+      expected: ab6ebcb3ce280c2ce6c082c03f34308c148b310488737344da81eeb0fbf345cc
+    - image: person.jpg
+      expected: 0a5829c8339b0a3acd919404255c83dea8b77af3d254a4a7b39a7167671b9e7b
