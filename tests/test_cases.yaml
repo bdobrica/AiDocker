@@ -58,7 +58,7 @@ modnet:
       expected: df0a69a4342d54f5c2f11771aab05bd9bea3189d39cf66fcbcdeadc5563b6359
     - image: valeria-lungu.jpg
       background: https://picsum.photos/id/1019/400
-      expected: c0de805cde11abba2382c8aa9b78a533b8b1a3e4673ca9f940d748c5cfcb67d1
+      expected: 056fd172e7194636b7bae8de69b625a16e918239f297d7eba7e820e4e68500c5
     - image: valeria-lungu.png
       expected: a4ccd904aa31bf90d8d2b465657a6b9f2e0003a6049ba4cedb5d944cd4d02fc2
     - image: valeria-lungu.png
