@@ -112,7 +112,7 @@ u2net:
       expected: f5ba4f0ac6437d3dafbb2d4c301780ae022cc127f1ae4233dc5e6bbf83be5a36
     - image: whisk.png
       background: https://picsum.photos/id/1019/400
-      expected: 8e226c00a733d79c92d05e378daccab836eb68227d56605a6fe845e3b5098382
+      expected: 28b752f65f768d912a02ad19e632765343a666c1d4760ad7c334b32daf0bbc4d
 vitgpt2:
   endpoint: /put/image
   test:
