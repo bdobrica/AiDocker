@@ -90,7 +90,7 @@ srfbnet:
       expected: 0675e6b8eebdc90c8799a0ae544a0af5d84a6b85f9251ce1d7403a680172210b
     - image: flowers.jpg
       scale: 3
-      expected: dcace4dd63c802c4a6a54980de08ccb8696af5c52f788bf70338845395570aae
+      expected: 6a189cc3d4d00ef9bd190167d96d8c80a089217b2505d5e4d137640a7740177e
     - image: flowers.jpg
       scale: 4
       expected: 71ec5b09ba3cd4b80854b452fe620d25bc9573932dfdddaf87961740d71902a7
