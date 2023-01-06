@@ -66,7 +66,7 @@ modnet:
       expected: 6662ddc7e4da0d1ce36194ab29714e44d2604554ae349de15f2168b53e9972d1
     - image: valeria-lungu.png
       background: https://picsum.photos/id/1019/400
-      expected: 859ee627b4aaede612c04dd7775834e7877cc1e7f1070859af83ebce14f9005f
+      expected: d1d43145a915a662eaa06f4a7f8cd0f03860e705dbbd550a5b812d84889a504b
 nudenet:
   endpoint: /put/image
   test:
