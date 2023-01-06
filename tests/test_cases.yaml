@@ -47,7 +47,7 @@ isnet:
       expected: f11585d2cced035eb3d22d697d76f30483398eefbd5b73bbcc1f2457da93c06e
     - image: valeria-lungu.png
       background: https://picsum.photos/id/1019/400
-      expected: 877bea22f1ca7a826719857657a403be5817016bec51f4b8cbf721486a4539ee
+      expected: bc48297f84c7b157617dcd1f0f775a07af931ea55c2c9f914b33541e63dca139
 modnet:
   endpoint: /put/image
   test:
