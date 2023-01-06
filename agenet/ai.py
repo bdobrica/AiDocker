@@ -16,7 +16,7 @@ from tensorflow.keras.models import Model
 
 from daemon import Daemon
 
-__version__ = "0.8.10"
+__version__ = "0.8.11"
 
 
 class AIDaemon(Daemon):
