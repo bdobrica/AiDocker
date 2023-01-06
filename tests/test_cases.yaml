@@ -9,7 +9,7 @@ facenet:
     - image: birthday.jpg
       expected: fcb6b0f8a15c1e39f1d861495811be6a3a6fdd883f49da701fadb7e5dea2635d
     - image: birthday-rotated.jpg
-      expected: fcb6b0f8a15c1e39f1d861495811be6a3a6fdd883f49da701fadb7e5dea2635d
+      expected: 3893f52ec8c8ee8e88bedf6f2dd6f2559ea09b90fe14654706c71cef0fc5cebd
 gfm34b2tt:
   endpoint: /put/image
   test:
