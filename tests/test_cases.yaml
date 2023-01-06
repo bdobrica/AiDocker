@@ -28,7 +28,7 @@ gfm34b2tt:
       expected: 83d6ed0585a09fe8aaf50fdde78daba2fa3d3acaa8a5cf5104ce0842f06ae5a8
     - image: whisk.png
       background: https://picsum.photos/id/1019/400
-      expected: d08fce262f543892b09d11c6076dc555a81ccad213d0bb23f8437ea69bec66ec
+      expected: cdbe4d91ab6893d24b0a0679dae398a156d9dc2cfb0f111920b3ec7e3a9feb37
 isnet:
   endpoint: /put/image
   test:
