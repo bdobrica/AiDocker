@@ -122,7 +122,6 @@ class AIDaemon(Daemon):
                 ).prev_sample
 
             # scale and decode the image latents with vae
-            start = time.perf_counter()
             latents = 1 / 0.18215 * latents
             image = self.vae.decode(latents).sample
             image = (image / 2 + 0.5).clamp(0, 1)
