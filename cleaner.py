@@ -46,14 +46,16 @@ def get_prepared_paths(file_token: str) -> List[Path]:
 
 def clean_files(file_token: str) -> None:
     paths = (
-        [get_metadata_path(file_token)]
-        + get_staged_paths(file_token)
+        get_staged_paths(file_token)
         + get_source_paths(file_token)
         + get_prepared_paths(file_token)
     )
     for path in paths:
         if path.exists():
             path.unlink()
+    path = get_metadata_path(file_token)
+    if path.exists():
+        path.unlink()
 
 
 class Cleaner(Daemon):
