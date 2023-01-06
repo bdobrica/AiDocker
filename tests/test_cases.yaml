@@ -39,7 +39,7 @@ isnet:
       expected: a9aec95c0dbc5a93b67d3652a2d2dcaaea1231b626cfc7aa8e1e597d3a3a267b
     - image: valeria-lungu.jpg
       background: https://picsum.photos/id/1019/400
-      expected: 0f99b5a4ff23bca088f4feee0ea1dd93d91fbd62fb29a673ef8c13a3c42c4c6b
+      expected: d2e2d1e32983b566b8c7a8936d6a4df1deaa77547d2c38290152d16dbc65cbf6
     - image: valeria-lungu.png
       expected: 76a58a0942f1052db6c18b3690fac98c996b07544c83853d32612a4c426194d8
     - image: valeria-lungu.png
