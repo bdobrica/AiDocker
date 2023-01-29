@@ -5,7 +5,7 @@ from datamodels import AvailableModels, ImageRequest, RootResponse, TextRequest
 from fastapi import Depends, FastAPI
 from initializers import cassandra_initialize, minio_initialize, pika_initialize
 
-__version__ = "0.8.6"
+__version__ = "0.9.0"
 
 app = FastAPI(docs_url=None, redoc_url="/docs")
 
