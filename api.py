@@ -118,7 +118,6 @@ def put_image():
         **request.form,
         **{
             "type": image_type,
-            "extension": image_extension,
             "upload_time": time.time(),
             "processed": "false",
         },
@@ -163,7 +162,6 @@ def put_text():
         **request.form,
         **{
             "type": "text/plain",
-            "extension": text_extension,
             "upload_time": time.time(),
             "processed": "false",
         },
@@ -305,7 +303,13 @@ def get_json():
             )
 
         json_data.update(
-            {"token": file_token, "status": "success", "version": __version__}
+            {
+                "token": file_token,
+                "status": "success",
+                "version": __version__,
+                "inference_time": float(file_metadata.get("update_time", 0))
+                - float(file_metadata.get("upload_time", 0)),
+            }
         )
         clean_files(file_token)
 

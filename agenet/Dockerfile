@@ -1,17 +1,17 @@
 ### USE A BUILDER STAGE TO BUILD DLIB ###
-FROM python:3.7-slim-bullseye as builder
+FROM python:3.9-slim-bullseye as builder
 
 RUN apt-get update && apt-get install -y build-essential cmake
 RUN python3 -m pip install --upgrade pip
 RUN python3 -m pip install dlib
-WORKDIR /usr/local/lib/python3.7/site-packages/
+WORKDIR /usr/local/lib/python3.9/site-packages/
 RUN find . -name "*dlib*" -exec tar -rf dlib.tar {} \;
 
-FROM python:3.7-slim-bullseye
+FROM python:3.9-slim-bullseye
 
 ### COPY DLIB ###
-WORKDIR /usr/local/lib/python3.7/site-packages/
-COPY --from=builder /usr/local/lib/python3.7/site-packages/dlib.tar .
+WORKDIR /usr/local/lib/python3.9/site-packages/
+COPY --from=builder /usr/local/lib/python3.9/site-packages/dlib.tar .
 RUN tar -xf dlib.tar
 WORKDIR /
 

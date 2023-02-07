@@ -18,7 +18,7 @@ __version__ = "0.8.11"
 
 
 class AIDaemon(Daemon):
-    def load(self):
+    def load(self) -> None:
         MODEL_PATH = os.environ.get("MODEL_PATH", "/opt/app/stable-diffusion")
         MODEL_DEVICE = os.environ.get("MODEL_DEVICE", "cuda:0")
         if MODEL_DEVICE.startswith("cuda") and not torch.cuda.is_available():
@@ -45,11 +45,30 @@ class AIDaemon(Daemon):
             steps_offset=1,
         )
 
-    def ai(self, source_file, prepared_file, **metadata):
+    def load_metadata(self, meta_file: Path) -> dict:
+        if not meta_file.is_file():
+            return {}
+        with open(meta_file, "r") as fp:
+            return json.load(fp)
+
+    def update_metadata(self, meta_file: Path, data: dict) -> None:
+        metadata = self.load_metadata(meta_file)
+        if "update_time" not in metadata:
+            metadata["update_time"] = time.time()
+        metadata.update(data)
+        with open(meta_file, "w") as fp:
+            json.dump(metadata, fp)
+
+    def ai(
+        self, source_file: Path, prepared_file: Path, meta_file: Path
+    ) -> None:
         try:
             MODEL_GUIDANCE_SCALE = float(
                 os.environ.get("MODEL_GUIDANCE_SCALE", 7.5)
             )
+
+            # Load metadata
+            metadata = self.load_metadata(meta_file)
 
             # Initialize
             with source_file.open("r") as fp:
@@ -136,14 +155,25 @@ class AIDaemon(Daemon):
                 cv2.imwrite(
                     str(image_file), cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
                 )
-
+            self.update_metadata(
+                meta_file,
+                {
+                    "processed": "true",
+                },
+            )
         except Exception as e:
             if os.environ.get("DEBUG", "false").lower() in ("true", "1", "on"):
                 print(traceback.format_exc())
+            self.update_metadata(
+                meta_file,
+                {
+                    "processed": "error",
+                },
+            )
 
         source_file.unlink()
 
-    def queue(self):
+    def queue(self) -> None:
         STAGED_PATH = os.environ.get("STAGED_PATH", "/tmp/ai/staged")
         SOURCE_PATH = os.environ.get("SOURCE_PATH", "/tmp/ai/source")
         PREPARED_PATH = os.environ.get("PREPARED_PATH", "/tmp/ai/prepared")
@@ -166,19 +196,6 @@ class AIDaemon(Daemon):
             staged_file = staged_files.pop(0)
 
             meta_file = staged_file.with_suffix(".json")
-            if meta_file.is_file():
-                with meta_file.open("r") as fp:
-                    try:
-                        image_metadata = json.load(fp)
-                    except:
-                        image_metadata = {}
-            image_metadata = {
-                **{
-                    "extension": staged_file.suffix,
-                },
-                **image_metadata,
-            }
-
             source_file = Path(SOURCE_PATH) / staged_file.name
             prepared_file = Path(PREPARED_PATH) / (
                 staged_file.stem
@@ -196,9 +213,9 @@ class AIDaemon(Daemon):
                     dst_fp.write(chunk)
 
             staged_file.unlink()
-            self.ai(source_file, prepared_file, **image_metadata)
+            self.ai(source_file, prepared_file, meta_file)
 
-    def run(self):
+    def run(self) -> None:
         signal.signal(signal.SIGCHLD, signal.SIG_IGN)
         while True:
             self.queue()

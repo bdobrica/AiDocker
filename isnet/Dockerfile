@@ -1,4 +1,4 @@
-FROM python:3.7-slim-bullseye
+FROM python:3.9-slim-bullseye
 
 ### CREATING FOLDERS ###
 RUN mkdir -p /opt/app/run
