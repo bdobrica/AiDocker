@@ -9,6 +9,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 import torch
+import torch.multiprocessing as mp
 from diffusers import AutoencoderKL, PNDMScheduler, UNet2DConditionModel
 from transformers import CLIPTextModel, CLIPTokenizer
 
@@ -25,18 +26,21 @@ class AIDaemon(Daemon):
             MODEL_DEVICE = "cpu"
 
         self.device = torch.device(MODEL_DEVICE)
+
+        # While the model can run both on CPU and GPU, let's load on CPU (safe memory)
+        cpu_device = torch.device("cpu")
         self.vae = AutoencoderKL.from_pretrained(
             MODEL_PATH, subfolder="vae", local_files_only=True
-        ).to(self.device)
+        ).to(cpu_device)
         self.tokenizer = CLIPTokenizer.from_pretrained(
             MODEL_PATH, subfolder="tokenizer", local_files_only=True
         )
         self.text_encoder = CLIPTextModel.from_pretrained(
             MODEL_PATH, subfolder="text_encoder", local_files_only=True
-        ).to(self.device)
+        ).to(cpu_device)
         self.unet = UNet2DConditionModel.from_pretrained(
             MODEL_PATH, subfolder="unet", local_files_only=True
-        ).to(self.device)
+        ).to(cpu_device)
         self.scheduler = PNDMScheduler(
             beta_start=0.00085,
             beta_end=0.012,
@@ -44,6 +48,15 @@ class AIDaemon(Daemon):
             skip_prk_steps=True,
             steps_offset=1,
         )
+    
+    def switch_device(self) -> None:
+        cpu_device = torch.device("cpu")
+        if self.device == cpu_device:
+            return
+        self.vae.to(self.device)
+        self.tokenizer.to(self.device)
+        self.text_encoder.to(self.device)
+        self.unet.to(self.device)
 
     def load_metadata(self, meta_file: Path) -> dict:
         if not meta_file.is_file():
@@ -69,6 +82,9 @@ class AIDaemon(Daemon):
 
             # Load metadata
             metadata = self.load_metadata(meta_file)
+
+            # Switch to the correct device
+            self.switch_device()
 
             # Initialize
             with source_file.open("r") as fp:
@@ -110,7 +126,7 @@ class AIDaemon(Daemon):
             )
             latents = latents.to(self.device)
 
-            self.scheduler.set_timesteps(inference_steps)
+            self.scheduler.set_timesteps(inference_steps, device=self.device)
             latents = latents * self.scheduler.init_noise_sigma
 
             for inference_step in self.scheduler.timesteps:
@@ -191,7 +207,7 @@ class AIDaemon(Daemon):
         source_files = [f for f in Path(SOURCE_PATH).glob("*") if f.is_file()]
         source_files_count = len(source_files)
 
-        while source_files_count < MAX_FORK and staged_files:
+        while len(mp.active_children()) < MAX_FORK and staged_files:
             source_files_count += 1
             staged_file = staged_files.pop(0)
 
@@ -213,14 +229,14 @@ class AIDaemon(Daemon):
                     dst_fp.write(chunk)
 
             staged_file.unlink()
-            self.ai(source_file, prepared_file, meta_file)
+            proc = mp.Process(target=self.ai, args=(source_file, prepared_file, meta_file))
+            proc.start()
 
     def run(self) -> None:
         signal.signal(signal.SIGCHLD, signal.SIG_IGN)
         while True:
             self.queue()
             time.sleep(1.0)
-
 
 if __name__ == "__main__":
     CHROOT_PATH = os.environ.get("CHROOT_PATH", "/opt/app")
