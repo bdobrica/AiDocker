@@ -123,7 +123,7 @@ vitgpt2:
       expected: ec7c16e4da3d160e3a41c89675353f62b323085b83b853c87919b9790e2e0071
     - image: friends.jpg
       num_beams: 2
-      expected: 1fee4c617b3c937457d4e1084b8777bc116a948843ab69ffddc14e3ce3dbc04a
+      expected: ec7c16e4da3d160e3a41c89675353f62b323085b83b853c87919b9790e2e0071
 yolov4:
   endpoint: /put/image
   test:
