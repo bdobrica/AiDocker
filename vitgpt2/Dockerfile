@@ -39,10 +39,11 @@ RUN mkdir -p /tmp/ai/prepared
 RUN apt-get update && apt-get install -y python3-opencv
 
 ### COPYING FILES ###
-COPY txt2img/container.yaml /opt/app
-COPY txt2img/requirements.txt /opt/app
-COPY txt2img/stable-diffusion /opt/app/stable-diffusion
-COPY txt2img/ai.py /opt/app
+COPY vitgpt2/container.yaml /opt/app
+COPY vitgpt2/requirements.txt /opt/app
+COPY vitgpt2/vitgpt2 /opt/app/vitgpt2
+COPY vitgpt2/pytorch_model.bin /opt/app/vitgpt2
+COPY vitgpt2/ai.py /opt/app
 COPY daemon /opt/app/daemon
 COPY cleaner.py /opt/app
 COPY mimetypes.json /opt/app
