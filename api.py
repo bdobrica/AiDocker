@@ -323,6 +323,8 @@ def get_json():
             "token": file_token,
             "status": "success",
             "version": __version__,
+            "inference_time": float(file_metadata.get("update_time", 0))
+            - float(file_metadata.get("upload_time", 0)),
         }
         if len(prepared_files) == 1:
             output["url"] = get_url(prepared_files[0])
