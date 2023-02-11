@@ -142,6 +142,9 @@ if __name__ == "__main__":
             out_path = Path("out") / model / str(COUNTER)
             out_path.mkdir(parents=True, exist_ok=True)
 
+            info(f"#{COUNTER} Testing model {model} ...")
+            info("=" * 70)
+
             expected = test.get("expected")
             del test["expected"]
 
@@ -150,7 +153,7 @@ if __name__ == "__main__":
             file_token = response.get("token")
             if not file_token:
                 error(
-                    "Could not correctly call put request with test"
+                    f"#{COUNTER} Could not correctly call put request with test"
                     f" {str(test)} to {url}/{endpoint}."
                 )
                 continue
@@ -162,7 +165,7 @@ if __name__ == "__main__":
 
             if json_response.get("status") != "success":
                 error(
-                    "Could not correctly retrieve the info"
+                    f"#{COUNTER} Could not correctly retrieve the info"
                     f" using {file_token} for test {str(test)}."
                 )
                 continue
@@ -170,7 +173,7 @@ if __name__ == "__main__":
             if json_response.get("url"):
                 image_url = json_response.get("url")
                 info(
-                    f"The model {model} produces an output under"
+                    f"#{COUNTER} The model {model} produces an output under"
                     f" {url}/{image_url}."
                 )
                 image_content = get_request(f"{url}/{image_url}")
@@ -183,9 +186,13 @@ if __name__ == "__main__":
                 h = h.hexdigest()
                 info(f"Image hash: {h}")
                 if h != expected:
-                    error(f"Failed testing model {model} with {str(test)}.")
+                    error(
+                        f"#{COUNTER} Failed testing model {model} with {str(test)}."
+                    )
                 else:
-                    ok(f"Passed testing model {model} with {str(test)}.")
+                    ok(
+                        f"#{COUNTER} Passed testing model {model} with {str(test)}."
+                    )
             else:
                 if "results" in json_response:
                     info(f"The model {model} produces a JSON response.")
@@ -196,15 +203,15 @@ if __name__ == "__main__":
                     info(f"JSON hash: {h}")
                     if h != expected:
                         error(
-                            f"Failed testing model {model} with test {str(test)}."
+                            f"#{COUNTER} Failed testing model {model} with test {str(test)}."
                         )
                     else:
                         ok(
-                            f"Passed testing model {model} with test {str(test)}."
+                            f"#{COUNTER} Passed testing model {model} with test {str(test)}."
                         )
                 else:
                     warn(
-                        f"The model {model} doesn't produce any useful response."
+                        f"#{COUNTER} The model {model} doesn't produce any useful response."
                     )
     if FAILED == 0:
         if PASSED < COUNTER:
