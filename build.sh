@@ -19,7 +19,8 @@ function build_container {
             fi
         done
     fi
-    docker build -f "${dockerfile}" -t "${model_name}" .
+    
+    sudo docker build -f "${dockerfile}" -t "${model_name}" .
 }
 
 
