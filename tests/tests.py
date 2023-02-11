@@ -142,6 +142,7 @@ if __name__ == "__main__":
             out_path = Path("out") / model / str(COUNTER)
             out_path.mkdir(parents=True, exist_ok=True)
 
+            info("=" * 80)
             info(f"#{COUNTER} Testing model {model} ...")
             info("=" * 80)
 
