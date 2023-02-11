@@ -58,7 +58,7 @@ class AIDaemon(Daemon):
                 )
             except:
                 model.load_darknet_weights(MODEL_PATH)
-            model.to(device).eval()
+            model.to(self.device).eval()
 
             # Get names and colors
             with Path(CLASSES_PATH).open("r") as f:
@@ -110,7 +110,7 @@ class AIDaemon(Daemon):
             # Convert the image to the expected format
             img = img[:, :, ::-1].transpose(2, 0, 1)  # BGR to RGB, to 3x416x416
             img = np.ascontiguousarray(img)
-            img = torch.from_numpy(img).to(device)
+            img = torch.from_numpy(img).to(self.device)
             img = img.float() / 255.0
             if img.ndimension() == 3:
                 img = img.unsqueeze(0)
