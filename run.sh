@@ -80,15 +80,14 @@ if [ -z "${container}" ]; then
 fi
 
 if [ "${container}" != "all" ]; then
-    echo "Running ${container} ..."
     run_container "${container}/Dockerfile"
 else
     if [ "${debug_mode}" = true ]; then
         echo "Debug mode is not supported for all containers"
         exit 1
     fi
+    echo "Running all containers ..."
     find . -name "Dockerfile" | while read dockerfile; do
-        echo "Running all containers ..."
         run_container "${dockerfile}"
     done
 fi
