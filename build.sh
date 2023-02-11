@@ -46,7 +46,6 @@ function parse_arguments {
                 find . -name "Dockerfile" | while read dockerfile; do
                     build_container "${dockerfile}"
                 done
-                done
                 ;;
             *)
                 echo "Invalid option: -${OPTARG}"
