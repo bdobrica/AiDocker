@@ -151,7 +151,7 @@ class AIDaemon(Daemon):
         signal.signal(signal.SIGCHLD, signal.SIG_IGN)
         while True:
             self.queue()
-            time.sleep(1.0)
+            time.sleep(float(os.environ.get("QUEUE_LATENCY", 1.0)))
 
 
 if __name__ == "__main__":

@@ -48,7 +48,7 @@ class AIDaemon(Daemon):
             skip_prk_steps=True,
             steps_offset=1,
         )
-    
+
     def switch_device(self) -> None:
         cpu_device = torch.device("cpu")
         if self.device == cpu_device:
@@ -229,14 +229,17 @@ class AIDaemon(Daemon):
                     dst_fp.write(chunk)
 
             staged_file.unlink()
-            proc = mp.Process(target=self.ai, args=(source_file, prepared_file, meta_file))
+            proc = mp.Process(
+                target=self.ai, args=(source_file, prepared_file, meta_file)
+            )
             proc.start()
 
     def run(self) -> None:
         signal.signal(signal.SIGCHLD, signal.SIG_IGN)
         while True:
             self.queue()
-            time.sleep(1.0)
+            time.sleep(float(os.environ.get("QUEUE_LATENCY", 1.0)))
+
 
 if __name__ == "__main__":
     CHROOT_PATH = os.environ.get("CHROOT_PATH", "/opt/app")
