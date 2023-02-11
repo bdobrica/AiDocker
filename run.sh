@@ -23,7 +23,7 @@ function run_container {
         max_port="${port}"
     fi
 
-    docker run --rm --env-file ./docker.env -d -p 127.0.0.1:${port}:5000/tcp ${model_name}
+    sudo docker run --rm --env-file ./docker.env -d -p 127.0.0.1:${port}:5000/tcp ${model_name}
 }
 
 function parse_arguments {
