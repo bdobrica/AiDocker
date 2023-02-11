@@ -28,7 +28,7 @@ function run_container {
 
 function parse_arguments {
     while getopts ":hc:a" opt; do
-        case "${op}t" in
+        case "${opt}" in
             h)
                 echo "Usage: $0 [-h] [-c <container>] [-a]"
                 echo "  -h  Show this help message"
@@ -58,4 +58,4 @@ function parse_arguments {
     done
 }
 
-parse_arguments ${@}
+parse_arguments "$@"
