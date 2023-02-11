@@ -43,10 +43,10 @@ function run_container {
 
     if [ "${debug_mode}" = true ]; then
         echo "Running ${model_name} on port ${port} in debug mode ..."
-        sudo docker run "${docker_args[@]}" --rm --env-file ./docker.env -it --entrypoint /bin/bash -p 127.0.0.1:${port}:5000/tcp ${model_name}
+        sudo docker run ${docker_args[@]} --rm --env-file ./docker.env -it --entrypoint /bin/bash -p 127.0.0.1:${port}:5000/tcp ${model_name}
     else
         echo "Running ${model_name} on port ${port} ..."
-        sudo docker run "${docker_args[@]}" --rm --env-file ./docker.env -d -p 127.0.0.1:${port}:5000/tcp ${model_name}
+        sudo docker run ${docker_args[@]} --rm --env-file ./docker.env -d -p 127.0.0.1:${port}:5000/tcp ${model_name}
     fi
 }
 
