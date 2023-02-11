@@ -2,6 +2,7 @@
 
 # --events-backend=file
 max_port=5000
+debug_mode=false
 
 function run_container {
     local dockerfile="$1"
@@ -23,17 +24,24 @@ function run_container {
         max_port="${port}"
     fi
 
-    sudo docker run --rm --env-file ./docker.env -d -p 127.0.0.1:${port}:5000/tcp ${model_name}
+    if [ "${debug_mode}" = true ]; then
+        echo "Running ${model_name} on port ${port} in debug mode ..."
+        sudo docker run --rm --env-file ./docker.env -it --entrypoint /bin/bash -p 127.0.0.1:${port}:5000/tcp ${model_name}
+    else
+        echo "Running ${model_name} on port ${port} ..."
+        sudo docker run --rm --env-file ./docker.env -d -p 127.0.0.1:${port}:5000/tcp ${model_name}
+    fi
 }
 
 function parse_arguments {
-    while getopts ":hc:a" opt; do
+    while getopts ":hc:ad" opt; do
         case "${opt}" in
             h)
                 echo "Usage: $0 [-h] [-c <container>] [-a]"
                 echo "  -h  Show this help message"
                 echo "  -c  Run only the specified container"
                 echo "  -a  Run all containers"
+                echo "  -d  Enable debug mode"
                 exit 0
                 ;;
             c)
@@ -49,6 +57,10 @@ function parse_arguments {
                 find . -name "Dockerfile" | while read dockerfile; do
                     run_container "${dockerfile}"
                 done
+                ;;
+            d)
+                echo "Debug mode enabled"
+                debug_mode=true
                 ;;
             *)
                 echo "Invalid option: -${OPTARG}"
