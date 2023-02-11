@@ -139,11 +139,13 @@ if __name__ == "__main__":
             continue
         for test in tests.get("test"):
             COUNTER += 1
+            out_path = Path("out") / model / str(COUNTER)
+            out_path.mkdir(parents=True, exist_ok=True)
 
             expected = test.get("expected")
             del test["expected"]
 
-            # upload image
+            # send the AI request
             response = put_request(f"{url}/{endpoint}", test)
             file_token = response.get("token")
             if not file_token:
@@ -155,6 +157,9 @@ if __name__ == "__main__":
 
             json_response = get_json(f"{url}/get/json", file_token)
             info(f"JSON response: {json_response}")
+            with open(out_path / "response.json", "w") as fp:
+                json.dump(json_response, fp, indent=4)
+
             if json_response.get("status") != "success":
                 error(
                     "Could not correctly retrieve the info"
@@ -169,6 +174,10 @@ if __name__ == "__main__":
                     f" {url}/{image_url}."
                 )
                 image_content = get_request(f"{url}/{image_url}")
+
+                with open(out_path / Path(image_url).name, "wb") as fp:
+                    fp.write(image_content)
+
                 h = hashlib.sha256()
                 h.update(image_content)
                 h = h.hexdigest()
