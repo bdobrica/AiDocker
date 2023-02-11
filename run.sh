@@ -4,6 +4,22 @@
 max_port=5000
 debug_mode=false
 container=""
+docker_args=()
+
+function detect_cuda {
+    if command -v nvidia-smi &> /dev/null; then
+        echo "nvidia-smi found, checking free GPU memory ..."
+        free_gpu=$(nvidia-smi --query-gpu=memory.free --format=csv,noheader,nounits | sort -n | head -n 1)
+        if [ "${free_gpu}" -lt 1000 ]; then
+            echo "No free GPU memory found, using CPU"
+            return
+        fi
+        docker_args+=("--gpus all")
+    else
+        echo "nvidia-smi not found, using CPU"
+        return
+    fi
+}
 
 function run_container {
     local dockerfile="$1"
@@ -27,10 +43,10 @@ function run_container {
 
     if [ "${debug_mode}" = true ]; then
         echo "Running ${model_name} on port ${port} in debug mode ..."
-        sudo docker run --rm --env-file ./docker.env -it --entrypoint /bin/bash -p 127.0.0.1:${port}:5000/tcp ${model_name}
+        sudo docker run "${docker_args[@]}" --rm --env-file ./docker.env -it --entrypoint /bin/bash -p 127.0.0.1:${port}:5000/tcp ${model_name}
     else
         echo "Running ${model_name} on port ${port} ..."
-        sudo docker run --rm --env-file ./docker.env -d -p 127.0.0.1:${port}:5000/tcp ${model_name}
+        sudo docker run "${docker_args[@]}" --rm --env-file ./docker.env -d -p 127.0.0.1:${port}:5000/tcp ${model_name}
     fi
 }
 
@@ -72,6 +88,7 @@ function parse_arguments {
 }
 
 parse_arguments "$@"
+detect_cuda
 
 if [ -z "${container}" ]; then
     echo "No container specified"
