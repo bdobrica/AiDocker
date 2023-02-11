@@ -14,6 +14,7 @@ function detect_cuda {
             echo "No free GPU memory found, using CPU"
             return
         fi
+        echo "Free GPU memory found, using GPU"
         docker_args+=("--gpus" "all")
     else
         echo "nvidia-smi not found, using CPU"
