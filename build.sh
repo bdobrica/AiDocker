@@ -24,8 +24,8 @@ function build_container {
 
 
 function parse_arguments {
-    while getopts ":hc:a" opt "$@"; do
-        case "${op}t" in
+    while getopts ":hc:a" opt; do
+        case "${opt}" in
             h)
                 echo "Usage: $0 [-h] [-c <container>] [-a]"
                 echo "  -h  Show this help message"
