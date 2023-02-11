@@ -143,7 +143,7 @@ if __name__ == "__main__":
             out_path.mkdir(parents=True, exist_ok=True)
 
             info(f"#{COUNTER} Testing model {model} ...")
-            info("=" * 70)
+            info("=" * 80)
 
             expected = test.get("expected")
             del test["expected"]
@@ -213,6 +213,9 @@ if __name__ == "__main__":
                     warn(
                         f"#{COUNTER} The model {model} doesn't produce any useful response."
                     )
+    info("=" * 80)
+    info("=" * 80)
+
     if FAILED == 0:
         if PASSED < COUNTER:
             warn(f"Passed {PASSED} tests / skipped {COUNTER - PASSED}.")
