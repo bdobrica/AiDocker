@@ -6,15 +6,77 @@ import sys
 import time
 import traceback
 from pathlib import Path
+from typing import List
 
 import cv2
 import numpy as np
 import torch
 from facenet_pytorch import MTCNN
 
-from daemon import Daemon
+from daemon import AiBatch as Batch
+from daemon import AiBatchDaemon as Daemon
 
 __version__ = "0.8.12"
+
+
+class AiBatch(Batch):
+    ANGLES = {
+        None: "normal",
+        cv2.ROTATE_180: "180",
+    }
+
+    @staticmethod
+    def flatten_list(list_of_lists: List[List]) -> List:
+        return [item for sublist in list_of_lists for item in sublist]
+
+    @staticmethod
+    def rotate_p(x: float, y: float, im_w: int, im_h: int, angle: int):
+        if angle == cv2.ROTATE_90_CLOCKWISE:
+            res = (y, im_h - x)
+        elif angle == cv2.ROTATE_180:
+            res = (im_w - x, im_h - y)
+        elif angle == cv2.ROTATE_90_COUNTERCLOCKWISE:
+            res = (im_w - y, x)
+        else:
+            res = (x, y)
+        return res
+
+    @staticmethod
+    def rotate_box(box: tuple, im_w: int, im_h: int, angle: int):
+        x1, y1, x2, y2 = box
+        x1, y1 = AiBatch.rotate_p(x1, y1, im_w, im_h, angle)
+        x2, y2 = AiBatch.rotate_p(x2, y2, im_w, im_h, angle)
+        return (
+            min(x1, x2),
+            min(y1, y2),
+            max(x1, x2),
+            max(y1, y2),
+        )
+
+    @staticmethod
+    def intersect_box(box_A: tuple, box_B: tuple):
+        xa, ya, xb, yb = box_A
+        xc, yc, xd, yd = box_B
+        xA = max(xa, xc)
+        yA = max(ya, yc)
+        xB = min(xb, xd)
+        yB = min(yb, yd)
+        return abs(max(0, xB - xA) * max(0, yB - yA))
+
+    def prepare(self) -> any:
+        # Load image
+        img = cv2.imread(source_file.as_posix())
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        self.shape = img.shape
+
+                        detected, confs = model.detect(
+                    im if angle is None else cv2.rotate(im, angle)
+                )
+
+        # Detect faces
+
+    def serve(self, inference_data: any) -> None:
+        return super().serve(inference_data)
 
 
 class AIDaemon(Daemon):
@@ -48,51 +110,6 @@ class AIDaemon(Daemon):
 
             # The MTCNN model has the weights inside facenet_pytorch
             model = MTCNN(keep_all=True, device=self.device)
-
-            # Load image
-            im = cv2.imread(str(source_file))
-            im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
-            im_h, im_w, _ = im.shape
-
-            # Data engineering tools
-            def rotate_p(x: float, y: float, im_w: int, im_h: int, angle: int):
-                if angle == cv2.ROTATE_90_CLOCKWISE:
-                    res = (y, im_h - x)
-                elif angle == cv2.ROTATE_180:
-                    res = (im_w - x, im_h - y)
-                elif angle == cv2.ROTATE_90_COUNTERCLOCKWISE:
-                    res = (im_w - y, x)
-                else:
-                    res = (x, y)
-                return res
-
-            def rotate_box(box: tuple, im_w: int, im_h: int, angle: int):
-                x1, y1, x2, y2 = box
-                x1, y1 = rotate_p(x1, y1, im_w, im_h, angle)
-                x2, y2 = rotate_p(x2, y2, im_w, im_h, angle)
-                return (
-                    min(x1, x2),
-                    min(y1, y2),
-                    max(x1, x2),
-                    max(y1, y2),
-                )
-
-            def intersect_box(box_A: tuple, box_B: tuple):
-                xa, ya, xb, yb = box_A
-                xc, yc, xd, yd = box_B
-                xA = max(xa, xc)
-                yA = max(ya, yc)
-                xB = min(xb, xd)
-                yB = min(yb, yd)
-                return abs(max(0, xB - xA) * max(0, yB - yA))
-
-            # Detect faces
-            angles = {
-                None: "normal",
-                # cv2.ROTATE_90_CLOCKWISE: "90cw",
-                cv2.ROTATE_180: "180",
-                # cv2.ROTATE_90_COUNTERCLOCKWISE: "90ccw",
-            }
 
             # Check different orientations and choose the best faces from each
             faces = []
