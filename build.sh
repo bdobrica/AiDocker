@@ -1,10 +1,21 @@
 #!/bin/bash
 
+function detect_docker_command {
+    if [ -x "$(command -v docker)" ]; then
+        echo "sudo docker"
+    elif [ -x "$(command -v podman)" ]; then
+        echo "podman"
+    else
+        echo "sudo docker"
+    fi
+}
+
 function build_container {
     local dockerfile="$1"
     local model_dir=$(dirname ${dockerfile})
     local model_name=$(basename ${model_dir})
     local weights_file="${model_dir}/weights.txt"
+    local docker=$(detect_docker_command)
 
     echo "Building ${model_name} ..."
 
@@ -20,7 +31,7 @@ function build_container {
         done
     fi
     
-    sudo docker build -f "${dockerfile}" -t "${model_name}" .
+    $docker build -f "${dockerfile}" -t "${model_name}" .
 }
 
 
