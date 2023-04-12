@@ -6,6 +6,16 @@ debug_mode=false
 container=""
 docker_args=()
 
+function detect_docker_command {
+    if [ -x "$(command -v docker)" ]; then
+        echo "sudo docker"
+    elif [ -x "$(command -v podman)" ]; then
+        echo "podman"
+    else
+        echo "sudo docker"
+    fi
+}
+
 function detect_cuda {
     if command -v nvidia-smi &> /dev/null; then
         echo "nvidia-smi found, checking free GPU memory ..."
@@ -26,6 +36,7 @@ function run_container {
     local dockerfile="$1"
     local model_dir=$(dirname "${dockerfile}")
     local model_name=$(basename "${model_dir}")
+    local docker=$(detect_docker_command)
 
     if [ -f "${model_dir}/port.txt" ]; then
         port=$(cat "${model_dir}/port.txt")
@@ -44,10 +55,10 @@ function run_container {
 
     if [ "${debug_mode}" = true ]; then
         echo "Running ${model_name} on port ${port} in debug mode ..."
-        sudo docker run ${docker_args[@]} --rm --env-file ./docker.env -it --entrypoint /bin/bash -p 127.0.0.1:${port}:5000/tcp ${model_name}
+        $docker run ${docker_args[@]} --rm --env-file ./docker.env -it --entrypoint /bin/bash -p 127.0.0.1:${port}:5000/tcp ${model_name}
     else
         echo "Running ${model_name} on port ${port} ..."
-        sudo docker run ${docker_args[@]} --rm --env-file ./docker.env -d -p 127.0.0.1:${port}:5000/tcp ${model_name}
+        $docker run ${docker_args[@]} --rm --env-file ./docker.env -d -p 127.0.0.1:${port}:5000/tcp ${model_name}
     fi
 }
 
