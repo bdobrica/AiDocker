@@ -55,8 +55,8 @@ RUN chmod +x /opt/app/api.py
 RUN chmod +x /opt/app/entry.sh
 
 ### INSTALLING OTHER REQUIRED PACKAGES ###
-RUN python3 -m pip install --progress-bar off --upgrade pip
-RUN python3 -m pip install --progress-bar off -r /opt/app/requirements.txt
+RUN python3 -m pip install --upgrade pip
+RUN python3 -m pip install -r /opt/app/requirements.txt
 
 ### RUNNING THE SCRIPT ###
 ENTRYPOINT ["/opt/app/entry.sh"]
