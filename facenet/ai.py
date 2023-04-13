@@ -22,6 +22,7 @@ class AiBatch(Batch):
         cv2.ROTATE_180: "180",
     }
     BORDER_COLOR = (114, 114, 114)
+    DEFAULT_EXTENSION = "json"
 
     @staticmethod
     def load_image(file_path: Path, angle: Optional[int] = None) -> np.ndarray:
