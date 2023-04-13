@@ -3,6 +3,7 @@ import os
 import signal
 import time
 from pathlib import Path
+from typing import Type
 
 from .aiinput import AiInput
 from .daemon import Daemon
@@ -11,6 +12,10 @@ __version__ = "0.8.12"
 
 
 class AiForkDaemon(Daemon):
+    def __init__(self, input_type: Type[AiInput], *args, **kwargs):
+        self.input_type = input_type
+        super().__init__(*args, **kwargs)
+
     def ai(self, input: AiInput):
         raise NotImplementedError(
             "You must implement ai(source_file: Path, prepared_file: Path, meta_file: Path)"
@@ -29,8 +34,8 @@ class AiForkDaemon(Daemon):
             key=lambda f: f.stat().st_mtime,
         )
 
-        while AiInput.get_queue_size() < MAX_FORK and staged_files:
-            input = AiInput(staged_files.pop(0))
+        while self.input_type.get_queue_size() < MAX_FORK and staged_files:
+            input = self.input_type(staged_files.pop(0))
             self.ai(input)
 
     def run(self):

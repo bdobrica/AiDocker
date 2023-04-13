@@ -178,7 +178,7 @@ class AiBatch(Batch):
                 json.dump(results, fp)
 
 
-class AIDaemon(Daemon):
+class AiDaemon(Daemon):
     def load(self) -> None:
         # Initialize
         MODEL_DEVICE = os.environ.get("MODEL_DEVICE", "cpu")
@@ -206,4 +206,4 @@ if __name__ == "__main__":
     CHROOT_PATH = os.environ.get("CHROOT_PATH", "/opt/app")
     PIDFILE_PATH = os.environ.get("PIDFILE_PATH", "/opt/app/run/ai.pid")
 
-    AIDaemon(pidfile=PIDFILE_PATH, chroot=CHROOT_PATH).start()
+    AiDaemon(batch_type=AiBatch, pidfile=PIDFILE_PATH, chroot=CHROOT_PATH).start()

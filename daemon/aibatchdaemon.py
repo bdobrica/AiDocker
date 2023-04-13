@@ -3,6 +3,7 @@ import os
 import signal
 import time
 from pathlib import Path
+from typing import Type
 
 from .aibatch import AiBatch
 from .daemon import Daemon
@@ -11,6 +12,11 @@ __version__ = "0.8.12"
 
 
 class AiBatchDaemon(Daemon):
+    def __init__(self, batch_type: Type[AiBatch], *args, **kwargs):
+        self.batch_type = batch_type
+        super().__init__(*args, **kwargs)
+
+
     def ai(self, batch: AiBatch):
         raise NotADirectoryError("You must implement ai(batch: AiBatch)")
 
@@ -28,7 +34,7 @@ class AiBatchDaemon(Daemon):
         )
 
         while staged_files:
-            batch = AiBatch(staged_files=staged_files[:BATCH_SIZE])
+            batch = self.batch_type(staged_files=staged_files[:BATCH_SIZE])
             staged_files = staged_files[BATCH_SIZE:]
             self.ai(batch)
 
