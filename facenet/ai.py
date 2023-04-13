@@ -158,7 +158,7 @@ class AiBatch(Batch):
                         )
                 faces.extend(faces_)
 
-            results = [
+            results = {"results": [
                 {
                     "x": float(0.5 * (face["box"][0] + face["box"][2])),
                     "y": float(0.5 * (face["box"][1] + face["box"][3])),
@@ -172,7 +172,7 @@ class AiBatch(Batch):
                     "orientation": face["orientation"],
                 }
                 for face in faces
-            ]
+            ]}
 
             # Save results
             with self.prepared_files[file_idx].open("w") as fp:
