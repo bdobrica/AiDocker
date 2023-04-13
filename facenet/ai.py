@@ -103,7 +103,7 @@ class AiBatch(Batch):
         ]
 
         # Build batch input
-        return np.stack([metadata["image"] for metadata in self.metadata])
+        return np.stack(images)
 
     def serve(self, inference_data: Tuple[np.ndarray, np.ndarray]) -> None:
         for file_idx in range(len(self.metadata)):
@@ -113,7 +113,7 @@ class AiBatch(Batch):
                 image_num = file_idx * len(AiBatch.ANGLES) + angle_idx
                 shape = self.shapes[image_num]
                 detections = inference_data[0][image_num]
-                confidences = inference_data[0][image_num]
+                confidences = inference_data[1][image_num]
                 # Skip no detections
                 if detections is None:
                     continue
@@ -194,7 +194,7 @@ class AiDaemon(Daemon):
             model_input = batch.prepare()
             model_output = self.model.detect(model_input)
             batch.serve(model_output)
-            batch.update_metadata({"processed", "true"})
+            batch.update_metadata({"processed": "true"})
 
         except Exception as e:
             batch.update_metadata({"processed": "error"})
