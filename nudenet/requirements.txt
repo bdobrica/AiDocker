@@ -1,4 +1,5 @@
 flask
+pyyaml
 numpy
 opencv-python
 scikit-image

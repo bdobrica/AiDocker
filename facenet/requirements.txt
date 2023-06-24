@@ -1,3 +1,4 @@
 flask
+pyyaml
 opencv-python
 facenet-pytorch

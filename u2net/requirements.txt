@@ -1,4 +1,5 @@
 flask
+pyyaml
 numpy
 torch
 torchvision

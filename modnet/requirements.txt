@@ -1,4 +1,5 @@
 flask
+pyyaml
 protobuf
 onnx
 onnxruntime
