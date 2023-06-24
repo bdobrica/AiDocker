@@ -1,0 +1,16 @@
+name: srfbnet
+description: Given an image, upscale the image by a factor of 2, 3 or 4 and return the upscaled image.
+port: 5007
+weights:
+  - srfbnet/gmfn_x2.pth
+  - srfbnet/gmfn_x3.pth
+  - srfbnet/gmfn_x4.pth
+input:
+  endpoint: /put/image
+  required:
+    image: image
+  parameters:
+    scale: number
+output:
+  endpoint: /get/image
+  type: image

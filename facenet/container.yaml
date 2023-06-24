@@ -1,0 +1,12 @@
+name: facenet
+description: Given an image, detect and extract human faces from the images.
+port: 5010
+weights:
+input:
+  endpoint: /put/image
+  required:
+    image: image
+  parameters:
+output:
+  endpoint: /get/json
+  type: json

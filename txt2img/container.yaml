@@ -1,0 +1,18 @@
+name: txt2img
+description: 
+port: 5009
+weights:
+  - txt2img/stable-diffusion/text_encoder/pytorch_model.bin
+  - txt2img/stable-diffusion/unet/diffusion_pytorch_model.bin
+  - txt2img/stable-diffusion/vae/diffusion_pytorch_model.bin
+input:
+  endpoint: /put/text
+  required:
+    text: text
+  parameters:
+    samples: number
+    image_height: number
+    image_width: number
+output:
+  endpoint: /get/images
+  type: images

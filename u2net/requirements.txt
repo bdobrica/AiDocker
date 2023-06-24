@@ -1,5 +1,5 @@
 flask
-numpy==1.15.2
+numpy
 torch
 torchvision
 opencv-python

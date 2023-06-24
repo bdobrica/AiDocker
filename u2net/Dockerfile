@@ -1,4 +1,4 @@
-FROM python:3.7-slim-bullseye
+FROM python:3.9-slim-bullseye
 
 ### CREATING FOLDERS ###
 RUN mkdir -p /opt/app/run
@@ -10,6 +10,7 @@ RUN mkdir -p /tmp/ai/prepared
 RUN apt-get update && apt-get install -y python3-opencv
 
 ### COPYING FILES ###
+COPY u2net/container.yaml /opt/app
 COPY u2net/requirements.txt /opt/app
 COPY u2net/u2net.pth /opt/app
 COPY u2net/u2net /opt/app/u2net

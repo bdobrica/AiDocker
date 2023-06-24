@@ -1,0 +1,17 @@
+name: gfm34b2tt
+description: Given an image, extract the background of the image and keep only what is considered foregrownd.
+port: 5005
+weights:
+  - gfm34b2tt/gfm_r34_2b_tt.pth
+  - pytorch/resnet34-b627a593.pth
+input:
+  endpoint: /put/image
+  required:
+    image: image
+  parameters:
+    background:
+      - color
+      - url
+output:
+  endpoint: /get/image
+  type: image

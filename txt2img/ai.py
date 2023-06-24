@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
-import json
 import os
-import signal
-import sys
-import time
+import traceback
 from pathlib import Path
+from typing import List
 
 import cv2
 import numpy as np
@@ -12,29 +10,87 @@ import torch
 from diffusers import AutoencoderKL, PNDMScheduler, UNet2DConditionModel
 from transformers import CLIPTextModel, CLIPTokenizer
 
-from daemon import Daemon
+from daemon import AiBatch as Batch
+from daemon import AiBatchDaemon as Daemon
 
-__version__ = "0.8.7"
+__version__ = "0.8.12"
+
+
+class AiBatch(Batch):
+    @staticmethod
+    def flatten_list(list_of_lists: List[List]) -> List:
+        return [item for sublist in list_of_lists for item in sublist]
+
+    @staticmethod
+    def load_source(source_file: Path) -> str:
+        with open(source_file, "r") as fp:
+            return fp.read().strip()
+
+    @staticmethod
+    def save_image(image: np.ndarray, prepared_file: Path, idx: int) -> None:
+        image_file = prepared_file.parent / (
+            prepared_file.stem + "_{0:02x}".format(idx) + prepared_file.suffix
+        )
+        cv2.imwrite(str(image_file), cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
+
+    @property
+    def height(self) -> int:
+        return max([meta.get("image_height", 512) for meta in self.metadata])
+
+    @property
+    def width(self) -> int:
+        return max([meta.get("image_width", 512) for meta in self.metadata])
+
+    @property
+    def inference_steps(self) -> int:
+        return sum([meta.get("inference_steps", 20) for meta in self.metadata])
+
+    def prepare(self) -> List[str]:
+        return AiBatch.flatten_list(
+            [
+                [AiBatch.load_source(source_file)] * meta.get("samples", 1)
+                for source_file, meta in zip(self.source_files, self.metadata)
+            ]
+        )
+
+    def serve(self, inference_data: np.ndarray) -> None:
+        prepared_files = AiBatch.flatten_list(
+            [
+                [prepared_file] * meta.get("samples", 1)
+                for prepared_file, meta in zip(
+                    self.prepared_files, self.metadata
+                )
+            ]
+        )
+        indices = AiBatch.flatten_list(
+            [list(range(meta.get("samples", 1))) for meta in self.metadata]
+        )
+        _ = [
+            AiBatch.save_image(data, prepared_files[idx], indices[idx])
+            for idx, data in enumerate(inference_data)
+        ]
 
 
 class AIDaemon(Daemon):
-    def initialize(self, model_path: str):
-        MODEL_DEVICE = os.environ.get("MODEL_DEVICE", "cpu")
-        if MODEL_DEVICE == "cuda" and not torch.cuda.is_available():
+    def load(self) -> None:
+        MODEL_PATH = os.environ.get("MODEL_PATH", "/opt/app/stable-diffusion")
+        MODEL_DEVICE = os.environ.get("MODEL_DEVICE", "cuda:0")
+        if MODEL_DEVICE.startswith("cuda") and not torch.cuda.is_available():
             MODEL_DEVICE = "cpu"
 
         self.device = torch.device(MODEL_DEVICE)
+
         self.vae = AutoencoderKL.from_pretrained(
-            model_path, subfolder="vae", local_files_only=True
+            MODEL_PATH, subfolder="vae", local_files_only=True
         ).to(self.device)
         self.tokenizer = CLIPTokenizer.from_pretrained(
-            model_path, subfolder="tokenizer", local_files_only=True
+            MODEL_PATH, subfolder="tokenizer", local_files_only=True
         )
         self.text_encoder = CLIPTextModel.from_pretrained(
-            model_path, subfolder="text_encoder", local_files_only=True
-        )
+            MODEL_PATH, subfolder="text_encoder", local_files_only=True
+        ).to(self.device)
         self.unet = UNet2DConditionModel.from_pretrained(
-            model_path, subfolder="unet", local_files_only=True
+            MODEL_PATH, subfolder="unet", local_files_only=True
         ).to(self.device)
         self.scheduler = PNDMScheduler(
             beta_start=0.00085,
@@ -44,25 +100,16 @@ class AIDaemon(Daemon):
             steps_offset=1,
         )
 
-    def ai(self, source_file, prepared_file, **metadata):
+    def ai(self, batch: AiBatch) -> None:
         try:
-            MODEL_PATH = os.environ.get(
-                "MODEL_PATH", "/opt/app/stable-diffusion"
-            )
-
             MODEL_GUIDANCE_SCALE = float(
                 os.environ.get("MODEL_GUIDANCE_SCALE", 7.5)
             )
 
-            # Initialize
-            prompt = metadata.get("prompt", "")
-            samples = int(metadata.get("samples", 1))
-            height = metadata.get("image_height", 512)
-            width = metadata.get("image_width", 512)
-            inference_steps = metadata.get("inference_steps", 20)
             generator = torch.manual_seed(42)
 
-            prompt = [prompt] * samples
+            prompt = batch.prepare()
+            samples = len(prompt)
 
             text_input = self.tokenizer(
                 prompt,
@@ -88,15 +135,22 @@ class AIDaemon(Daemon):
 
             text_embeddings = torch.cat([uncond_embeddings, text_embeddings])
             latents = torch.randn(
-                (samples, self.unet.in_channels, height // 8, width // 8),
+                (
+                    samples,
+                    self.unet.in_channels,
+                    batch.height // 8,
+                    batch.width // 8,
+                ),
                 generator=generator,
             )
             latents = latents.to(self.device)
 
-            self.scheduler.set_timesteps(inference_steps)
+            self.scheduler.set_timesteps(
+                batch.inference_steps, device=self.device
+            )
             latents = latents * self.scheduler.init_noise_sigma
 
-            for inference_step in range(inference_steps):
+            for inference_step in self.scheduler.timesteps:
                 # expand the latents if we are doing classifier-free guidance to avoid doing two forward passes.
                 latent_model_input = torch.cat([latents] * 2)
 
@@ -124,90 +178,18 @@ class AIDaemon(Daemon):
                 ).prev_sample
 
             # scale and decode the image latents with vae
-            start = time.perf_counter()
             latents = 1 / 0.18215 * latents
-            image = self.vae.decode(latents).sample
-            image = (image / 2 + 0.5).clamp(0, 1)
-            image = image.detach().cpu().permute(0, 2, 3, 1).numpy()
-            images = (image * 255).round().astype("uint8")
-            for idx, image in enumerate(images):
-                image_file = prepared_file.parent / (
-                    prepared_file.stem
-                    + "_{0:02x}".format(idx)
-                    + prepared_file.suffix
-                )
-                cv2.imwrite(str(image_file), image)
-
-            results = []
-            json_file = prepared_file.with_suffix(".json")
-            with json_file.open("w") as f:
-                json.dump({"results": results}, f)
+            output = self.vae.decode(latents).sample
+            output = (output / 2 + 0.5).clamp(0, 1)
+            output = output.detach().cpu().permute(0, 2, 3, 1).numpy()
+            images = (output * 255).round().astype("uint8")
+            batch.serve(images)
+            batch.update_metadata({"processed": "true"})
 
         except Exception as e:
-            pass
-
-        source_file.unlink()
-        sys.exit()
-
-    def queue(self):
-        STAGED_PATH = os.environ.get("STAGED_PATH", "/tmp/ai/staged")
-        SOURCE_PATH = os.environ.get("SOURCE_PATH", "/tmp/ai/source")
-        PREPARED_PATH = os.environ.get("PREPARED_PATH", "/tmp/ai/prepared")
-        MAX_FORK = int(os.environ.get("MAX_FORK", 8))
-        CHUNK_SIZE = int(os.environ.get("CHUNK_SIZE", 4096))
-
-        staged_files = sorted(
-            [
-                f
-                for f in Path(STAGED_PATH).glob("*")
-                if f.is_file() and f.suffix != ".json"
-            ],
-            key=lambda f: f.stat().st_mtime,
-        )
-        source_files = [f for f in Path(SOURCE_PATH).glob("*") if f.is_file()]
-        source_files_count = len(source_files)
-
-        while source_files_count < MAX_FORK and staged_files:
-            source_files_count += 1
-            staged_file = staged_files.pop(0)
-
-            meta_file = staged_file.with_suffix(".json")
-            if meta_file.is_file():
-                with meta_file.open("r") as fp:
-                    try:
-                        image_metadata = json.load(fp)
-                    except:
-                        image_metadata = {}
-            image_metadata = {
-                **{
-                    "extension": staged_file.suffix,
-                    "background": "",
-                },
-                **image_metadata,
-            }
-
-            source_file = Path(SOURCE_PATH) / staged_file.name
-            prepared_file = Path(PREPARED_PATH) / (
-                staged_file.stem + image_metadata["extension"]
-            )
-
-            with staged_file.open("rb") as src_fp, source_file.open(
-                "wb"
-            ) as dst_fp:
-                while True:
-                    chunk = src_fp.read(CHUNK_SIZE)
-                    if not chunk:
-                        break
-                    dst_fp.write(chunk)
-
-            staged_file.unlink()
-            self.ai(source_file, prepared_file, **image_metadata)
-
-    def run(self):
-        signal.signal(signal.SIGCHLD, signal.SIG_IGN)
-        while True:
-            self.queue()
-            time.sleep(1.0)
+            batch.update_metadata({"processed": "error"})
+            if os.environ.get("DEBUG", "false").lower() in ("true", "1", "on"):
+                print(traceback.format_exc())
 
 
 if __name__ == "__main__":

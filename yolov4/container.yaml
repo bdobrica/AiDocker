@@ -1,0 +1,13 @@
+name: yolov4
+description: Given an image, detect the objects in the image and return the bounding boxes, the probability and the class name for each object.
+port: 5000
+weights:
+  - yolov4/yolov4.weights
+input:
+  endpoint: /put/image
+  required:
+    image: image
+  parameters:
+output:
+  endpoint: /get/json
+  type: json

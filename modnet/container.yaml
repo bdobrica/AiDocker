@@ -1,0 +1,16 @@
+name: agenet
+description: Given an image, extract the background of the image and keep only what is considered foregrownd.
+port: 5001
+weights:
+  - modnet/modnet_photographic_portrait_matting.onnx
+input:
+  endpoint: /put/image
+  required:
+    image: image
+  parameters:
+    background:
+      - color
+      - url
+output:
+  endpoint: /get/image
+  type: image

@@ -5,6 +5,7 @@ import re
 import signal
 import sys
 import time
+import traceback
 from pathlib import Path
 from urllib import request
 
@@ -16,23 +17,48 @@ from gfm.utils import inference
 
 from daemon import Daemon
 
-__version__ = "0.8.7"
+__version__ = "0.8.12"
 
 
 class AIDaemon(Daemon):
-    def ai(self, source_file, prepared_file, **metadata):
+    def load_metadata(self, meta_file: Path) -> dict:
+        if not meta_file.is_file():
+            return {}
+        with open(meta_file, "r") as fp:
+            return json.load(fp)
+
+    def update_metadata(self, meta_file: Path, data: dict) -> None:
+        metadata = self.load_metadata(meta_file)
+        if "update_time" not in metadata:
+            metadata["update_time"] = time.time()
+        metadata.update(data)
+        with open(meta_file, "w") as fp:
+            json.dump(metadata, fp)
+
+    def ai(
+        self, source_file: Path, prepared_file: Path, meta_file: Path
+    ) -> None:
         pid = os.fork()
         if pid != 0:
             return
 
         try:
+            # Detect device
+            MODEL_DEVICE = os.environ.get("MODEL_DEVICE", "cuda:0")
+            if (
+                MODEL_DEVICE.startswith("cuda")
+                and not torch.cuda.is_available()
+            ):
+                MODEL_DEVICE = "cpu"
+            self.device = torch.device(MODEL_DEVICE)
+
             # Load model
             model = GFM()
             MODEL_PATH = os.environ.get(
                 "MODEL_PATH",
                 "/opt/app/gfm_r34_2b_tt.pth",
             )
-            ckpt = torch.load(MODEL_PATH, map_location=torch.device("cpu"))
+            ckpt = torch.load(MODEL_PATH, map_location=self.device)
             model.load_state_dict(ckpt, strict=True)
             _ = model.eval()
 
@@ -54,6 +80,9 @@ class AIDaemon(Daemon):
 
             out_im[:, :, 3] = mask
             out_im = out_im.astype(float)
+
+            # Load metadata
+            metadata = self.load_metadata(meta_file)
 
             background = metadata.get("background", "").strip(" #")
             if len(background) == 6:
@@ -121,13 +150,26 @@ class AIDaemon(Daemon):
                 out_im[:, :, 3] = 255.0
 
             cv2.imwrite(str(prepared_file), out_im.astype("uint8"))
+            self.update_metadata(
+                meta_file,
+                {
+                    "processed": "true",
+                },
+            )
         except Exception as e:
-            pass
+            if os.environ.get("DEBUG", "false").lower() in ("true", "1", "on"):
+                print(traceback.format_exc())
+            self.update_metadata(
+                meta_file,
+                {
+                    "processed": "error",
+                },
+            )
 
         source_file.unlink()
         sys.exit()
 
-    def queue(self):
+    def queue(self) -> None:
         STAGED_PATH = os.environ.get("STAGED_PATH", "/tmp/ai/staged")
         SOURCE_PATH = os.environ.get("SOURCE_PATH", "/tmp/ai/source")
         PREPARED_PATH = os.environ.get("PREPARED_PATH", "/tmp/ai/prepared")
@@ -150,24 +192,9 @@ class AIDaemon(Daemon):
             staged_file = staged_files.pop(0)
 
             meta_file = staged_file.with_suffix(".json")
-            if meta_file.is_file():
-                with meta_file.open("r") as fp:
-                    try:
-                        image_metadata = json.load(fp)
-                    except:
-                        image_metadata = {}
-            image_metadata = {
-                **{
-                    "extension": staged_file.suffix,
-                    "fast": "no",
-                    "censor": "no",
-                },
-                **image_metadata,
-            }
-
             source_file = Path(SOURCE_PATH) / staged_file.name
             prepared_file = Path(PREPARED_PATH) / (
-                staged_file.stem + image_metadata["extension"]
+                staged_file.stem + staged_file.suffix
             )
 
             with staged_file.open("rb") as src_fp, source_file.open(
@@ -180,13 +207,13 @@ class AIDaemon(Daemon):
                     dst_fp.write(chunk)
 
             staged_file.unlink()
-            self.ai(source_file, prepared_file, **image_metadata)
+            self.ai(source_file, prepared_file, meta_file)
 
-    def run(self):
+    def run(self) -> None:
         signal.signal(signal.SIGCHLD, signal.SIG_IGN)
         while True:
             self.queue()
-            time.sleep(1.0)
+            time.sleep(float(os.environ.get("QUEUE_LATENCY", 1.0)))
 
 
 if __name__ == "__main__":

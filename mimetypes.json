@@ -3,5 +3,6 @@
 "image/png": ".png",
 "image/gif": ".gif",
 "image/tiff": ".tiff",
-"image/webp": ".webp"
+"image/webp": ".webp",
+"text/plain": ".txt"
 }
