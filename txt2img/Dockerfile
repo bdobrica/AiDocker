@@ -46,7 +46,7 @@ COPY txt2img/stable-diffusion /opt/app/stable-diffusion
 COPY txt2img/ai.py /opt/app
 COPY daemon /opt/app/daemon
 COPY cleaner.py /opt/app
-COPY mimetypes.json /opt/app
+COPY mimetypes.* /opt/app
 COPY api.py /opt/app
 COPY entry.sh /opt/app
 

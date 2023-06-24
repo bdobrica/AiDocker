@@ -36,25 +36,21 @@ class AiInput:
     def __init__(self, staged_file: Path):
         self.staged_file = staged_file
         self.meta_file = self.staged_file.with_suffix(".json")
-        self.source_files = self.SOURCE_PATH / self.staged_file.name
+        self.source_file = self.SOURCE_PATH / self.staged_file.name
         self.metadata = self._load_metadata(self.meta_file)
-        self.prepared_files = self.PREPARED_PATH / (
-            self.staged_file.stem
-            + "."
-            + self.metadata.get("output_extension", self.DEFAULT_EXTENSION)
+        self.prepared_file = self.PREPARED_PATH / (
+            self.staged_file.stem + "." + self.metadata.get("output_extension", self.DEFAULT_EXTENSION)
         )
-        self.staged_file.rename(self.source_files)
+        self.staged_file.rename(self.source_file)
 
     def prepare(self) -> any:
         raise NotImplementedError("You must implement prepare() -> any")
 
     def serve(self, inference_data: any) -> None:
-        raise NotImplementedError(
-            "You must implement serve(inference_data: any)"
-        )
+        raise NotImplementedError("You must implement serve(inference_data: any)")
 
     def update_metadata(self, data: dict) -> None:
         AiInput._update_metadata(self.meta_file, data)
 
     def __del__(self):
-        self.source_files.unlink()
+        self.source_file.unlink()

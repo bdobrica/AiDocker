@@ -47,7 +47,7 @@ COPY gfm34b2tt/gfm_r34_2b_tt.pth /opt/app
 COPY gfm34b2tt/resnet34-b627a593.pth /opt/app
 COPY daemon /opt/app/daemon
 COPY cleaner.py /opt/app
-COPY mimetypes.json /opt/app
+COPY mimetypes.* /opt/app
 COPY api.py /opt/app
 COPY entry.sh /opt/app
 

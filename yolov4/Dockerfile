@@ -18,7 +18,7 @@ COPY yolov4/yolov4 /opt/app/yolov4
 COPY yolov4/ai.py /opt/app
 COPY daemon /opt/app/daemon
 COPY cleaner.py /opt/app
-COPY mimetypes.json /opt/app
+COPY mimetypes.* /opt/app
 COPY api.py /opt/app
 COPY entry.sh /opt/app
 

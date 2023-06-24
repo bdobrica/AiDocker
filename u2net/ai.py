@@ -19,7 +19,7 @@ from daemon import AiForkDaemon as Daemon
 from daemon import AiInput as Input
 from u2net import U2NET
 
-__version__ = "0.8.12"
+__version__ = "0.8.13"
 
 
 class AiInput(Input):
@@ -139,7 +139,7 @@ class AiInput(Input):
         cv2.imwrite(str(prepared_file), out_im.astype("uint8"))
 
 
-class AIDaemon(Daemon):
+class AiDaemon(Daemon):
     def load_metadata(self, meta_file: Path) -> dict:
         if not meta_file.is_file():
             return {}
@@ -238,4 +238,4 @@ if __name__ == "__main__":
     CHROOT_PATH = os.environ.get("CHROOT_PATH", "/opt/app")
     PIDFILE_PATH = os.environ.get("PIDFILE_PATH", "/opt/app/run/ai.pid")
 
-    AIDaemon(pidfile=PIDFILE_PATH, chroot=CHROOT_PATH).start()
+    AiDaemon(input_type=AiInput, pidfile=PIDFILE_PATH, chroot=CHROOT_PATH).start()

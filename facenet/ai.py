@@ -13,7 +13,7 @@ from facenet_pytorch import MTCNN
 from daemon import AiBatch as Batch
 from daemon import AiBatchDaemon as Daemon
 
-__version__ = "0.8.12"
+__version__ = "0.8.13"
 
 
 class AiBatch(Batch):

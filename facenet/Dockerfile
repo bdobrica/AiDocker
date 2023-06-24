@@ -44,7 +44,7 @@ COPY facenet/requirements.txt /opt/app
 COPY facenet/ai.py /opt/app
 COPY daemon /opt/app/daemon
 COPY cleaner.py /opt/app
-COPY mimetypes.json /opt/app
+COPY mimetypes.* /opt/app
 COPY api.py /opt/app
 COPY entry.sh /opt/app
 

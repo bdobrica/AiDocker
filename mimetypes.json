@@ -1,8 +1,9 @@
 {
-"image/jpeg": ".jpg",
-"image/png": ".png",
-"image/gif": ".gif",
-"image/tiff": ".tiff",
-"image/webp": ".webp",
-"text/plain": ".txt"
+    "image/jpeg": ".jpg",
+    "image/png": ".png",
+    "image/gif": ".gif",
+    "image/tiff": ".tiff",
+    "image/webp": ".webp",
+    "text/plain": ".txt",
+    "text/csv": ".csv"
 }

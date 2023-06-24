@@ -20,7 +20,7 @@ COPY nudenet/detector_v2_base_checkpoint.onnx /opt/app
 COPY nudenet/detector_v2_base_classes /opt/app
 COPY daemon /opt/app/daemon
 COPY cleaner.py /opt/app
-COPY mimetypes.json /opt/app
+COPY mimetypes.* /opt/app
 COPY api.py /opt/app
 COPY entry.sh /opt/app
 

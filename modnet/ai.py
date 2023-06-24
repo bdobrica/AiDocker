@@ -15,7 +15,7 @@ import onnxruntime
 
 from daemon import Daemon
 
-__version__ = "0.8.12"
+__version__ = "0.8.13"
 
 
 class AIDaemon(Daemon):

@@ -15,7 +15,7 @@ from daemon import AiForkDaemon as Daemon
 from daemon import AiInput as Input
 from yolov4 import Darknet, non_max_suppression, scale_coords
 
-__version__ = "0.8.12"
+__version__ = "0.8.13"
 
 
 class AiInput(Input):
@@ -185,7 +185,7 @@ class AiInput(Input):
             cv2.imwrite(self.prepared_file.as_posix(), img_copy)
 
 
-class AIDaemon(Daemon):
+class AiDaemon(Daemon):
     def ai(self, input: AiInput) -> None:
         pid = os.fork()
         if pid != 0:
@@ -221,4 +221,4 @@ if __name__ == "__main__":
     CHROOT_PATH = os.environ.get("CHROOT_PATH", "/opt/app")
     PIDFILE_PATH = os.environ.get("PIDFILE_PATH", "/opt/app/run/ai.pid")
 
-    AIDaemon(pidfile=PIDFILE_PATH, chroot=CHROOT_PATH).start()
+    AiDaemon(input_type=AiInput, pidfile=PIDFILE_PATH, chroot=CHROOT_PATH).start()

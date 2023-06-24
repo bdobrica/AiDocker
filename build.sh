@@ -1,12 +1,13 @@
 #!/bin/bash
 
 function detect_docker_command {
-    if [ -x "$(command -v docker)" ]; then
+    if pgrep dockerd >/dev/null && [ -x "$(command -v docker)" ]; then
         echo "sudo docker"
     elif [ -x "$(command -v podman)" ]; then
         echo "podman"
     else
-        echo "sudo docker"
+        echo "No docker command found"
+        exit 1
     fi
 }
 

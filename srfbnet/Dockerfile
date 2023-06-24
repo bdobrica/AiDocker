@@ -48,7 +48,7 @@ COPY srfbnet/gmfn_x3.pth /opt/app
 COPY srfbnet/gmfn_x4.pth /opt/app
 COPY daemon /opt/app/daemon
 COPY cleaner.py /opt/app
-COPY mimetypes.json /opt/app
+COPY mimetypes.* /opt/app
 COPY api.py /opt/app
 COPY entry.sh /opt/app
 

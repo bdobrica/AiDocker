@@ -7,12 +7,13 @@ container=""
 docker_args=()
 
 function detect_docker_command {
-    if [ -x "$(command -v docker)" ]; then
+    if pgrep dockerd >/dev/null && [ -x "$(command -v docker)" ]; then
         echo "sudo docker"
     elif [ -x "$(command -v podman)" ]; then
         echo "podman"
     else
-        echo "sudo docker"
+        echo "No docker command found"
+        exit 1
     fi
 }
 
@@ -39,7 +40,7 @@ function run_container {
     local docker=$(detect_docker_command)
 
     if [ -f "${model_dir}/port.txt" ]; then
-        port=$(cat "${model_dir}/port.txt")
+        port=$(cat "${model_dir}/port.txt" | tr -d "\r" | tr -d "\n")
         if [ -e "${port}" ]; then
             port=$[max_port + 1]
             echo "${port}" > "${model_dir}/port.txt"

@@ -18,7 +18,7 @@ from transformers import (
 from daemon import AiBatch as Batch
 from daemon import AiBatchDaemon as Daemon
 
-__version__ = "0.8.12"
+__version__ = "0.8.13"
 
 
 class AiBatch(Batch):
@@ -61,7 +61,7 @@ class AiBatch(Batch):
                 json.dump(result, fp)
 
 
-class AIDaemon(Daemon):
+class AiDaemon(Daemon):
     def load(self) -> None:
         MODEL_DEVICE = os.getenv("MODEL_DEVICE", "cuda:0")
         if MODEL_DEVICE.startswith("cuda") and not torch.cuda.is_available():
@@ -122,4 +122,4 @@ if __name__ == "__main__":
     CHROOT_PATH = os.getenv("CHROOT_PATH", "/opt/app")
     PIDFILE_PATH = os.getenv("PIDFILE_PATH", "/opt/app/run/ai.pid")
 
-    AIDaemon(pidfile=PIDFILE_PATH, chroot=CHROOT_PATH).start()
+    AiDaemon(batch_type=AiBatch, pidfile=PIDFILE_PATH, chroot=CHROOT_PATH).start()
