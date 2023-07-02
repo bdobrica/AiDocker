@@ -34,19 +34,15 @@ class AIDaemon(Daemon):
         with open(meta_file, "w") as fp:
             json.dump(metadata, fp)
 
-    def ai(
-        self, source_file: Path, prepared_file: Path, meta_file: Path
-    ) -> None:
+    def ai(self, source_file: Path, prepared_file: Path, meta_file: Path) -> None:
         pid = os.fork()
         if pid != 0:
             return
 
         try:
-            MODEL_PATH = os.environ.get(
-                "MODEL_PATH", "/opt/app/EfficientNetB3_224_weights.11-3.44.hdf5"
-            )
+            MODEL_PATH = os.environ.get("MODEL_PATH", "/opt/app/EfficientNetB3_224_weights.11-3.44.hdf5")
             EFFICIENTNETB3_PATH = os.environ.get(
-                "EFFICIENTNETB3_PATH", "/opt/app/efficientnetb3_notop.h5"
+                "EFFICIENTNETB3_PATH", "/opt/app/EfficientNetB3_224_weights.11-3.44.hdf5"
             )
             IMAGE_SIZE = 224
             MARGIN = 0.4
@@ -59,15 +55,9 @@ class AIDaemon(Daemon):
                 weights=EFFICIENTNETB3_PATH,
             )
             features = base_model.output
-            pred_gender = Dense(
-                units=2, activation="softmax", name="pred_gender"
-            )(features)
-            pred_age = Dense(units=101, activation="softmax", name="pred_age")(
-                features
-            )
-            model = Model(
-                inputs=base_model.input, outputs=[pred_gender, pred_age]
-            )
+            pred_gender = Dense(units=2, activation="softmax", name="pred_gender")(features)
+            pred_age = Dense(units=101, activation="softmax", name="pred_age")(features)
+            model = Model(inputs=base_model.input, outputs=[pred_gender, pred_age])
             detector = dlib.get_frontal_face_detector()
 
             # Load model
@@ -150,11 +140,7 @@ class AIDaemon(Daemon):
         CHUNK_SIZE = int(os.environ.get("CHUNK_SIZE", 4096))
 
         staged_files = sorted(
-            [
-                f
-                for f in Path(STAGED_PATH).glob("*")
-                if f.is_file() and f.suffix != ".json"
-            ],
+            [f for f in Path(STAGED_PATH).glob("*") if f.is_file() and f.suffix != ".json"],
             key=lambda f: f.stat().st_mtime,
         )
         source_files = [f for f in Path(SOURCE_PATH).glob("*") if f.is_file()]
@@ -166,13 +152,9 @@ class AIDaemon(Daemon):
 
             meta_file = staged_file.with_suffix(".json")
             source_file = Path(SOURCE_PATH) / staged_file.name
-            prepared_file = Path(PREPARED_PATH) / (
-                staged_file.stem + staged_file.suffix
-            )
+            prepared_file = Path(PREPARED_PATH) / (staged_file.stem + staged_file.suffix)
 
-            with staged_file.open("rb") as src_fp, source_file.open(
-                "wb"
-            ) as dst_fp:
+            with staged_file.open("rb") as src_fp, source_file.open("wb") as dst_fp:
                 while True:
                     chunk = src_fp.read(CHUNK_SIZE)
                     if not chunk:
