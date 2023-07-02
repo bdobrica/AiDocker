@@ -32,8 +32,8 @@ COPY agenet/EfficientNetB3_224_weights.11-3.44.hdf5 /opt/app
 COPY agenet/ai.py /opt/app
 COPY daemon /opt/app/daemon
 COPY cleaner.py /opt/app
-COPY mimetypes.* /opt/app
-COPY api.py /opt/app
+COPY mimetypes.* /opt/app/
+COPY api /opt/app/api
 COPY entry.sh /opt/app
 
 ### MAKING THE SCRIPTS EXECUTABLE ###
