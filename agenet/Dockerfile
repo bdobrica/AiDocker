@@ -27,7 +27,6 @@ RUN apt-get update && apt-get install -y python3-opencv
 ### COPYING FILES ###
 COPY agenet/requirements.txt /opt/app
 COPY agenet/container.yaml /opt/app
-COPY agenet/EfficientNetB3_224_weights.11-3.44.hdf5 /opt/app
 COPY agenet/efficientnetb3_notop.h5 /opt/app
 COPY agenet/ai.py /opt/app
 COPY daemon /opt/app/daemon

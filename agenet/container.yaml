@@ -3,6 +3,7 @@ description: Given an image, detect and extract human faces from the images and 
 port: 5004
 weights:
   - agenet/EfficientNetB3_224_weights.11-3.44.hdf5
+  - agenet/efficientnetb3_notop.h5
 input:
   endpoint: /put/image
   required:
