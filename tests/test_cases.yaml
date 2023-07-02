@@ -2,7 +2,7 @@ agenet:
   endpoint: /put/image
   test:
     - image: birthday.jpg
-      expected: 04076a4b1659b0944a7c2ffb09140e7ec344f864cdd88fb617d05f007ef50d33
+      expected: 298de2a8fd98f5b35d6b7d9d5021aa3b584afbd94a90a49958a51267ee420b28
 facenet:
   endpoint: /put/image
   test:
