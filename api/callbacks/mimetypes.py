@@ -35,9 +35,9 @@ def read_mimetypes(file: Path) -> list:
 
 def get_extension(mimetype: str) -> str:
     for mimetype_ in MIMETYPES:
-        if mimetype == mimetype["mime"]:
-            return mimetype["ext"]
-    raise ValueError(f"Unknown file type: {file}")
+        if mimetype == mimetype_["mime"]:
+            return mimetype_["ext"]
+    raise ValueError(f"Unknown file type: {mimetype}")
 
 
 def get_mimetype(file: Path) -> str:
