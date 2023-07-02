@@ -37,7 +37,6 @@ COPY api /opt/app/api
 COPY entry.sh /opt/app
 
 ### MAKING THE SCRIPTS EXECUTABLE ###
-RUN chmod +x /opt/app/ai.py
 RUN chmod +x /opt/app/cleaner.py
 RUN chmod +x /opt/app/api.py
 RUN chmod +x /opt/app/entry.sh
