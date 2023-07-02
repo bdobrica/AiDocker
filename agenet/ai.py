@@ -41,7 +41,7 @@ class AIDaemon(Daemon):
 
         try:
             MODEL_PATH = os.environ.get("MODEL_PATH", "/opt/app/EfficientNetB3_224_weights.11-3.44.hdf5")
-            EFFICIENTNETB3_PATH = os.environ.get("EFFICIENTNETB3_PATH", "/opt/app/agenet/efficientnetb3_notop.h5")
+            EFFICIENTNETB3_PATH = os.environ.get("EFFICIENTNETB3_PATH", "/opt/app/efficientnetb3_notop.h5")
             IMAGE_SIZE = 224
             MARGIN = 0.4
 
