@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import argparse
 import hashlib
 import json
 import mimetypes
@@ -99,11 +100,7 @@ def get_json(url: str, image_token: str) -> dict:
         except:
             wait = False
             response_obj = {}
-        wait = (
-            wait
-            and (time.time() - start_time < 60.0)
-            and (response_obj.get("wait") == "true")
-        )
+        wait = wait and (time.time() - start_time < 60.0) and (response_obj.get("wait") == "true")
 
     return response_obj
 
@@ -129,10 +126,19 @@ def detect_model_url(model: str) -> str:
     return f"http://localhost:{port}"
 
 
+def parse_cli_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Test the AI models.")
+    parser.add_argument("-c", type=str, default="all", help="The model to test.")
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
     COUNTER = 0
+    args = parse_cli_args()
 
     for model, tests in TESTS.items():
+        if args.c != "all" and args.c != model:
+            continue
         url = detect_model_url(model)
         endpoint = tests.get("endpoint")
         if url is None:
@@ -154,10 +160,7 @@ if __name__ == "__main__":
             response = put_request(f"{url}/{endpoint}", test)
             file_token = response.get("token")
             if not file_token:
-                error(
-                    f"#{COUNTER} Could not correctly call put request with test"
-                    f" {str(test)} to {url}/{endpoint}."
-                )
+                error(f"#{COUNTER} Could not correctly call put request with test" f" {str(test)} to {url}/{endpoint}.")
                 continue
 
             json_response = get_json(f"{url}/get/json", file_token)
@@ -166,18 +169,12 @@ if __name__ == "__main__":
                 json.dump(json_response, fp, indent=4)
 
             if json_response.get("status") != "success":
-                error(
-                    f"#{COUNTER} Could not correctly retrieve the info"
-                    f" using {file_token} for test {str(test)}."
-                )
+                error(f"#{COUNTER} Could not correctly retrieve the info" f" using {file_token} for test {str(test)}.")
                 continue
 
             if json_response.get("url"):
                 image_url = json_response.get("url")
-                info(
-                    f"#{COUNTER} The model {model} produces an output under"
-                    f" {url}/{image_url}."
-                )
+                info(f"#{COUNTER} The model {model} produces an output under" f" {url}/{image_url}.")
                 image_content = get_request(f"{url}/{image_url}")
 
                 with open(out_path / Path(image_url).name, "wb") as fp:
@@ -188,13 +185,9 @@ if __name__ == "__main__":
                 h = h.hexdigest()
                 info(f"Image hash: {h}")
                 if h != expected:
-                    error(
-                        f"#{COUNTER} Failed testing model {model} with {str(test)}."
-                    )
+                    error(f"#{COUNTER} Failed testing model {model} with {str(test)}.")
                 else:
-                    ok(
-                        f"#{COUNTER} Passed testing model {model} with {str(test)}."
-                    )
+                    ok(f"#{COUNTER} Passed testing model {model} with {str(test)}.")
             else:
                 if "results" in json_response:
                     info(f"The model {model} produces a JSON response.")
@@ -204,17 +197,11 @@ if __name__ == "__main__":
                     h = h.hexdigest()
                     info(f"JSON hash: {h}")
                     if h != expected:
-                        error(
-                            f"#{COUNTER} Failed testing model {model} with test {str(test)}."
-                        )
+                        error(f"#{COUNTER} Failed testing model {model} with test {str(test)}.")
                     else:
-                        ok(
-                            f"#{COUNTER} Passed testing model {model} with test {str(test)}."
-                        )
+                        ok(f"#{COUNTER} Passed testing model {model} with test {str(test)}.")
                 else:
-                    warn(
-                        f"#{COUNTER} The model {model} doesn't produce any useful response."
-                    )
+                    warn(f"#{COUNTER} The model {model} doesn't produce any useful response.")
     info("=" * 80)
     info("=" * 80)
 
@@ -224,7 +211,4 @@ if __name__ == "__main__":
         else:
             ok(f"Passed all {PASSED} tests.")
     else:
-        error(
-            f"Failed {FAILED} tests / passed {PASSED} tests /"
-            f" skipped {COUNTER - PASSED - FAILED} tests."
-        )
+        error(f"Failed {FAILED} tests / passed {PASSED} tests /" f" skipped {COUNTER - PASSED - FAILED} tests.")
