@@ -1,0 +1,6 @@
+mpnetv2/mpnet-base-v2/config.json
+mpnetv2/mpnet-base-v2/pytorch_model.bin
+mpnetv2/mpnet-base-v2/sentencepiece.bpe.model
+mpnetv2/mpnet-base-v2/special_tokens_map.json
+mpnetv2/mpnet-base-v2/tokenizer_config.json
+mpnetv2/mpnet-base-v2/tokenizer.json

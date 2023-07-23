@@ -19,3 +19,15 @@
 - file: csv
   type: text/csv
   ext: .csv
+- file: document
+  type: application/pdf
+  ext: .pdf
+- file: document
+  type: application/msword
+  ext: .doc
+- file: document
+  type: application/vnd.openxmlformats-officedocument.wordprocessingml.document
+  ext: .docx
+- file: document
+  type: text/html
+  ext: .html
