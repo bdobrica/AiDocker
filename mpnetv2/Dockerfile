@@ -12,11 +12,12 @@ RUN apt-get update && apt-get install -y python3-opencv
 ### COPYING FILES ###
 COPY mpnetv2/container.yaml /opt/app
 COPY mpnetv2/requirements.txt /opt/app
+COPY mpnetv2/reader /opt/app/reader
 COPY mpnetv2/ai.py /opt/app
 COPY daemon /opt/app/daemon
 COPY cleaner.py /opt/app
 COPY mimetypes.* /opt/app
-COPY api.py /opt/app
+COPY api /opt/app
 COPY entry.sh /opt/app
 
 ### MAKING THE SCRIPTS EXECUTABLE ###

@@ -5,7 +5,7 @@ from hashlib import md5, sha256
 
 from flask import Response, request
 
-from . import __version__
+from .. import __version__
 from .helpers import get_metadata_path, get_prepared_paths, get_staged_path
 
 

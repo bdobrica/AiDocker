@@ -10,11 +10,14 @@ weights:
   - mpnet-base-v2/tokenizer.json
 input:
   - endpoint: /put/document
+    queue: file
     required:
       document: document
   - endpoint: /put/text
+    queue: file
     required:
       text: text
 output:
   endpoint: /get/json
+  queue: zero
   type: json

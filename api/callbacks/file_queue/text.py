@@ -7,9 +7,9 @@ from pathlib import Path
 
 from flask import Response, request, send_file
 
-from . import __version__
+from .. import __version__
+from ..mimetypes import get_mimetype
 from .helpers import clean_files, get_metadata_path, get_prepared_paths, get_staged_path
-from .mimetypes import get_mimetype
 
 
 def put_text():

@@ -5,6 +5,8 @@ from pathlib import Path
 
 from flask import Response, request
 
+from .. import __version__
+from ..mimetypes import get_url
 from .helpers import (
     clean_files,
     get_json_path,
@@ -13,9 +15,6 @@ from .helpers import (
     get_source_paths,
     get_staged_paths,
 )
-from .mimetypes import get_url
-
-__version__ = "0.8.12"
 
 
 def get_json():
