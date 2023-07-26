@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 
 import yaml
-from flask import Flask, Response
+from flask import Flask, Response, _app_ctx_stack
 
 from .callbacks import __version__, file_queue, zero_queue
 

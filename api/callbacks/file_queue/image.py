@@ -15,7 +15,7 @@ from .helpers import clean_files, get_metadata_path, get_prepared_paths, get_sta
 logger = logging.getLogger(__name__)
 
 
-def put_image():
+def put_image() -> Response:
     image_file = request.files.get("image")
     if not image_file:
         return Response(
@@ -61,7 +61,7 @@ def put_image():
     )
 
 
-def get_image(image_file):
+def get_image(image_file) -> Response:
     image_file = Path(image_file)
     image_token = image_file.stem.split("_", 2)[0]
 

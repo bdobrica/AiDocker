@@ -9,7 +9,7 @@ from .. import __version__
 from .helpers import get_metadata_path, get_prepared_paths, get_staged_path
 
 
-def put_document():
+def put_document() -> Response:
     document_file = request.files.get("document")
     if not document_file:
         return Response(

@@ -17,7 +17,7 @@ from .helpers import (
 )
 
 
-def get_json():
+def get_json() -> Response:
     lifetime = float(os.environ.get("API_CLEANER_FILE_LIFETIME", "1800.0"))
 
     file_token = request.json.get("token")

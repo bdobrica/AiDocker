@@ -12,7 +12,7 @@ from ..mimetypes import get_mimetype
 from .helpers import clean_files, get_metadata_path, get_prepared_paths, get_staged_path
 
 
-def put_csv():
+def put_csv() -> Response:
     csv_file = request.files.get("csv")
     if not csv_file:
         return Response(
@@ -55,7 +55,7 @@ def put_csv():
     )
 
 
-def get_csv(csv_file):
+def get_csv(csv_file) -> Response:
     csv_file = Path(csv_file)
     csv_token = csv_file.stem.split("_", 2)[0]
 

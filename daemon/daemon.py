@@ -38,8 +38,6 @@ from pathlib import Path
 from signal import SIGTERM
 from typing import Union
 
-__version__ = "0.8.12"
-
 PathLike = Union[str, Path]
 
 

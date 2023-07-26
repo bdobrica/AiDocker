@@ -12,7 +12,7 @@ from ..mimetypes import get_mimetype
 from .helpers import clean_files, get_metadata_path, get_prepared_paths, get_staged_path
 
 
-def put_text():
+def put_text() -> Response:
     text_data = request.form.get("text", "")
 
     if not text_data:
@@ -51,7 +51,7 @@ def put_text():
     )
 
 
-def get_test(text_file):
+def get_test(text_file) -> Response:
     text_file = Path(text_file)
     text_token = text_file.stem.split("_", 2)[0]
 
