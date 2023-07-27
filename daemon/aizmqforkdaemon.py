@@ -53,11 +53,11 @@ class AiZMQForkDaemon(AiForkDaemon):
         socket_path.parent.mkdir(parents=True, exist_ok=True)
         return f"ipc://{socket_path.absolute().as_posix()}"
 
-    def restart_worker(self, worker_id: int) -> None:
+    def requeue_worker(self, worker_id: int) -> None:
         logger.info(f"Restarting worker %s", worker_id)
         self.workers_pool.append(worker_id)
 
-    def start_worker(self, worker_id: int) -> None:
+    def zero_worker(self, worker_id: int) -> None:
         logger.info(f"Starting worker %s", worker_id)
 
         context = zmq.Context()
@@ -98,5 +98,5 @@ class AiZMQForkDaemon(AiForkDaemon):
             while True:
                 if self.workers_pool:
                     worker_id = self.workers_pool.pop(0)
-                    pool.apply_async(self.start_worker, [worker_id], callback=self.restart_worker)
+                    pool.apply_async(self.zero_worker, [worker_id], callback=self.requeue_worker)
                 time.sleep(self.worker_latency)
