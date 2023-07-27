@@ -2,6 +2,7 @@ import argparse
 import os
 from pathlib import Path
 
+from .queuecleaner import QueueCleaner
 from .zmqdaemon import ZMQDaemon
 
 if __name__ == "__main__":
@@ -17,6 +18,7 @@ if __name__ == "__main__":
 
     daemons = {
         "zmqdaemon": ZMQDaemon,
+        "queuecleaner": QueueCleaner,
     }
     if args.daemon not in daemons:
         raise ValueError(f"Unknown daemon: {args.daemon}")
