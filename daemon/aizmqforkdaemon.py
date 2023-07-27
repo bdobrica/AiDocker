@@ -42,13 +42,13 @@ class AiZMQForkDaemon(AiForkDaemon):
 
     @property
     def client_address(self) -> str:
-        return self.get_zmq_address("ZMQ_CLIENT_SOCKET_PATH", "/tmp/ai/client")
+        return self.get_socket_address("ZMQ_CLIENT_SOCKET_PATH", "/tmp/ai/client")
 
     @property
     def worker_address(self) -> str:
-        return self.get_zmq_address("ZMQ_WORKER_SOCKET_PATH", "/tmp/ai/worker")
+        return self.get_socket_address("ZMQ_WORKER_SOCKET_PATH", "/tmp/ai/worker")
 
-    def get_zmq_address(self, env_var: str, default_value: Optional[str] = None) -> str:
+    def get_socket_address(self, env_var: str, default_value: Optional[str] = None) -> str:
         socket_path = Path(os.getenv(env_var, default_value)).with_suffix(self.model_suffix)
         socket_path.parent.mkdir(parents=True, exist_ok=True)
         return f"ipc://{socket_path.absolute().as_posix()}"
