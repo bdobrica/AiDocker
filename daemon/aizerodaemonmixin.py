@@ -8,12 +8,10 @@ from typing import Optional
 import yaml
 import zmq
 
-from .aiforkdaemon import AiForkDaemon
-
 logger = logging.getLogger(__name__)
 
 
-class AiZMQForkDaemon(AiForkDaemon):
+class AiZeroDaemonMixin:
     @property
     def workers_number(self) -> int:
         return int(os.getenv("MAX_FORK", 8))
