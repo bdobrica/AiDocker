@@ -50,11 +50,7 @@ class AiInput(Input):
         self.out_img = cv2.cvtColor(img, cv2.COLOR_BGR2BGRA)
 
         img = img[:, :, ::-1]
-        img_t = Variable(
-            transforms.Compose([AiInput._rescale_t, AiInput._to_tensor_lab])(
-                img
-            ).type(torch.FloatTensor)
-        )
+        img_t = Variable(transforms.Compose([AiInput._rescale_t, AiInput._to_tensor_lab])(img).type(torch.FloatTensor))
         return img_t
 
     def serve(self, inference_data: torch.Tensor) -> None:
@@ -65,9 +61,7 @@ class AiInput(Input):
         pred_np = pred.squeeze().cpu().data.numpy()
 
         sal_map = (pred_np * 255).astype("uint8")
-        sal_map = cv2.resize(
-            sal_map, self.shape[1::-1], interpolation=cv2.INTER_AREA
-        )
+        sal_map = cv2.resize(sal_map, self.shape[1::-1], interpolation=cv2.INTER_AREA)
         out_im[:, :, 3] = sal_map
         out_im = out_im.astype(float)
 
@@ -82,9 +76,7 @@ class AiInput(Input):
         color_re = re.compile(r"(^[A-Za-z0-9]{6}$)|(^[A-Za-z0-9]{8}$)")
         background_alpha = 0
         background_im = None
-        if background.startswith("http://") or background.startswith(
-            "https://"
-        ):
+        if background.startswith("http://") or background.startswith("https://"):
             try:
                 req = request.urlopen(background)
                 arr = np.asarray(bytearray(req.read()), dtype=np.uint8)
@@ -97,8 +89,7 @@ class AiInput(Input):
                 if background_im.shape[2] == 4:
                     background_im = background_im.astype(float)
                     background_im = background_im[:, :, :3] * np.repeat(
-                        background_im[:, :, 3].reshape(out_im.shape[:2] + (1,))
-                        / 255.0,
+                        background_im[:, :, 3].reshape(out_im.shape[:2] + (1,)) / 255.0,
                         3,
                         axis=2,
                     )
@@ -113,9 +104,7 @@ class AiInput(Input):
                 background_alpha = int(background[6:8], 16) / 255.0
             else:
                 background_alpha = 1.0
-            background_im = np.full(
-                (im_h, im_w, 3), [blue, green, red], dtype=np.float32
-            )
+            background_im = np.full((im_h, im_w, 3), [blue, green, red], dtype=np.float32)
 
         alpha_mask = np.repeat(
             out_im[:, :, 3].reshape(out_im.shape[:2] + (1,)) / 255.0,
@@ -125,15 +114,11 @@ class AiInput(Input):
         out_im[:, :, :3] = out_im[:, :, :3] * alpha_mask
 
         if background_im is None and metadata.get("type", "") != "image/png":
-            background_im = np.full(
-                (im_h, im_w, 3), [255.0, 255.0, 255.0], dtype=np.float32
-            )
+            background_im = np.full((im_h, im_w, 3), [255.0, 255.0, 255.0], dtype=np.float32)
             background_alpha = 1.0
 
         if background_im is not None:
-            out_im[:, :, :3] = out_im[:, :, :3] + background_im[
-                :, :, :3
-            ] * background_alpha * (1.0 - alpha_mask)
+            out_im[:, :, :3] = out_im[:, :, :3] + background_im[:, :, :3] * background_alpha * (1.0 - alpha_mask)
             out_im[:, :, 3] = 255.0
 
         cv2.imwrite(str(prepared_file), out_im.astype("uint8"))
@@ -161,7 +146,7 @@ class AiDaemon(Daemon):
 
         try:
             net = U2NET(3, 1)
-            MODEL_PATH = os.environ.get("MODEL_PATH", "/opt/app/u2net.pth")
+            MODEL_PATH = os.getenv("MODEL_PATH", "/opt/app/u2net.pth")
             net.load_state_dict(torch.load(MODEL_PATH, map_location="cpu"))
             net.eval()
 
@@ -175,7 +160,7 @@ class AiDaemon(Daemon):
                 },
             )
         except Exception as e:
-            if os.environ.get("DEBUG", "false").lower() in ("true", "1", "on"):
+            if os.getenv("DEBUG", "false").lower() in ("true", "1", "on"):
                 print(traceback.format_exc())
             self.update_metadata(
                 meta_file,
@@ -188,18 +173,14 @@ class AiDaemon(Daemon):
         sys.exit()
 
     def queue(self) -> None:
-        STAGED_PATH = os.environ.get("STAGED_PATH", "/tmp/ai/staged")
-        SOURCE_PATH = os.environ.get("SOURCE_PATH", "/tmp/ai/source")
-        PREPARED_PATH = os.environ.get("PREPARED_PATH", "/tmp/ai/prepared")
-        MAX_FORK = int(os.environ.get("MAX_FORK", 8))
-        CHUNK_SIZE = int(os.environ.get("CHUNK_SIZE", 4096))
+        STAGED_PATH = os.getenv("STAGED_PATH", "/tmp/ai/staged")
+        SOURCE_PATH = os.getenv("SOURCE_PATH", "/tmp/ai/source")
+        PREPARED_PATH = os.getenv("PREPARED_PATH", "/tmp/ai/prepared")
+        MAX_FORK = int(os.getenv("MAX_FORK", 8))
+        CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", 4096))
 
         staged_files = sorted(
-            [
-                f
-                for f in Path(STAGED_PATH).glob("*")
-                if f.is_file() and f.suffix != ".json"
-            ],
+            [f for f in Path(STAGED_PATH).glob("*") if f.is_file() and f.suffix != ".json"],
             key=lambda f: f.stat().st_mtime,
         )
         source_files = [f for f in Path(SOURCE_PATH).glob("*") if f.is_file()]
@@ -211,13 +192,9 @@ class AiDaemon(Daemon):
 
             meta_file = staged_file.with_suffix(".json")
             source_file = Path(SOURCE_PATH) / staged_file.name
-            prepared_file = Path(PREPARED_PATH) / (
-                staged_file.stem + staged_file.suffix
-            )
+            prepared_file = Path(PREPARED_PATH) / (staged_file.stem + staged_file.suffix)
 
-            with staged_file.open("rb") as src_fp, source_file.open(
-                "wb"
-            ) as dst_fp:
+            with staged_file.open("rb") as src_fp, source_file.open("wb") as dst_fp:
                 while True:
                     chunk = src_fp.read(CHUNK_SIZE)
                     if not chunk:
@@ -231,11 +208,11 @@ class AiDaemon(Daemon):
         signal.signal(signal.SIGCHLD, signal.SIG_IGN)
         while True:
             self.queue()
-            time.sleep(float(os.environ.get("QUEUE_LATENCY", 1.0)))
+            time.sleep(float(os.getenv("QUEUE_LATENCY", 1.0)))
 
 
 if __name__ == "__main__":
-    CHROOT_PATH = os.environ.get("CHROOT_PATH", "/opt/app")
-    PIDFILE_PATH = os.environ.get("PIDFILE_PATH", "/opt/app/run/ai.pid")
+    CHROOT_PATH = os.getenv("CHROOT_PATH", "/opt/app")
+    PIDFILE_PATH = os.getenv("PIDFILE_PATH", "/opt/app/run/ai.pid")
 
     AiDaemon(input_type=AiInput, pidfile=PIDFILE_PATH, chroot=CHROOT_PATH).start()

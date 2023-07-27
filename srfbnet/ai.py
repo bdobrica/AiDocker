@@ -32,9 +32,7 @@ class AIDaemon(Daemon):
         with open(meta_file, "w") as fp:
             json.dump(metadata, fp)
 
-    def ai(
-        self, source_file: Path, prepared_file: Path, meta_file: Path
-    ) -> None:
+    def ai(self, source_file: Path, prepared_file: Path, meta_file: Path) -> None:
         pid = os.fork()
         if pid != 0:
             return
@@ -45,23 +43,18 @@ class AIDaemon(Daemon):
             scale = int(metadata.get("scale", 2))
 
             # Detect device
-            MODEL_DEVICE = os.environ.get("MODEL_DEVICE", "cuda:0")
-            if (
-                MODEL_DEVICE.startswith("cuda")
-                and not torch.cuda.is_available()
-            ):
+            MODEL_DEVICE = os.getenv("MODEL_DEVICE", "cuda:0")
+            if MODEL_DEVICE.startswith("cuda") and not torch.cuda.is_available():
                 MODEL_DEVICE = "cpu"
             self.device = torch.device(MODEL_DEVICE)
 
             # Load model
             model = GMFN(upscale_factor=scale)
-            MODEL_PATH = os.environ.get(
+            MODEL_PATH = os.getenv(
                 "MODEL_PATH",
                 "/opt/app/gmfn_x{scale}.pth",
             )
-            ckpt = torch.load(
-                MODEL_PATH.format(scale=scale), map_location=self.device
-            )
+            ckpt = torch.load(MODEL_PATH.format(scale=scale), map_location=self.device)
             model.load_state_dict(ckpt, strict=True)
             _ = model.eval()
 
@@ -95,7 +88,7 @@ class AIDaemon(Daemon):
                 },
             )
         except Exception as e:
-            if os.environ.get("DEBUG", "false").lower() in ("true", "1", "on"):
+            if os.getenv("DEBUG", "false").lower() in ("true", "1", "on"):
                 print(traceback.format_exc())
             self.update_metadata(
                 meta_file,
@@ -108,18 +101,14 @@ class AIDaemon(Daemon):
         sys.exit()
 
     def queue(self) -> None:
-        STAGED_PATH = os.environ.get("STAGED_PATH", "/tmp/ai/staged")
-        SOURCE_PATH = os.environ.get("SOURCE_PATH", "/tmp/ai/source")
-        PREPARED_PATH = os.environ.get("PREPARED_PATH", "/tmp/ai/prepared")
-        MAX_FORK = int(os.environ.get("MAX_FORK", 8))
-        CHUNK_SIZE = int(os.environ.get("CHUNK_SIZE", 4096))
+        STAGED_PATH = os.getenv("STAGED_PATH", "/tmp/ai/staged")
+        SOURCE_PATH = os.getenv("SOURCE_PATH", "/tmp/ai/source")
+        PREPARED_PATH = os.getenv("PREPARED_PATH", "/tmp/ai/prepared")
+        MAX_FORK = int(os.getenv("MAX_FORK", 8))
+        CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", 4096))
 
         staged_files = sorted(
-            [
-                f
-                for f in Path(STAGED_PATH).glob("*")
-                if f.is_file() and f.suffix != ".json"
-            ],
+            [f for f in Path(STAGED_PATH).glob("*") if f.is_file() and f.suffix != ".json"],
             key=lambda f: f.stat().st_mtime,
         )
         source_files = [f for f in Path(SOURCE_PATH).glob("*") if f.is_file()]
@@ -131,13 +120,9 @@ class AIDaemon(Daemon):
 
             meta_file = staged_file.with_suffix(".json")
             source_file = Path(SOURCE_PATH) / staged_file.name
-            prepared_file = Path(PREPARED_PATH) / (
-                staged_file.stem + staged_file.suffix
-            )
+            prepared_file = Path(PREPARED_PATH) / (staged_file.stem + staged_file.suffix)
 
-            with staged_file.open("rb") as src_fp, source_file.open(
-                "wb"
-            ) as dst_fp:
+            with staged_file.open("rb") as src_fp, source_file.open("wb") as dst_fp:
                 while True:
                     chunk = src_fp.read(CHUNK_SIZE)
                     if not chunk:
@@ -151,11 +136,11 @@ class AIDaemon(Daemon):
         signal.signal(signal.SIGCHLD, signal.SIG_IGN)
         while True:
             self.queue()
-            time.sleep(float(os.environ.get("QUEUE_LATENCY", 1.0)))
+            time.sleep(float(os.getenv("QUEUE_LATENCY", 1.0)))
 
 
 if __name__ == "__main__":
-    CHROOT_PATH = os.environ.get("CHROOT_PATH", "/opt/app")
-    PIDFILE_PATH = os.environ.get("PIDFILE_PATH", "/opt/app/run/ai.pid")
+    CHROOT_PATH = os.getenv("CHROOT_PATH", "/opt/app")
+    PIDFILE_PATH = os.getenv("PIDFILE_PATH", "/opt/app/run/ai.pid")
 
     AIDaemon(pidfile=PIDFILE_PATH, chroot=CHROOT_PATH).start()

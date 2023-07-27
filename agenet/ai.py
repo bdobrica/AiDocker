@@ -40,8 +40,8 @@ class AIDaemon(Daemon):
             return
 
         try:
-            MODEL_PATH = os.environ.get("MODEL_PATH", "/opt/app/EfficientNetB3_224_weights.11-3.44.hdf5")
-            EFFICIENTNETB3_PATH = os.environ.get("EFFICIENTNETB3_PATH", "/opt/app/efficientnetb3_notop.h5")
+            MODEL_PATH = os.getenv("MODEL_PATH", "/opt/app/EfficientNetB3_224_weights.11-3.44.hdf5")
+            EFFICIENTNETB3_PATH = os.getenv("EFFICIENTNETB3_PATH", "/opt/app/efficientnetb3_notop.h5")
             IMAGE_SIZE = 224
             MARGIN = 0.4
 
@@ -118,7 +118,7 @@ class AIDaemon(Daemon):
                 },
             )
         except Exception as e:
-            if os.environ.get("DEBUG", "false").lower() in ("true", "1", "on"):
+            if os.getenv("DEBUG", "false").lower() in ("true", "1", "on"):
                 print(traceback.format_exc())
             self.update_metadata(
                 meta_file,
@@ -131,11 +131,11 @@ class AIDaemon(Daemon):
         sys.exit()
 
     def queue(self) -> None:
-        STAGED_PATH = os.environ.get("STAGED_PATH", "/tmp/ai/staged")
-        SOURCE_PATH = os.environ.get("SOURCE_PATH", "/tmp/ai/source")
-        PREPARED_PATH = os.environ.get("PREPARED_PATH", "/tmp/ai/prepared")
-        MAX_FORK = int(os.environ.get("MAX_FORK", 8))
-        CHUNK_SIZE = int(os.environ.get("CHUNK_SIZE", 4096))
+        STAGED_PATH = os.getenv("STAGED_PATH", "/tmp/ai/staged")
+        SOURCE_PATH = os.getenv("SOURCE_PATH", "/tmp/ai/source")
+        PREPARED_PATH = os.getenv("PREPARED_PATH", "/tmp/ai/prepared")
+        MAX_FORK = int(os.getenv("MAX_FORK", 8))
+        CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", 4096))
 
         staged_files = sorted(
             [f for f in Path(STAGED_PATH).glob("*") if f.is_file() and f.suffix != ".json"],
@@ -166,11 +166,11 @@ class AIDaemon(Daemon):
         signal.signal(signal.SIGCHLD, signal.SIG_IGN)
         while True:
             self.queue()
-            time.sleep(float(os.environ.get("QUEUE_LATENCY", 1.0)))
+            time.sleep(float(os.getenv("QUEUE_LATENCY", 1.0)))
 
 
 if __name__ == "__main__":
-    CHROOT_PATH = os.environ.get("CHROOT_PATH", "/opt/app")
-    PIDFILE_PATH = os.environ.get("PIDFILE_PATH", "/opt/app/run/ai.pid")
+    CHROOT_PATH = os.getenv("CHROOT_PATH", "/opt/app")
+    PIDFILE_PATH = os.getenv("PIDFILE_PATH", "/opt/app/run/ai.pid")
 
     AIDaemon(pidfile=PIDFILE_PATH, chroot=CHROOT_PATH).start()

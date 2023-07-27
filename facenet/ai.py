@@ -87,9 +87,7 @@ class AiBatch(Batch):
     def prepare(self) -> np.ndarray:
         # Load the images
         images = [
-            AiBatch.load_image(source_file, angle)
-            for source_file in self.source_files
-            for angle in AiBatch.ANGLES
+            AiBatch.load_image(source_file, angle) for source_file in self.source_files for angle in AiBatch.ANGLES
         ]
 
         # Compute maximum image size
@@ -98,10 +96,7 @@ class AiBatch(Batch):
         self.im_w = max([shape[1] for shape in self.shapes])
 
         # Augment images
-        images = [
-            AiBatch.prepare_image(image, self.im_w, self.im_h)
-            for image in images
-        ]
+        images = [AiBatch.prepare_image(image, self.im_w, self.im_h) for image in images]
 
         # Build batch input
         return np.stack(images)
@@ -124,10 +119,7 @@ class AiBatch(Batch):
                     box = box.astype(int)
                     confidence = float(confidences[box_idx])
                     # Skip invalid detections
-                    if (
-                        box[::2].max() > self.im_h
-                        or box[1::2].max() > self.im_w
-                    ):
+                    if box[::2].max() > self.im_h or box[1::2].max() > self.im_w:
                         continue
                     # Rotate detection
                     box = AiBatch.rotate_box(box, shape[1], shape[0], angle)
@@ -158,21 +150,20 @@ class AiBatch(Batch):
                         )
                 faces.extend(faces_)
 
-            results = {"results": [
-                {
-                    "x": float(0.5 * (face["box"][0] + face["box"][2])),
-                    "y": float(0.5 * (face["box"][1] + face["box"][3])),
-                    "w": float(abs(face["box"][0] - face["box"][2])),
-                    "h": float(abs(face["box"][1] - face["box"][3])),
-                    "area": float(
-                        abs(face["box"][0] - face["box"][2])
-                        * abs(face["box"][1] - face["box"][3])
-                    ),
-                    "conf": face["conf"],
-                    "orientation": face["orientation"],
-                }
-                for face in faces
-            ]}
+            results = {
+                "results": [
+                    {
+                        "x": float(0.5 * (face["box"][0] + face["box"][2])),
+                        "y": float(0.5 * (face["box"][1] + face["box"][3])),
+                        "w": float(abs(face["box"][0] - face["box"][2])),
+                        "h": float(abs(face["box"][1] - face["box"][3])),
+                        "area": float(abs(face["box"][0] - face["box"][2]) * abs(face["box"][1] - face["box"][3])),
+                        "conf": face["conf"],
+                        "orientation": face["orientation"],
+                    }
+                    for face in faces
+                ]
+            }
 
             # Save results
             with self.prepared_files[file_idx].open("w") as fp:
@@ -182,7 +173,7 @@ class AiBatch(Batch):
 class AiDaemon(Daemon):
     def load(self) -> None:
         # Initialize
-        MODEL_DEVICE = os.environ.get("MODEL_DEVICE", "cpu")
+        MODEL_DEVICE = os.getenv("MODEL_DEVICE", "cpu")
         if MODEL_DEVICE == "cuda" and not torch.cuda.is_available():
             MODEL_DEVICE = "cpu"
         self.device = torch.device(MODEL_DEVICE)
@@ -199,12 +190,12 @@ class AiDaemon(Daemon):
 
         except Exception as e:
             batch.update_metadata({"processed": "error"})
-            if os.environ.get("DEBUG", "false").lower() in ("true", "1", "on"):
+            if os.getenv("DEBUG", "false").lower() in ("true", "1", "on"):
                 print(traceback.format_exc())
 
 
 if __name__ == "__main__":
-    CHROOT_PATH = os.environ.get("CHROOT_PATH", "/opt/app")
-    PIDFILE_PATH = os.environ.get("PIDFILE_PATH", "/opt/app/run/ai.pid")
+    CHROOT_PATH = os.getenv("CHROOT_PATH", "/opt/app")
+    PIDFILE_PATH = os.getenv("PIDFILE_PATH", "/opt/app/run/ai.pid")
 
     AiDaemon(batch_type=AiBatch, pidfile=PIDFILE_PATH, chroot=CHROOT_PATH).start()

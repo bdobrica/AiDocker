@@ -24,10 +24,7 @@ __version__ = "0.8.13"
 class AiBatch(Batch):
     def prepare(self) -> np.ndarray:
         # Load the images
-        images = [
-            cv2.cvtColor(cv2.imread(str(source_file)), cv2.COLOR_BGR2RGB)
-            for source_file in self.source_files
-        ]
+        images = [cv2.cvtColor(cv2.imread(str(source_file)), cv2.COLOR_BGR2RGB) for source_file in self.source_files]
 
         # Compute maximum image size
         self.shapes = [im.shape for im in images]
@@ -35,20 +32,11 @@ class AiBatch(Batch):
         self.im_w = max([shape[1] for shape in self.shapes])
 
         # Augment images
-        images = [
-            cv2.resize(
-                im, (self.im_w, self.im_h), interpolation=cv2.INTER_LINEAR
-            )
-            for im in images
-        ]
+        images = [cv2.resize(im, (self.im_w, self.im_h), interpolation=cv2.INTER_LINEAR) for im in images]
 
         # Parameters
-        self.max_length = max(
-            [int(metadata.get("max_length", 16)) for metadata in self.metadata]
-        )
-        self.num_beams = max(
-            [int(metadata.get("num_beams", 4)) for metadata in self.metadata]
-        )
+        self.max_length = max([int(metadata.get("max_length", 16)) for metadata in self.metadata])
+        self.num_beams = max([int(metadata.get("num_beams", 4)) for metadata in self.metadata])
 
         # Build batch input
         return np.stack(images)
@@ -72,19 +60,13 @@ class AiDaemon(Daemon):
 
         # The trick is to not initialize the model outside the forked process
         # It saves some time, but not much. At least no disk I/O
-        model_config = VisionEncoderDecoderConfig.from_pretrained(
-            MODEL_PATH, local_files_only=True
-        )
+        model_config = VisionEncoderDecoderConfig.from_pretrained(MODEL_PATH, local_files_only=True)
         model_sd = torch.load(
             (Path(MODEL_PATH) / "pytorch_model.bin").as_posix(),
             map_location=self.device,
         )
-        feature_extractor = ViTFeatureExtractor.from_pretrained(
-            MODEL_PATH, local_files_only=True
-        )
-        tokenizer = AutoTokenizer.from_pretrained(
-            MODEL_PATH, local_files_only=True
-        )
+        feature_extractor = ViTFeatureExtractor.from_pretrained(MODEL_PATH, local_files_only=True)
+        tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH, local_files_only=True)
         self.model = VisionEncoderDecoderModel(config=model_config)
         self.model.to(self.device)
         self.model.load_state_dict(model_sd)
@@ -102,19 +84,15 @@ class AiDaemon(Daemon):
                 "max_length": batch.max_length,
                 "num_beams": batch.num_beams,
             }
-            pixel_values = self.feature_extractor(
-                images=model_input, return_tensors="pt"
-            ).pixel_values
+            pixel_values = self.feature_extractor(images=model_input, return_tensors="pt").pixel_values
             output_ids = self.model.generate(pixel_values, **gen_kwargs)
-            predictions = self.tokenizer.batch_decode(
-                output_ids, skip_special_tokens=True
-            )
+            predictions = self.tokenizer.batch_decode(output_ids, skip_special_tokens=True)
             batch.serve(predictions)
             batch.update_metadata({"processed": "true"})
 
         except Exception as e:
             batch.update_metadata({"processed": "error"})
-            if os.environ.get("DEBUG", "false").lower() in ("true", "1", "on"):
+            if os.getenv("DEBUG", "false").lower() in ("true", "1", "on"):
                 print(traceback.format_exc())
 
 

@@ -89,7 +89,7 @@ class AiZMQForkDaemon(AiForkDaemon):
                     break
             time.sleep(self.worker_latency)
 
-    def queue(self) -> None:
+    def zero_queue(self) -> None:
         mp_context = mp.get_context("fork")
 
         self.workers_pool = list(range(self.workers_number))

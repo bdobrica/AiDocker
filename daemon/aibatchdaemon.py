@@ -60,8 +60,8 @@ class AiBatchDaemon(Daemon):
         - STAGED_PATH: The path to the staged folder. Defaults to /tmp/ai/staged.
         - BATCH_SIZE: The number of files to process in a single batch. Defaults to 8.
         """
-        STAGED_PATH = os.environ.get("STAGED_PATH", "/tmp/ai/staged")
-        BATCH_SIZE = int(os.environ.get("BATCH_SIZE", 8))
+        STAGED_PATH = os.getenv("STAGED_PATH", "/tmp/ai/staged")
+        BATCH_SIZE = int(os.getenv("BATCH_SIZE", 8))
 
         staged_files = sorted(
             [f for f in Path(STAGED_PATH).glob("*") if f.is_file() and f.suffix != ".json"],
@@ -84,4 +84,4 @@ class AiBatchDaemon(Daemon):
         signal.signal(signal.SIGCHLD, signal.SIG_IGN)
         while True:
             self.queue()
-            time.sleep(float(os.environ.get("QUEUE_LATENCY", 1.0)))
+            time.sleep(float(os.getenv("QUEUE_LATENCY", 1.0)))

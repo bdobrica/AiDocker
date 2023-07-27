@@ -21,49 +21,37 @@ app = Flask(__name__)
 
 
 def get_metadata_path(file_token: str) -> Path:
-    STAGED_PATH = Path(os.environ.get("STAGED_PATH", "/tmp/ai/staged"))
+    STAGED_PATH = Path(os.getenv("STAGED_PATH", "/tmp/ai/staged"))
     return STAGED_PATH / (file_token + ".json")
 
 
 def get_staged_path(file_token: str, file_suffix: str) -> Path:
-    STAGED_PATH = Path(os.environ.get("STAGED_PATH", "/tmp/ai/staged"))
+    STAGED_PATH = Path(os.getenv("STAGED_PATH", "/tmp/ai/staged"))
     return STAGED_PATH / (file_token + "." + file_suffix.strip(".").lower())
 
 
 def get_json_path(file_token: str, file_suffix: str = "json") -> Path:
-    PREPARED_PATH = Path(os.environ.get("PREPARED_PATH", "/tmp/ai/prepared"))
+    PREPARED_PATH = Path(os.getenv("PREPARED_PATH", "/tmp/ai/prepared"))
     return PREPARED_PATH / (file_token + "." + file_suffix.strip(".").lower())
 
 
 def get_staged_paths(file_token: str) -> List[Path]:
-    STAGED_PATH = Path(os.environ.get("STAGED_PATH", "/tmp/ai/staged"))
-    return [
-        path
-        for path in STAGED_PATH.glob(file_token + "*")
-        if path.is_file() and path.suffix != ".json"
-    ]
+    STAGED_PATH = Path(os.getenv("STAGED_PATH", "/tmp/ai/staged"))
+    return [path for path in STAGED_PATH.glob(file_token + "*") if path.is_file() and path.suffix != ".json"]
 
 
 def get_source_paths(file_token: str) -> List[Path]:
-    SOURCE_PATH = Path(os.environ.get("SOURCE_PATH", "/tmp/ai/source"))
-    return [
-        path
-        for path in SOURCE_PATH.glob(file_token + "*")
-        if path.is_file() and path.suffix != ".json"
-    ]
+    SOURCE_PATH = Path(os.getenv("SOURCE_PATH", "/tmp/ai/source"))
+    return [path for path in SOURCE_PATH.glob(file_token + "*") if path.is_file() and path.suffix != ".json"]
 
 
 def get_prepared_paths(file_token: str) -> List[Path]:
-    PREPARED_PATH = Path(os.environ.get("PREPARED_PATH", "/tmp/ai/prepared"))
+    PREPARED_PATH = Path(os.getenv("PREPARED_PATH", "/tmp/ai/prepared"))
     return [path for path in PREPARED_PATH.glob(file_token + "*")]
 
 
 def clean_files(file_token: str) -> None:
-    paths = (
-        get_staged_paths(file_token)
-        + get_source_paths(file_token)
-        + get_prepared_paths(file_token)
-    )
+    paths = get_staged_paths(file_token) + get_source_paths(file_token) + get_prepared_paths(file_token)
     for path in paths:
         if path.exists():
             path.unlink()
@@ -102,12 +90,7 @@ def put_image():
     image_type = image_file.mimetype
     image_data = image_file.read()
 
-    image_hash = (
-        {"MD5": md5, "SHA256": sha256}.get(
-            os.environ.get("API_IMAGE_HASHER", "SHA256").upper()
-        )
-        or sha256
-    )()
+    image_hash = ({"MD5": md5, "SHA256": sha256}.get(os.getenv("API_IMAGE_HASHER", "SHA256").upper()) or sha256)()
     image_hash.update(image_data)
     image_token = image_hash.hexdigest()
 
@@ -148,12 +131,7 @@ def put_text():
             mimetype="application/json",
         )
 
-    text_hash = (
-        {"MD5": md5, "SHA256": sha256}.get(
-            os.environ.get("API_TEXT_HASHER", "SHA256").upper()
-        )
-        or sha256
-    )()
+    text_hash = ({"MD5": md5, "SHA256": sha256}.get(os.getenv("API_TEXT_HASHER", "SHA256").upper()) or sha256)()
     text_hash.update(text_data.encode("utf8"))
     text_token = text_hash.hexdigest()
     text_extension = ".txt"
@@ -220,9 +198,7 @@ def get_image(image_file):
 
     if not image_data:
         return Response(
-            json.dumps(
-                {"token": image_token, "error": "image output is empty"}
-            ),
+            json.dumps({"token": image_token, "error": "image output is empty"}),
             status=404,
             mimetype="application/json",
         )
@@ -249,7 +225,7 @@ def get_image(image_file):
 
 @app.route("/get/json", methods=["POST"])
 def get_json():
-    lifetime = float(os.environ.get("API_CLEANER_FILE_LIFETIME", "1800.0"))
+    lifetime = float(os.getenv("API_CLEANER_FILE_LIFETIME", "1800.0"))
 
     file_token = request.json.get("token")
 
@@ -257,9 +233,7 @@ def get_json():
     if not meta_file.is_file():
         clean_files(file_token)
         return Response(
-            json.dumps(
-                {"error": "missing file metadata", "version": __version__}
-            ),
+            json.dumps({"error": "missing file metadata", "version": __version__}),
             status=400,
             mimetype="application/json",
         )
@@ -269,9 +243,7 @@ def get_json():
     except:
         clean_files(file_token)
         return Response(
-            json.dumps(
-                {"error": "corrupted image metadata", "version": __version__}
-            ),
+            json.dumps({"error": "corrupted image metadata", "version": __version__}),
             status=400,
             mimetype="application/json",
         )
@@ -313,9 +285,7 @@ def get_json():
         )
         clean_files(file_token)
 
-        return Response(
-            json.dumps(json_data), status=200, mimetype="application/json"
-        )
+        return Response(json.dumps(json_data), status=200, mimetype="application/json")
 
     prepared_files = get_prepared_paths(file_token)
     if prepared_files:
@@ -323,24 +293,19 @@ def get_json():
             "token": file_token,
             "status": "success",
             "version": __version__,
-            "inference_time": float(file_metadata.get("update_time", 0))
-            - float(file_metadata.get("upload_time", 0)),
+            "inference_time": float(file_metadata.get("update_time", 0)) - float(file_metadata.get("upload_time", 0)),
         }
         if len(prepared_files) == 1:
             output["url"] = get_url(prepared_files[0])
         else:
             output["urls"] = [get_url(file) for file in prepared_files]
 
-        return Response(
-            json.dumps(output), status=200, mimetype="application/json"
-        )
+        return Response(json.dumps(output), status=200, mimetype="application/json")
 
     source_files = get_source_paths(file_token)
     if source_files:
         return Response(
-            json.dumps(
-                {"wait": "true", "status": "processing", "version": __version__}
-            ),
+            json.dumps({"wait": "true", "status": "processing", "version": __version__}),
             status=200,
             mimetype="application/json",
         )
@@ -348,9 +313,7 @@ def get_json():
     staged_files = get_staged_paths(file_token)
     if staged_files:
         return Response(
-            json.dumps(
-                {"wait": "true", "status": "not queued", "version": __version__}
-            ),
+            json.dumps({"wait": "true", "status": "not queued", "version": __version__}),
             status=200,
             mimetype="application/json",
         )

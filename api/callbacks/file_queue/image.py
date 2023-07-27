@@ -27,7 +27,7 @@ def put_image() -> Response:
     image_type = image_file.mimetype
     image_data = image_file.read()
 
-    image_hash = ({"MD5": md5, "SHA256": sha256}.get(os.environ.get("API_IMAGE_HASHER", "SHA256").upper()) or sha256)()
+    image_hash = ({"MD5": md5, "SHA256": sha256}.get(os.getenv("API_IMAGE_HASHER", "SHA256").upper()) or sha256)()
     image_hash.update(image_data)
     image_token = image_hash.hexdigest()
 

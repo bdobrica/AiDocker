@@ -31,9 +31,7 @@ class AIDaemon(Daemon):
         with open(meta_file, "w") as fp:
             json.dump(metadata, fp)
 
-    def ai(
-        self, source_file: Path, prepared_file: Path, meta_file: Path
-    ) -> None:
+    def ai(self, source_file: Path, prepared_file: Path, meta_file: Path) -> None:
         pid = os.fork()
         if pid != 0:
             return
@@ -52,58 +50,41 @@ class AIDaemon(Daemon):
                 kwargs["fast"] = True
             results = model.detect(str(source_file), **kwargs)
             results = filter(
-                lambda item: item["score"]
-                > os.environ.get("API_THRESHOLD", 0.5),
+                lambda item: item["score"] > os.getenv("API_THRESHOLD", 0.5),
                 results,
             )
 
-            API_NUDENET_KEEP_LABELS = os.environ.get(
-                "API_NUDENET_KEEP_LABELS", ""
-            )
+            API_NUDENET_KEEP_LABELS = os.getenv("API_NUDENET_KEEP_LABELS", "")
             if API_NUDENET_KEEP_LABELS:
                 results = filter(
-                    lambda item: item["label"]
-                    in API_NUDENET_KEEP_LABELS.split(","),
+                    lambda item: item["label"] in API_NUDENET_KEEP_LABELS.split(","),
                     results,
                 )
-            API_NUDENET_DROP_LABELS = os.environ.get(
-                "API_NUDENET_DROP_LABELS", ""
-            )
+            API_NUDENET_DROP_LABELS = os.getenv("API_NUDENET_DROP_LABELS", "")
             if API_NUDENET_DROP_LABELS:
                 results = filter(
-                    lambda item: item["label"]
-                    not in API_NUDENET_DROP_LABELS.split(","),
+                    lambda item: item["label"] not in API_NUDENET_DROP_LABELS.split(","),
                     results,
                 )
 
             # Do censoring
             img_copy = img_orig.copy()
             if metadata.get("censor", "no").lower() == "yes":
-                API_NUDENET_CENSOR_TYPE = os.environ.get(
-                    "API_NUDENET_CENSOR_TYPE", "blackbox"
-                )
+                API_NUDENET_CENSOR_TYPE = os.getenv("API_NUDENET_CENSOR_TYPE", "blackbox")
                 if results:
                     for item in results:
                         box = tuple(item["box"])
                         if API_NUDENET_CENSOR_TYPE == "blackbox":
-                            img_copy = cv2.rectangle(
-                                img_copy, box[:2], box[2:], (0, 0, 0), -1
-                            )
+                            img_copy = cv2.rectangle(img_copy, box[:2], box[2:], (0, 0, 0), -1)
                         elif API_NUDENET_CENSOR_TYPE == "blur":
-                            img_box = img_copy[
-                                box[1] : box[3], box[0] : box[2], :
-                            ]
+                            img_box = img_copy[box[1] : box[3], box[0] : box[2], :]
                             box_height, box_width = img_box.shape[:2]
                             box_blur = (
                                 1 + 2 * (box_height // 2),
                                 1 + 2 * (box_width // 2),
                             )
-                            img_box = cv2.GaussianBlur(
-                                img_box, box_blur, cv2.BORDER_DEFAULT
-                            )
-                            img_copy[
-                                box[1] : box[3], box[0] : box[2], :
-                            ] = img_box
+                            img_box = cv2.GaussianBlur(img_box, box_blur, cv2.BORDER_DEFAULT)
+                            img_copy[box[1] : box[3], box[0] : box[2], :] = img_box
 
                 cv2.imwrite(str(prepared_file), img_copy)
             else:
@@ -117,7 +98,7 @@ class AIDaemon(Daemon):
                 },
             )
         except Exception as e:
-            if os.environ.get("DEBUG", "false").lower() in ("true", "1", "on"):
+            if os.getenv("DEBUG", "false").lower() in ("true", "1", "on"):
                 print(traceback.format_exc())
             self.update_metadata(
                 meta_file,
@@ -130,18 +111,14 @@ class AIDaemon(Daemon):
         sys.exit()
 
     def queue(self) -> None:
-        STAGED_PATH = os.environ.get("STAGED_PATH", "/tmp/ai/staged")
-        SOURCE_PATH = os.environ.get("SOURCE_PATH", "/tmp/ai/source")
-        PREPARED_PATH = os.environ.get("PREPARED_PATH", "/tmp/ai/prepared")
-        MAX_FORK = int(os.environ.get("MAX_FORK", 8))
-        CHUNK_SIZE = int(os.environ.get("CHUNK_SIZE", 4096))
+        STAGED_PATH = os.getenv("STAGED_PATH", "/tmp/ai/staged")
+        SOURCE_PATH = os.getenv("SOURCE_PATH", "/tmp/ai/source")
+        PREPARED_PATH = os.getenv("PREPARED_PATH", "/tmp/ai/prepared")
+        MAX_FORK = int(os.getenv("MAX_FORK", 8))
+        CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", 4096))
 
         staged_files = sorted(
-            [
-                f
-                for f in Path(STAGED_PATH).glob("*")
-                if f.is_file() and f.suffix != ".json"
-            ],
+            [f for f in Path(STAGED_PATH).glob("*") if f.is_file() and f.suffix != ".json"],
             key=lambda f: f.stat().st_mtime,
         )
         source_files = [f for f in Path(SOURCE_PATH).glob("*") if f.is_file()]
@@ -153,13 +130,9 @@ class AIDaemon(Daemon):
 
             meta_file = staged_file.with_suffix(".json")
             source_file = Path(SOURCE_PATH) / staged_file.name
-            prepared_file = Path(PREPARED_PATH) / (
-                staged_file.stem + staged_file.suffix
-            )
+            prepared_file = Path(PREPARED_PATH) / (staged_file.stem + staged_file.suffix)
 
-            with staged_file.open("rb") as src_fp, source_file.open(
-                "wb"
-            ) as dst_fp:
+            with staged_file.open("rb") as src_fp, source_file.open("wb") as dst_fp:
                 while True:
                     chunk = src_fp.read(CHUNK_SIZE)
                     if not chunk:
@@ -173,11 +146,11 @@ class AIDaemon(Daemon):
         signal.signal(signal.SIGCHLD, signal.SIG_IGN)
         while True:
             self.queue()
-            time.sleep(float(os.environ.get("QUEUE_LATENCY", 1.0)))
+            time.sleep(float(os.getenv("QUEUE_LATENCY", 1.0)))
 
 
 if __name__ == "__main__":
-    CHROOT_PATH = os.environ.get("CHROOT_PATH", "/opt/app")
-    PIDFILE_PATH = os.environ.get("PIDFILE_PATH", "/opt/app/run/ai.pid")
+    CHROOT_PATH = os.getenv("CHROOT_PATH", "/opt/app")
+    PIDFILE_PATH = os.getenv("PIDFILE_PATH", "/opt/app/run/ai.pid")
 
     AIDaemon(pidfile=PIDFILE_PATH, chroot=CHROOT_PATH).start()

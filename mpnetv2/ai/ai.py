@@ -25,7 +25,7 @@ class AiBatch(Batch):
             yield from read_text(Path(source_file))
 
     def prepare(self) -> Generator[List[TextItem]]:
-        yield list(itertools.islice(self.get_text_item(), 0, int(os.environ.get("BATCH_SIZE", 8))))
+        yield list(itertools.islice(self.get_text_item(), 0, int(os.getenv("BATCH_SIZE", 8))))
 
     def serve(self, inference_data: np.ndarray) -> None:
         with open(self.target_file, "w") as fp:
@@ -40,8 +40,8 @@ class AiDaemon(Daemon):
 
     def load(self) -> None:
         # Initialize
-        MODEL_PATH = os.environ.get("MODEL_PATH", "/opt/app/mpnet-base-v2")
-        MODEL_DEVICE = os.environ.get("MODEL_DEVICE", "cpu")
+        MODEL_PATH = os.getenv("MODEL_PATH", "/opt/app/mpnet-base-v2")
+        MODEL_DEVICE = os.getenv("MODEL_DEVICE", "cpu")
         if MODEL_DEVICE == "cuda" and not torch.cuda.is_available():
             MODEL_DEVICE = "cpu"
         self.device = torch.device(MODEL_DEVICE)
@@ -50,9 +50,9 @@ class AiDaemon(Daemon):
         self.tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
         self.model = AutoModel.from_pretrained(MODEL_PATH)
         self.redis = Redis(
-            host=os.environ.get("REDIS_HOST", "localhost"),
-            port=int(os.environ.get("REDIS_PORT", 6379)),
-            db=int(os.environ.get("REDIS_DB", 0)),
+            host=os.getenv("REDIS_HOST", "localhost"),
+            port=int(os.getenv("REDIS_PORT", 6379)),
+            db=int(os.getenv("REDIS_DB", 0)),
         )
 
     def ai(self, batch: AiBatch) -> None:
@@ -71,12 +71,12 @@ class AiDaemon(Daemon):
 
         except Exception as e:
             batch.update_metadata({"processed": "error"})
-            if os.environ.get("DEBUG", "false").lower() in ("true", "1", "on"):
+            if os.getenv("DEBUG", "false").lower() in ("true", "1", "on"):
                 print(traceback.format_exc())
 
 
 if __name__ == "__main__":
-    CHROOT_PATH = os.environ.get("CHROOT_PATH", "/opt/app")
-    PIDFILE_PATH = os.environ.get("PIDFILE_PATH", "/opt/app/run/ai.pid")
+    CHROOT_PATH = os.getenv("CHROOT_PATH", "/opt/app")
+    PIDFILE_PATH = os.getenv("PIDFILE_PATH", "/opt/app/run/ai.pid")
 
     AiDaemon(batch_type=AiBatch, pidfile=PIDFILE_PATH, chroot=CHROOT_PATH).start()

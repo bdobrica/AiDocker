@@ -22,14 +22,12 @@ class AiInput(Input):
     IMAGE_SIZE = 640
     AUTO_SIZE = 64
     BORDER_COLOR = (114, 114, 114)
-    CLASSES_PATH = os.environ.get("CLASSES_PATH", "/opt/app/coco.names")
+    CLASSES_PATH = os.getenv("CLASSES_PATH", "/opt/app/coco.names")
 
     def _load_classes(self) -> List[str]:
         # Get names and colors
         with Path(self.CLASSES_PATH).open("r") as f:
-            names = list(
-                filter(None, f.read().split("\n"))
-            )  # filter removes empty strings (such as last line)
+            names = list(filter(None, f.read().split("\n")))  # filter removes empty strings (such as last line)
         return names
 
     def _load_image(self) -> np.ndarray:
@@ -50,15 +48,11 @@ class AiInput(Input):
             new_shape[1] - new_unpad[0],
             new_shape[0] - new_unpad[1],
         )  # wh padding
-        dw, dh = np.mod(dw, self.AUTO_SIZE), np.mod(
-            dh, self.AUTO_SIZE
-        )  # wh padding
+        dw, dh = np.mod(dw, self.AUTO_SIZE), np.mod(dh, self.AUTO_SIZE)  # wh padding
         dw /= 2  # divide padding into 2 sides
         dh /= 2
         if shape[::-1] != new_unpad:  # resize
-            img = cv2.resize(
-                self.img_orig, new_unpad, interpolation=cv2.INTER_LINEAR
-            )
+            img = cv2.resize(self.img_orig, new_unpad, interpolation=cv2.INTER_LINEAR)
         else:
             img = self.img_orig.copy()
         top, bottom = int(round(dh - 0.1)), int(round(dh + 0.1))
@@ -107,9 +101,7 @@ class AiInput(Input):
         results = []
         for det in pred:  # detections per image
             if det is not None and len(det):
-                det[:, :4] = scale_coords(
-                    self.tensor_shape[2:], det[:, :4], self.shape
-                ).round()
+                det[:, :4] = scale_coords(self.tensor_shape[2:], det[:, :4], self.shape).round()
 
                 for *xyxy, conf, class_id in det:
                     det_x = float((xyxy[0] + xyxy[2]) / 2)  # x center
@@ -125,9 +117,7 @@ class AiInput(Input):
                             "y": det_y,
                             "w": det_w,
                             "h": det_h,
-                            "area": det_w
-                            * det_h
-                            / (self.shape[0] * self.shape[1]),
+                            "area": det_w * det_h / (self.shape[0] * self.shape[1]),
                         }
                     )
 
@@ -146,9 +136,7 @@ class AiInput(Input):
                         thickness=2,
                     )
 
-                    text_size = cv2.getTextSize(
-                        self.names[int(class_id)], 0, fontScale=0.5, thickness=1
-                    )[0]
+                    text_size = cv2.getTextSize(self.names[int(class_id)], 0, fontScale=0.5, thickness=1)[0]
                     cv2.rectangle(
                         img_copy,
                         (
@@ -181,7 +169,7 @@ class AiInput(Input):
         with json_file.open("w") as f:
             json.dump({"results": results}, f)
 
-        if os.environ.get("API_DEBUG", False):
+        if os.getenv("API_DEBUG", False):
             cv2.imwrite(self.prepared_file.as_posix(), img_copy)
 
 
@@ -192,14 +180,12 @@ class AiDaemon(Daemon):
             return
 
         try:
-            MODEL_PATH = os.environ.get("MODEL_PATH", "/opt/app/yolov4.weights")
+            MODEL_PATH = os.getenv("MODEL_PATH", "/opt/app/yolov4.weights")
 
             # Load model
             model = Darknet(None, AiInput.IMAGE_SIZE).cpu()
             try:
-                model.load_state_dict(
-                    torch.load(MODEL_PATH, map_location="cpu")["model"]
-                )
+                model.load_state_dict(torch.load(MODEL_PATH, map_location="cpu")["model"])
             except:
                 model.load_darknet_weights(MODEL_PATH)
             model.eval()
@@ -210,7 +196,7 @@ class AiDaemon(Daemon):
 
             input.update_metadata({"processed": "true"})
         except Exception as e:
-            if os.environ.get("DEBUG", "false").lower() in ("true", "1", "on"):
+            if os.getenv("DEBUG", "false").lower() in ("true", "1", "on"):
                 print(traceback.format_exc())
             input.update_metadata({"processed": "error"})
 
@@ -218,7 +204,7 @@ class AiDaemon(Daemon):
 
 
 if __name__ == "__main__":
-    CHROOT_PATH = os.environ.get("CHROOT_PATH", "/opt/app")
-    PIDFILE_PATH = os.environ.get("PIDFILE_PATH", "/opt/app/run/ai.pid")
+    CHROOT_PATH = os.getenv("CHROOT_PATH", "/opt/app")
+    PIDFILE_PATH = os.getenv("PIDFILE_PATH", "/opt/app/run/ai.pid")
 
     AiDaemon(input_type=AiInput, pidfile=PIDFILE_PATH, chroot=CHROOT_PATH).start()

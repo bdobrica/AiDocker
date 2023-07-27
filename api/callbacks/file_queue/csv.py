@@ -24,7 +24,7 @@ def put_csv() -> Response:
     csv_type = csv_file.mimetype
     csv_data = csv_file.read()
 
-    csv_hash = ({"MD5": md5, "SHA256": sha256}.get(os.environ.get("API_CSV_HASHER", "SHA256").upper()) or sha256)()
+    csv_hash = ({"MD5": md5, "SHA256": sha256}.get(os.getenv("API_CSV_HASHER", "SHA256").upper()) or sha256)()
     csv_hash.update(csv_data)
     csv_token = csv_hash.hexdigest()
 

@@ -28,9 +28,7 @@ class AiBatch(Batch):
 
     @staticmethod
     def save_image(image: np.ndarray, prepared_file: Path, idx: int) -> None:
-        image_file = prepared_file.parent / (
-            prepared_file.stem + "_{0:02x}".format(idx) + prepared_file.suffix
-        )
+        image_file = prepared_file.parent / (prepared_file.stem + "_{0:02x}".format(idx) + prepared_file.suffix)
         cv2.imwrite(str(image_file), cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
 
     @property
@@ -57,41 +55,30 @@ class AiBatch(Batch):
         prepared_files = AiBatch.flatten_list(
             [
                 [prepared_file] * meta.get("samples", 1)
-                for prepared_file, meta in zip(
-                    self.prepared_files, self.metadata
-                )
+                for prepared_file, meta in zip(self.prepared_files, self.metadata)
             ]
         )
-        indices = AiBatch.flatten_list(
-            [list(range(meta.get("samples", 1))) for meta in self.metadata]
-        )
-        _ = [
-            AiBatch.save_image(data, prepared_files[idx], indices[idx])
-            for idx, data in enumerate(inference_data)
-        ]
+        indices = AiBatch.flatten_list([list(range(meta.get("samples", 1))) for meta in self.metadata])
+        _ = [AiBatch.save_image(data, prepared_files[idx], indices[idx]) for idx, data in enumerate(inference_data)]
 
 
 class AIDaemon(Daemon):
     def load(self) -> None:
-        MODEL_PATH = os.environ.get("MODEL_PATH", "/opt/app/stable-diffusion")
-        MODEL_DEVICE = os.environ.get("MODEL_DEVICE", "cuda:0")
+        MODEL_PATH = os.getenv("MODEL_PATH", "/opt/app/stable-diffusion")
+        MODEL_DEVICE = os.getenv("MODEL_DEVICE", "cuda:0")
         if MODEL_DEVICE.startswith("cuda") and not torch.cuda.is_available():
             MODEL_DEVICE = "cpu"
 
         self.device = torch.device(MODEL_DEVICE)
 
-        self.vae = AutoencoderKL.from_pretrained(
-            MODEL_PATH, subfolder="vae", local_files_only=True
-        ).to(self.device)
-        self.tokenizer = CLIPTokenizer.from_pretrained(
-            MODEL_PATH, subfolder="tokenizer", local_files_only=True
-        )
+        self.vae = AutoencoderKL.from_pretrained(MODEL_PATH, subfolder="vae", local_files_only=True).to(self.device)
+        self.tokenizer = CLIPTokenizer.from_pretrained(MODEL_PATH, subfolder="tokenizer", local_files_only=True)
         self.text_encoder = CLIPTextModel.from_pretrained(
             MODEL_PATH, subfolder="text_encoder", local_files_only=True
         ).to(self.device)
-        self.unet = UNet2DConditionModel.from_pretrained(
-            MODEL_PATH, subfolder="unet", local_files_only=True
-        ).to(self.device)
+        self.unet = UNet2DConditionModel.from_pretrained(MODEL_PATH, subfolder="unet", local_files_only=True).to(
+            self.device
+        )
         self.scheduler = PNDMScheduler(
             beta_start=0.00085,
             beta_end=0.012,
@@ -102,9 +89,7 @@ class AIDaemon(Daemon):
 
     def ai(self, batch: AiBatch) -> None:
         try:
-            MODEL_GUIDANCE_SCALE = float(
-                os.environ.get("MODEL_GUIDANCE_SCALE", 7.5)
-            )
+            MODEL_GUIDANCE_SCALE = float(os.getenv("MODEL_GUIDANCE_SCALE", 7.5))
 
             generator = torch.manual_seed(42)
 
@@ -118,9 +103,7 @@ class AIDaemon(Daemon):
                 truncation=True,
                 return_tensors="pt",
             )
-            text_embeddings = self.text_encoder(
-                text_input.input_ids.to(self.device)
-            )[0]
+            text_embeddings = self.text_encoder(text_input.input_ids.to(self.device))[0]
 
             max_length = text_input.input_ids.shape[-1]
             uncond_input = self.tokenizer(
@@ -129,9 +112,7 @@ class AIDaemon(Daemon):
                 max_length=max_length,
                 return_tensors="pt",
             )
-            uncond_embeddings = self.text_encoder(
-                uncond_input.input_ids.to(self.device)
-            )[0]
+            uncond_embeddings = self.text_encoder(uncond_input.input_ids.to(self.device))[0]
 
             text_embeddings = torch.cat([uncond_embeddings, text_embeddings])
             latents = torch.randn(
@@ -145,18 +126,14 @@ class AIDaemon(Daemon):
             )
             latents = latents.to(self.device)
 
-            self.scheduler.set_timesteps(
-                batch.inference_steps, device=self.device
-            )
+            self.scheduler.set_timesteps(batch.inference_steps, device=self.device)
             latents = latents * self.scheduler.init_noise_sigma
 
             for inference_step in self.scheduler.timesteps:
                 # expand the latents if we are doing classifier-free guidance to avoid doing two forward passes.
                 latent_model_input = torch.cat([latents] * 2)
 
-                latent_model_input = self.scheduler.scale_model_input(
-                    latent_model_input
-                )
+                latent_model_input = self.scheduler.scale_model_input(latent_model_input)
 
                 # predict the noise residual
                 with torch.no_grad():
@@ -168,14 +145,10 @@ class AIDaemon(Daemon):
 
                 # perform guidance
                 noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
-                noise_pred = noise_pred_uncond + MODEL_GUIDANCE_SCALE * (
-                    noise_pred_text - noise_pred_uncond
-                )
+                noise_pred = noise_pred_uncond + MODEL_GUIDANCE_SCALE * (noise_pred_text - noise_pred_uncond)
 
                 # compute the previous noisy sample x_t -> x_t-1
-                latents = self.scheduler.step(
-                    noise_pred, inference_step, latents
-                ).prev_sample
+                latents = self.scheduler.step(noise_pred, inference_step, latents).prev_sample
 
             # scale and decode the image latents with vae
             latents = 1 / 0.18215 * latents
@@ -188,12 +161,12 @@ class AIDaemon(Daemon):
 
         except Exception as e:
             batch.update_metadata({"processed": "error"})
-            if os.environ.get("DEBUG", "false").lower() in ("true", "1", "on"):
+            if os.getenv("DEBUG", "false").lower() in ("true", "1", "on"):
                 print(traceback.format_exc())
 
 
 if __name__ == "__main__":
-    CHROOT_PATH = os.environ.get("CHROOT_PATH", "/opt/app")
-    PIDFILE_PATH = os.environ.get("PIDFILE_PATH", "/opt/app/run/ai.pid")
+    CHROOT_PATH = os.getenv("CHROOT_PATH", "/opt/app")
+    PIDFILE_PATH = os.getenv("PIDFILE_PATH", "/opt/app/run/ai.pid")
 
     AIDaemon(pidfile=PIDFILE_PATH, chroot=CHROOT_PATH).start()

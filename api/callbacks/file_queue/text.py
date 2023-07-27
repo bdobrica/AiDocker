@@ -22,7 +22,7 @@ def put_text() -> Response:
             mimetype="application/json",
         )
 
-    text_hash = ({"MD5": md5, "SHA256": sha256}.get(os.environ.get("API_TEXT_HASHER", "SHA256").upper()) or sha256)()
+    text_hash = ({"MD5": md5, "SHA256": sha256}.get(os.getenv("API_TEXT_HASHER", "SHA256").upper()) or sha256)()
     text_hash.update(text_data.encode("utf8"))
     text_token = text_hash.hexdigest()
     text_extension = ".txt"

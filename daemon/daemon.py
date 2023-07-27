@@ -80,7 +80,7 @@ class Daemon:
         Setting the DEBUG environment variable to true will prevent the process from being daemonized,
         allowing for easier debugging.
         """
-        if os.environ.get("DEBUG", "false").lower() in ("true", "1", "on"):
+        if os.getenv("DEBUG", "false").lower() in ("true", "1", "on"):
             return
 
         try:

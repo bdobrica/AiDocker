@@ -21,7 +21,7 @@ def put_document() -> Response:
     document_type = document_file.mimetype
     document_data = document_file.read()
 
-    document_hash = ({"MD5": md5, "SHA256": sha256}.get(os.environ.get("API_CSV_HASHER", "SHA256").upper()) or sha256)()
+    document_hash = ({"MD5": md5, "SHA256": sha256}.get(os.getenv("API_CSV_HASHER", "SHA256").upper()) or sha256)()
     document_hash.update(document_data)
     document_token = document_hash.hexdigest()
 

@@ -5,9 +5,9 @@ from pathlib import Path
 
 
 class AiInput:
-    SOURCE_PATH = Path(os.environ.get("SOURCE_PATH", "/tmp/ai/source"))
-    PREPARED_PATH = Path(os.environ.get("PREPARED_PATH", "/tmp/ai/prepared"))
-    DEFAULT_EXTENSION = os.environ.get("DEFAULT_EXTENSION", "png").lower()
+    SOURCE_PATH = Path(os.getenv("SOURCE_PATH", "/tmp/ai/source"))
+    PREPARED_PATH = Path(os.getenv("PREPARED_PATH", "/tmp/ai/prepared"))
+    DEFAULT_EXTENSION = os.getenv("DEFAULT_EXTENSION", "png").lower()
 
     @staticmethod
     def _load_metadata(meta_file: Path) -> dict:

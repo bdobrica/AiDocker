@@ -20,8 +20,8 @@ class AiForkDaemon(Daemon):
         raise NotImplementedError("You must implement ai(source_file: Path, prepared_file: Path, meta_file: Path)")
 
     def queue(self):
-        STAGED_PATH = os.environ.get("STAGED_PATH", "/tmp/ai/staged")
-        MAX_FORK = int(os.environ.get("MAX_FORK", 8))
+        STAGED_PATH = os.getenv("STAGED_PATH", "/tmp/ai/staged")
+        MAX_FORK = int(os.getenv("MAX_FORK", 8))
 
         staged_files = sorted(
             [f for f in Path(STAGED_PATH).glob("*") if f.is_file() and f.suffix != ".json"],
@@ -40,4 +40,4 @@ class AiForkDaemon(Daemon):
         signal.signal(signal.SIGCHLD, signal.SIG_IGN)
         while True:
             self.queue()
-            time.sleep(float(os.environ.get("QUEUE_LATENCY", 1.0)))
+            time.sleep(float(os.getenv("QUEUE_LATENCY", 1.0)))
