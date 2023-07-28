@@ -8,7 +8,7 @@ import zmq
 from .daemon import Daemon
 
 
-class ZmqDaemon(Daemon):
+class ZMQDaemon(Daemon):
     @property
     def model_suffix(self) -> str:
         return "." + self.config.get("model", "model")

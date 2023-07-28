@@ -7,7 +7,7 @@ from .zmqdaemon import ZMQDaemon
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--daemon", "-d", type=str, default="zmqdaemon", help="Daemon to control")
+    parser.add_argument("--daemon", "-d", type=str, default="queuecleaner", help="Daemon to control")
     parser.add_argument("--action", "-a", type=str, default="start", help="Action to perform")
 
     args = parser.parse_args()
@@ -17,8 +17,8 @@ if __name__ == "__main__":
     pidfile_path.parent.mkdir(parents=True, exist_ok=True)
 
     daemons = {
-        "zmqdaemon": ZMQDaemon,
         "queuecleaner": QueueCleaner,
+        "zmqdaemon": ZMQDaemon,
     }
     if args.daemon not in daemons:
         raise ValueError(f"Unknown daemon: {args.daemon}")
