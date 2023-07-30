@@ -16,8 +16,8 @@ class AiForkDaemon(Daemon):
         self.input_type = input_type
         super().__init__(*args, **kwargs)
 
-    def ai(self, input: AiInput):
-        raise NotImplementedError("You must implement ai(source_file: Path, prepared_file: Path, meta_file: Path)")
+    def ai(self, input: AiInput) -> None:
+        raise NotImplementedError("You must implement ai(input: AiInput) -> None")
 
     def queue(self):
         STAGED_PATH = os.getenv("STAGED_PATH", "/tmp/ai/staged")

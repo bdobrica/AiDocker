@@ -63,6 +63,6 @@ class TextItem:
             self.key,
             mapping={
                 **self.asdict(),
-                "vector": vector.tobytes(),
+                "vector": vector.astype(np.float32).tobytes(),
             },
         )

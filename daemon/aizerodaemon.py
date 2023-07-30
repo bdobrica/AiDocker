@@ -3,15 +3,17 @@ import multiprocessing as mp
 import os
 import time
 from pathlib import Path
-from typing import Optional
+from typing import Any, Dict, Optional
 
-import yaml
 import zmq
+
+from .aiforkdaemon import AiForkDaemon
+from .aiinput import AiInput
 
 logger = logging.getLogger(__name__)
 
 
-class AiZeroDaemonMixin:
+class AiZeroDaemon(AiForkDaemon):
     @property
     def workers_number(self) -> int:
         return int(os.getenv("MAX_FORK", 8))
@@ -29,22 +31,15 @@ class AiZeroDaemonMixin:
         return int(os.getenv("ZMQ_WORKER_ERRORS", 0))
 
     @property
-    def model_suffix(self) -> str:
-        return "." + self.config.get("model", "model")
-
-    @property
-    def config(self) -> dict:
-        config_path = Path("/opt/app/container.yaml")
-        with config_path.open("r") as fp:
-            return yaml.safe_load(fp)
-
-    @property
     def client_address(self) -> str:
         return self.get_socket_address("ZMQ_CLIENT_SOCKET_PATH", "/tmp/ai/client")
 
     @property
     def worker_address(self) -> str:
         return self.get_socket_address("ZMQ_WORKER_SOCKET_PATH", "/tmp/ai/worker")
+
+    def ai(self, input: AiInput) -> Dict[str, Any]:
+        raise NotImplementedError("You must implement ai(input: AiInput) -> Dict[str, Any]")
 
     def get_socket_address(self, env_var: str, default_value: Optional[str] = None) -> str:
         socket_path = Path(os.getenv(env_var, default_value)).with_suffix(self.model_suffix)
@@ -87,7 +82,7 @@ class AiZeroDaemonMixin:
                     break
             time.sleep(self.worker_latency)
 
-    def zero_queue(self) -> None:
+    def queue(self) -> None:
         mp_context = mp.get_context("fork")
 
         self.workers_pool = list(range(self.workers_number))
