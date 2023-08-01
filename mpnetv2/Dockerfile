@@ -16,10 +16,10 @@ RUN python3 -m pip install -r /opt/app/requirements.txt
 
 ### COPYING FILES ###
 COPY mpnetv2/container.yaml /opt/app
-COPY mpnetv2/ai /opt/app
+COPY mpnetv2/ai /opt/app/ai
 COPY daemon /opt/app/daemon
 COPY mimetypes.* /opt/app
-COPY api /opt/app
+COPY api /opt/app/api
 COPY entry.sh /opt/app
 
 ### MAKING THE SCRIPTS EXECUTABLE ###
