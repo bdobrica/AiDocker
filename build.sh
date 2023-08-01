@@ -25,15 +25,21 @@ function build_container {
     echo "Building ${model_name} ..."
 
     if [ -f "${weights_file}" ]; then
+        echo "Found weights.txt, downloading weights ..."
         cat "${weights_file}" | while read line; do
             line=$(echo ${line} | tr -d "\r" | tr -d "\n")
-            if [ ! -z "${line}" ]; then
+            if [ -n "${line}" ]; then
                 local weight_file=${model_dir}/${line#*/}
                 if [ ! -f "${weight_file}" ]; then
+                    echo "Downloading ${line} to ${weight_file} ..."
                     wget "https://ublo.ro/wp-content/mirror/${line}" -O ${weight_file}
+                else
+                    echo "Found ${weight_file}, skipping download"
                 fi
             fi
         done
+    else
+        echo "No weights.txt found, skipping weights download"
     fi
     
     $docker build -f "${dockerfile}" -t "${model_name}" .
