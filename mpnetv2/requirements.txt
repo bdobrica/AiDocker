@@ -1,3 +1,6 @@
+flask
+pyyaml
+redis
 torch
 torchvision
 torchaudio
