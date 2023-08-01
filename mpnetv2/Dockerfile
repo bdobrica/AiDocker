@@ -9,9 +9,13 @@ RUN mkdir -p /tmp/ai/prepared
 ### INSTALLING BASE PYTHON PACKAGES ###
 RUN apt-get update && apt-get install -y python3-opencv
 
+### MAKE SURE TO INSTALL REQUIREMENTS FIRST, SO THAT THE CACHE CAN BE USED ###
+COPY mpnetv2/requirements.txt /opt/app
+RUN python3 -m pip install --upgrade pip
+RUN python3 -m pip install -r /opt/app/requirements.txt
+
 ### COPYING FILES ###
 COPY mpnetv2/container.yaml /opt/app
-COPY mpnetv2/requirements.txt /opt/app
 COPY mpnetv2/ai /opt/app
 COPY daemon /opt/app/daemon
 COPY mimetypes.* /opt/app
@@ -20,10 +24,6 @@ COPY entry.sh /opt/app
 
 ### MAKING THE SCRIPTS EXECUTABLE ###
 RUN chmod +x /opt/app/entry.sh
-
-### INSTALLING OTHER REQUIRED PACKAGES ###
-RUN python3 -m pip install --upgrade pip
-RUN python3 -m pip install -r /opt/app/requirements.txt
 
 ### RUNNING THE SCRIPT ###
 ENTRYPOINT ["/opt/app/entry.sh"]
