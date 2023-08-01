@@ -32,6 +32,7 @@ function build_container {
                 local weight_file=${model_dir}/${line#*/}
                 if [ ! -f "${weight_file}" ]; then
                     echo "Downloading ${line} to ${weight_file} ..."
+                    mkdir -p $(dirname ${weight_file})
                     wget "https://ublo.ro/wp-content/mirror/${line}" -O ${weight_file}
                 else
                     echo "Found ${weight_file}, skipping download"
