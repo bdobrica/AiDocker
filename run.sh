@@ -5,6 +5,7 @@ max_port=5000
 debug_mode=false
 container=""
 docker_args=()
+docker_network=""
 
 function detect_docker_command {
     if pgrep dockerd >/dev/null && [ -x "$(command -v docker)" ]; then
@@ -60,6 +61,12 @@ function run_container {
         max_port="${port}"
     fi
 
+    if [ -n "${docker_network}" ]; then
+        docker_args+=("--network" "${docker_network}")
+    else
+        docker_args+=(-p 127.0.0.1:${port}:5000/tcp)
+    fi
+
     if [ "${debug_mode}" = true ]; then
         echo "Running ${model_name} on port ${port} in debug mode ..."
         $docker run \
@@ -69,7 +76,6 @@ function run_container {
             -e DEBUG=true \
             -it \
             --entrypoint /bin/bash \
-            -p 127.0.0.1:${port}:5000/tcp \
             ${model_name}
     else
         echo "Running ${model_name} on port ${port} ..."
@@ -78,7 +84,6 @@ function run_container {
             --rm \
             --env-file ./docker.env \
             -d \
-            -p 127.0.0.1:${port}:5000/tcp \
             ${model_name} ${container_args[@]}
     fi
 }
@@ -89,11 +94,12 @@ function show_usage {
     echo "  -c  Run only the specified container"
     echo "  -a  Run all containers"
     echo "  -d  Enable debug mode"
+    echo "  -n  Run connected to this network"
     exit 0
 }
 
 function parse_arguments {
-    while getopts ":hc:ad" opt; do
+    while getopts ":hc:adn:" opt; do
         case "${opt}" in
             h)
                 show_usage
@@ -112,6 +118,10 @@ function parse_arguments {
             d)
                 echo "Debug mode enabled"
                 debug_mode=true
+                ;;
+            n)
+                echo "Connecting to network ${OPTARG}"
+                docker_network="${OPTARG}"
                 ;;
             *)
                 show_usage
