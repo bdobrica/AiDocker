@@ -12,7 +12,6 @@ RUN apt-get update && apt-get install -y python3-opencv
 ### COPYING FILES ###
 COPY mpnetv2/container.yaml /opt/app
 COPY mpnetv2/requirements.txt /opt/app
-COPY mpnetv2/reader /opt/app/reader
 COPY mpnetv2/ai /opt/app
 COPY daemon /opt/app/daemon
 COPY mimetypes.* /opt/app
