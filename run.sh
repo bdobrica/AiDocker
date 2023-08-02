@@ -5,7 +5,7 @@ max_port=5000
 debug_mode=false
 container=""
 docker_args=()
-docker_network=""
+network=""
 
 function detect_docker_command {
     if pgrep dockerd >/dev/null && [ -x "$(command -v docker)" ]; then
@@ -61,8 +61,8 @@ function run_container {
         max_port="${port}"
     fi
 
-    if [ -n "${docker_network}" ]; then
-        docker_args+=("--network" "${docker_network}")
+    if [ -n "${network}" ]; then
+        docker_args+=("--network" "${network}")
     else
         docker_args+=(-p 127.0.0.1:${port}:5000/tcp)
     fi
@@ -121,7 +121,7 @@ function parse_arguments {
                 ;;
             n)
                 echo "Connecting to network ${OPTARG}"
-                docker_network="${OPTARG}"
+                network="${OPTARG}"
                 ;;
             *)
                 show_usage
