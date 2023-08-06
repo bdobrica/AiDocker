@@ -15,8 +15,8 @@ if __name__ == "__main__":
     PIDFILE_PATH = os.getenv("PIDFILE_PATH", "/opt/app/run/ai.pid")
 
     if args.daemon.lower() in ("aibuilddaemon", "builddaemon", "build"):
-        AiBuildDaemon(batch_type=AiBuildBatch, pidfile=PIDFILE_PATH, chroot=CHROOT_PATH).start()
+        AiBuildDaemon(input_type=AiBuildBatch, pidfile=PIDFILE_PATH, chroot=CHROOT_PATH).start()
     elif args.daemon.lower() in ("aiquerydaemon", "querydaemon", "query"):
-        AiQueryDaemon(batch_type=AiQueryInput, pidfile=PIDFILE_PATH, chroot=CHROOT_PATH).start()
+        AiQueryDaemon(input_type=AiQueryInput, pidfile=PIDFILE_PATH, chroot=CHROOT_PATH).start()
     else:
         raise ValueError(f"Unknown daemon type: {args.daemon}")

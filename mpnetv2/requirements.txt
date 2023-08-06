@@ -1,4 +1,6 @@
 flask
+pypdf2
+python-docx
 pyyaml
 pyzmq
 redis[hiredis]

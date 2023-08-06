@@ -100,4 +100,4 @@ if __name__ == "__main__":
     CHROOT_PATH = os.getenv("CHROOT_PATH", "/opt/app")
     PIDFILE_PATH = os.getenv("PIDFILE_PATH", "/opt/app/run/ai.pid")
 
-    AiDaemon(batch_type=AiBatch, pidfile=PIDFILE_PATH, chroot=CHROOT_PATH).start()
+    AiDaemon(input_type=AiBatch, pidfile=PIDFILE_PATH, chroot=CHROOT_PATH).start()

@@ -41,7 +41,7 @@ class TextItem:
             "path": self.path or "",
         }
 
-    def split(self, max_length: int = 512, overlap: int = 0) -> Generator["TextItem"]:
+    def split(self, max_length: int = 512, overlap: int = 0) -> Generator["TextItem", None, None]:
         if len(self.text) <= max_length:
             yield self
             return

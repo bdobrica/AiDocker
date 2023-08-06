@@ -13,7 +13,7 @@ __version__ = "0.8.12"
 class AiBatchDaemon(Daemon):
     def __init__(
         self,
-        batch_type: Type[AiBatch],
+        input_type: Type[AiBatch],
         pidfile: PathLike,
         chroot: PathLike,
         stdin: PathLike = os.devnull,
@@ -33,14 +33,14 @@ class AiBatchDaemon(Daemon):
         constructing a batch from them. The batch is then passed to the ai method, which is responsible for processing
         the batch.
 
-        :param batch_type: The type of batch to use. This must be a subclass of AiBatch.
+        :param input_type: The type of batch to use. This must be a subclass of AiBatch.
         :param pidfile: The path to where the file containing the pid should be stored.
         :param chroot: The path to the directory to chroot to.
         :param stdin: The path to the file to use as stdin.
         :param stdout: The path to the file to use as stdout.
         :param stderr: The path to the file to use as stderr.
         """
-        self.batch_type = batch_type
+        self.input_type = input_type
         super().__init__(pidfile=pidfile, chroot=chroot, stdin=stdin, stdout=stdout, stderr=stderr)
 
     def ai(self, batch: AiBatch) -> None:
@@ -69,7 +69,7 @@ class AiBatchDaemon(Daemon):
         )
 
         while staged_files:
-            batch = self.batch_type(staged_files=staged_files[:BATCH_SIZE])
+            batch = self.input_type(staged_files=staged_files[:BATCH_SIZE])
             staged_files = staged_files[BATCH_SIZE:]
             self.ai(batch)
 

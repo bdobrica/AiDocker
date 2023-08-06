@@ -15,6 +15,7 @@ RUN python3 -m pip install --upgrade pip
 RUN python3 -m pip install -r /opt/app/requirements.txt
 
 ### COPYING FILES ###
+COPY mpnetv2/mpnet-base-v2 /opt/app/mpnet-base-v2
 COPY mpnetv2/container.yaml /opt/app
 COPY mpnetv2/ai /opt/app/ai
 COPY daemon /opt/app/daemon
