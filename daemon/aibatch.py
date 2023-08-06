@@ -2,7 +2,9 @@ import json
 import os
 import time
 from pathlib import Path
-from typing import List
+from typing import Iterable, Union
+
+from .daemon import PathLike
 
 
 class AiBatch:
@@ -29,8 +31,13 @@ class AiBatch:
     def _move_staged_files(self) -> None:
         _ = [staged_file.rename(source_file) for staged_file, source_file in zip(self.staged_files, self.source_files)]
 
-    def __init__(self, staged_files: List[Path]):
-        self.staged_files = staged_files
+    def __init__(self, staged_files: Union[PathLike, Iterable[PathLike]]):
+        if isinstance(staged_files, str):
+            staged_files = Path(staged_files)
+        if isinstance(staged_files, Path):
+            staged_files = [staged_files]
+
+        self.staged_files = list(staged_files)
         self.meta_files = [staged_file.with_suffix(".json") for staged_file in self.staged_files]
         self.source_files = [self.SOURCE_PATH / staged_file.name for staged_file in self.staged_files]
         self.metadata = [AiBatch._load_metadata(meta_file) for meta_file in self.meta_files]
@@ -40,6 +47,12 @@ class AiBatch:
             for index, staged_file in enumerate(self.staged_files)
         ]
         self._move_staged_files()
+
+    def get_queued_files(self) -> list:
+        return list(self.SOURCE_PATH.iterdir())
+
+    def get_queue_size(self) -> int:
+        return len(self.get_queued_files())
 
     def prepare(self) -> any:
         raise NotImplementedError("You must implement prepare() -> any")
