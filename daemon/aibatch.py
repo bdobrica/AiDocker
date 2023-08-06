@@ -28,6 +28,14 @@ class AiBatch:
         with open(meta_file, "w") as fp:
             json.dump(metadata, fp)
 
+    @staticmethod
+    def get_queued_files() -> list:
+        return list(AiBatch.SOURCE_PATH.iterdir())
+
+    @staticmethod
+    def get_queue_size() -> int:
+        return len(AiBatch.get_queued_files())
+
     def _move_staged_files(self) -> None:
         _ = [staged_file.rename(source_file) for staged_file, source_file in zip(self.staged_files, self.source_files)]
 
@@ -47,12 +55,6 @@ class AiBatch:
             for index, staged_file in enumerate(self.staged_files)
         ]
         self._move_staged_files()
-
-    def get_queued_files(self) -> list:
-        return list(self.SOURCE_PATH.iterdir())
-
-    def get_queue_size(self) -> int:
-        return len(self.get_queued_files())
 
     def prepare(self) -> any:
         raise NotImplementedError("You must implement prepare() -> any")

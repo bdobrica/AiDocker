@@ -25,6 +25,14 @@ class AiInput:
         with open(meta_file, "w") as fp:
             json.dump(metadata, fp)
 
+    @staticmethod
+    def get_queued_files() -> list:
+        return list(AiInput.SOURCE_PATH.iterdir())
+
+    @staticmethod
+    def get_queue_size(self) -> int:
+        return len(AiInput.get_queued_files())
+
     def __init__(self, staged_file: Path):
         self.staged_file = staged_file
         self.meta_file = self.staged_file.with_suffix(".json")
@@ -34,12 +42,6 @@ class AiInput:
             self.staged_file.stem + "." + self.metadata.get("output_extension", self.DEFAULT_EXTENSION)
         )
         self.staged_file.rename(self.source_file)
-
-    def get_queued_files(self) -> list:
-        return list(self.SOURCE_PATH.iterdir())
-
-    def get_queue_size(self) -> int:
-        return len(self.get_queued_files())
 
     def prepare(self) -> any:
         raise NotImplementedError("You must implement prepare() -> any")
