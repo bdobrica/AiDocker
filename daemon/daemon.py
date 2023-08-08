@@ -42,6 +42,8 @@ import yaml
 
 PathLike = Union[str, Path]
 
+__version__ = "0.8.12"
+
 
 class Daemon:
     def __init__(

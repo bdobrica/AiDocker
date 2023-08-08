@@ -1,13 +1,12 @@
+import logging
 import os
-import signal
 import time
-from pathlib import Path
-from typing import Type
+from typing import Any, Optional, Type
 
 from .aibatch import AiBatch
 from .daemon import Daemon, PathLike
 
-__version__ = "0.8.12"
+logger = logging.getLogger(__name__)
 
 
 class AiBatchDaemon(Daemon):
@@ -43,13 +42,17 @@ class AiBatchDaemon(Daemon):
         self.input_type = input_type
         super().__init__(pidfile=pidfile, chroot=chroot, stdin=stdin, stdout=stdout, stderr=stderr)
 
-    def ai(self, batch: AiBatch) -> None:
+    @property
+    def batch_size(self) -> int:
+        return int(os.getenv("BATCH_SIZE", 8))
+
+    def ai(self, input: Any) -> Optional[Any]:
         """
         Method that is called when a batch is ready to be processed.
 
         :param batch: The batch to process.
         """
-        raise NotImplementedError("You must implement ai(batch: AiBatch)")
+        raise NotImplementedError("You must implement ai(batch: Any) -> Optional[Any]")
 
     def queue(self) -> None:
         """
@@ -60,18 +63,10 @@ class AiBatchDaemon(Daemon):
         - STAGED_PATH: The path to the staged folder. Defaults to /tmp/ai/staged.
         - BATCH_SIZE: The number of files to process in a single batch. Defaults to 8.
         """
-        STAGED_PATH = os.getenv("STAGED_PATH", "/tmp/ai/staged")
-        BATCH_SIZE = int(os.getenv("BATCH_SIZE", 8))
-
-        staged_files = sorted(
-            [f for f in Path(STAGED_PATH).glob("*") if f.is_file() and f.suffix != ".json"],
-            key=lambda f: f.stat().st_mtime,
-        )
-
-        while staged_files:
-            batch = self.input_type(staged_files=staged_files[:BATCH_SIZE])
-            staged_files = staged_files[BATCH_SIZE:]
-            self.ai(batch)
+        while staged_files := self.input_type.get_input_files(self.batch_size):
+            model_input = self.input_type(staged_files)
+            model_output = self.ai(model_input.prepare())
+            model_input.serve(model_output)
 
     def run(self) -> None:
         """
@@ -81,7 +76,6 @@ class AiBatchDaemon(Daemon):
         Environment variables:
         - QUEUE_LATENCY: The number of seconds to wait between each call to the queue method. Defaults to 1.0.
         """
-        signal.signal(signal.SIGCHLD, signal.SIG_IGN)
         while True:
             self.queue()
             time.sleep(float(os.getenv("QUEUE_LATENCY", 1.0)))

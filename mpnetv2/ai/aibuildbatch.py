@@ -1,24 +1,41 @@
 #!/usr/bin/env python3
-import itertools
-import os
-from pathlib import Path
-from typing import Generator, List
+from typing import Generator, Iterable, List, Optional, Union
 
-import numpy as np
 from redis import Redis
+from torch import Tensor
 
 from daemon import AiBatch as Batch
+from daemon import PathLike
 
 from .reader import TextItem, read_text
 
 
 class AiBuildBatch(Batch):
-    def set_redis_connection(self, redis: Redis) -> None:
+    def __init__(self, source_files: Union[PathLike, Iterable[PathLike]], redis: Redis) -> None:
+        super().__init__(self, source_files=source_files)
         self.redis = redis
 
     def get_text_item(self) -> Generator[TextItem, None, None]:
         for source_file in self.source_files:
-            yield from read_text(Path(source_file))
+            yield from read_text(source_file)
+            # TODO: need to check if this update is really in the right place
+            self._update_metadata(source_file, {"processed": "true"})
 
-    def prepare(self) -> Generator[List[TextItem], None, None]:
-        yield list(itertools.islice(self.get_text_item(), 0, int(os.getenv("BATCH_SIZE", 8))))
+    def prepare(self, batch_size: int) -> Generator[List[TextItem], None, None]:
+        self._buffer: List[TextItem] = []
+        for item in self.get_text_item():
+            self._buffer.append(item)
+            if len(self._buffer) >= batch_size:
+                yield self._buffer
+                self._buffer = []
+        if self._buffer:
+            yield self._buffer
+
+    def serve(self, model_output: Optional[Tensor]) -> None:
+        if model_output is None:
+            # TODO: should do some update that processing failed
+            return
+
+        model_output = model_output.cpu().numpy()
+        for item, vector in zip(self._buffer, model_output):
+            item.store(self.redis, vector.flatten())

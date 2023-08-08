@@ -4,7 +4,7 @@ from .aiforkdaemon import AiForkDaemon
 from .aiinput import AiInput
 from .aizerodaemon import AiZeroDaemon
 from .aizeroinput import AiZeroInput
-from .daemon import Daemon
+from .daemon import Daemon, PathLike
 
 __version__ = "0.8.13"
 

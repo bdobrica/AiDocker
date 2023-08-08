@@ -47,11 +47,11 @@ class AiZeroDaemon(AiForkDaemon):
         return f"ipc://{socket_path.absolute().as_posix()}"
 
     def requeue_worker(self, worker_id: int) -> None:
-        logger.info(f"Restarting worker %s", worker_id)
+        logger.info("Restarting worker %s", worker_id)
         self.workers_pool.append(worker_id)
 
     def zero_worker(self, worker_id: int) -> None:
-        logger.info(f"Starting worker %s", worker_id)
+        logger.info("Starting worker %s", worker_id)
 
         context = zmq.Context()
         socket = context.socket(zmq.REP)

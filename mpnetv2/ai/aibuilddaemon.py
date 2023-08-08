@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 import os
 import traceback
+from typing import Iterable, Optional
 
-import numpy as np
 import torch
 from redis import Redis
 from redis.commands.search.field import NumericField, TextField, VectorField
 from redis.commands.search.indexDefinition import IndexDefinition, IndexType
 from transformers import AutoModel, AutoTokenizer
 
-from daemon import AiDaemon as Daemon
+from daemon import AiBatchDaemon as Daemon
 
-from .aibuildbatch import AiBuildBatch
+from .aibuildbatch import TextItem
 
 
 class AiBuildDaemon(Daemon):
@@ -60,26 +60,23 @@ class AiBuildDaemon(Daemon):
         )
         self.create_redix_vector_index()
 
-    def ai(self, batch: AiBuildBatch) -> None:
-        try:
-            model_output = None
-            for model_input in batch.prepare():
-                encoded_input_t = self.tokenizer(
-                    [item.text for item in model_input], padding=True, truncation=True, return_tensors="pt"
-                )
-                with torch.no_grad():
-                    model_output_t = self.model(**encoded_input_t)
-                model_output_t = self.mean_pooling(model_output_t, encoded_input_t["attention_mask"])
-                if model_output is None:
-                    model_output = model_output_t.cpu().numpy()
-                else:
-                    model_output = np.vstack((model_output, model_output_t.cpu().numpy()))
-                model_output = model_output_t.cpu().numpy()
-                for item, vector in zip(model_input, model_output):
-                    item.store(self.redis, vector.flatten())
-            batch.update_metadata({"processed": "true"})
+    def queue(self) -> None:
+        while staged_files := self.input_type.get_input_files():
+            model_input = self.input_type(staged_files)
+            for prepared_input in model_input.prepare(self.batch_size):
+                model_output = self.ai(prepared_input)
+                model_input.serve(model_output)
 
+    def ai(self, input: Iterable[TextItem]) -> Optional[torch.Tensor]:
+        try:
+            encoded_input_t = self.tokenizer(
+                [item.text for item in input], padding=True, truncation=True, return_tensors="pt"
+            )
+            with torch.no_grad():
+                model_output_t = self.model(**encoded_input_t)
+            model_output_t = self.mean_pooling(model_output_t, encoded_input_t["attention_mask"])
+            return model_output_t
         except Exception as e:
-            batch.update_metadata({"processed": "error"})
             if os.getenv("DEBUG", "false").lower() in ("true", "1", "on"):
                 print(traceback.format_exc())
+            return None

@@ -1,51 +1,23 @@
-import json
 import os
-import time
 from pathlib import Path
-from typing import Iterable, Union
+from typing import Any, Iterable, Optional, Union
 
 from .daemon import PathLike
+from .filequeue import FileQueue
 
 
-class AiBatch:
-    SOURCE_PATH = Path(os.getenv("SOURCE_PATH", "/tmp/ai/source"))
-    PREPARED_PATH = Path(os.getenv("PREPARED_PATH", "/tmp/ai/prepared"))
+class AiBatch(FileQueue):
     DEFAULT_EXTENSION = os.getenv("DEFAULT_EXTENSION", "png").lower()
-
-    @staticmethod
-    def _load_metadata(meta_file: Path) -> dict:
-        if not meta_file.is_file():
-            return {}
-        with open(meta_file, "r") as fp:
-            return json.load(fp)
-
-    @staticmethod
-    def _update_metadata(meta_file: Path, data: dict) -> None:
-        metadata = AiBatch._load_metadata(meta_file)
-        if "update_time" not in metadata:
-            metadata["update_time"] = time.time()
-        metadata.update(data)
-        with open(meta_file, "w") as fp:
-            json.dump(metadata, fp)
-
-    @staticmethod
-    def get_queued_files() -> list:
-        return list(AiBatch.SOURCE_PATH.iterdir())
-
-    @staticmethod
-    def get_queue_size() -> int:
-        return len(AiBatch.get_queued_files())
 
     def _move_staged_files(self) -> None:
         _ = [staged_file.rename(source_file) for staged_file, source_file in zip(self.staged_files, self.source_files)]
 
     def __init__(self, staged_files: Union[PathLike, Iterable[PathLike]]):
-        if isinstance(staged_files, str):
-            staged_files = Path(staged_files)
-        if isinstance(staged_files, Path):
+        if isinstance(staged_files, (str, Path)):
             staged_files = [staged_files]
-
-        self.staged_files = list(staged_files)
+        self.staged_files = [
+            Path(staged_file) if isinstance(staged_file, str) else staged_file for staged_file in staged_files
+        ]
         self.meta_files = [staged_file.with_suffix(".json") for staged_file in self.staged_files]
         self.source_files = [self.SOURCE_PATH / staged_file.name for staged_file in self.staged_files]
         self.metadata = [AiBatch._load_metadata(meta_file) for meta_file in self.meta_files]
@@ -56,11 +28,11 @@ class AiBatch:
         ]
         self._move_staged_files()
 
-    def prepare(self) -> any:
-        raise NotImplementedError("You must implement prepare() -> any")
+    def prepare(self) -> Any:
+        raise NotImplementedError("You must implement prepare() -> Any")
 
-    def serve(self, inference_data: any) -> None:
-        raise NotImplementedError("You must implement serve(inference_data: any)")
+    def serve(self, inference_data: Optional[Any]) -> None:
+        raise NotImplementedError("You must implement serve(inference_data: Any)")
 
     def update_metadata(self, data: dict) -> None:
         _ = [AiBatch._update_metadata(meta_file, data) for meta_file in self.meta_files]
