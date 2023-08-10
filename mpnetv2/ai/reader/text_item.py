@@ -1,6 +1,7 @@
 import re
 from hashlib import sha256
-from typing import Generator, Optional
+from pathlib import Path
+from typing import Generator, Optional, Union
 
 import numpy as np
 from redis import Redis
@@ -9,10 +10,12 @@ from redis import Redis
 
 
 class TextItem:
-    def __init__(self, text: str, page: Optional[int], paragraph: Optional[int], path: Optional[str]):
+    def __init__(self, text: str, page: Optional[int], paragraph: Optional[int], path: Optional[Union[str, Path]]):
         self.text = re.sub(r"\s+", " ", text).strip()
         self.page = page
         self.paragraph = paragraph
+        if isinstance(path, str):
+            path = Path(path)
         self.path = path
 
     def __str__(self):
@@ -38,7 +41,7 @@ class TextItem:
             "text": self.text,
             "page": self.page if self.page is not None else -1,
             "paragraph": self.paragraph if self.paragraph is not None else -1,
-            "path": self.path or "",
+            "path": self.path.as_posix() or "",
         }
 
     def split(self, max_length: int = 512, overlap: int = 0) -> Generator["TextItem", None, None]:

@@ -15,6 +15,7 @@ from .aibuildbatch import TextItem
 
 
 class AiBuildDaemon(Daemon):
+    @staticmethod
     def mean_pooling(model_output, attention_mask) -> torch.Tensor:
         token_embeddings = model_output[0]
         input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
@@ -62,7 +63,7 @@ class AiBuildDaemon(Daemon):
 
     def queue(self) -> None:
         while staged_files := self.input_type.get_input_files():
-            model_input = self.input_type(staged_files)
+            model_input = self.input_type(staged_files, redis=self.redis)
             for prepared_input in model_input.prepare(self.batch_size):
                 model_output = self.ai(prepared_input)
                 model_input.serve(model_output)

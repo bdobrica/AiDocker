@@ -11,8 +11,8 @@ from .reader import TextItem, read_text
 
 
 class AiBuildBatch(Batch):
-    def __init__(self, source_files: Union[PathLike, Iterable[PathLike]], redis: Redis) -> None:
-        super().__init__(self, source_files=source_files)
+    def __init__(self, staged_files: Union[PathLike, Iterable[PathLike]], redis: Redis) -> None:
+        super().__init__(staged_files=staged_files)
         self.redis = redis
 
     def get_text_item(self) -> Generator[TextItem, None, None]:

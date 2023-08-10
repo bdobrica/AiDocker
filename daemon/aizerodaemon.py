@@ -50,7 +50,7 @@ class AiZeroDaemon(AiForkDaemon):
         logger.info("Restarting worker %s", worker_id)
         self.workers_pool.append(worker_id)
 
-    def zero_worker(self, worker_id: int) -> None:
+    def zero_worker(self, worker_id: int) -> int:
         logger.info("Starting worker %s", worker_id)
 
         context = zmq.Context()
@@ -81,6 +81,7 @@ class AiZeroDaemon(AiForkDaemon):
                     logger.info("Worker %s served %s requests, exiting", worker_id, served_request)
                     break
             time.sleep(self.worker_latency)
+        return worker_id
 
     def queue(self) -> None:
         mp_context = mp.get_context("fork")

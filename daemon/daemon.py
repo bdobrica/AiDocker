@@ -68,8 +68,6 @@ class Daemon:
         self.stdout = stdout
         self.stderr = stderr
 
-        self.load()
-
     @property
     def model_name(self) -> str:
         """
@@ -111,6 +109,7 @@ class Daemon:
         allowing for easier debugging.
         """
         if os.getenv("DEBUG", "false").lower() in ("true", "1", "on"):
+            self.load()
             return
 
         try:
@@ -160,6 +159,8 @@ class Daemon:
 
         with open(self.pidfile, "w+") as fp:
             fp.write(pid + "\n")
+
+        self.load()
 
     def atexit(self) -> None:
         """
