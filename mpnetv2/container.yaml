@@ -14,10 +14,10 @@ input:
     required:
       document: document
   - endpoint: /put/text
-    queue: file
+    queue: zero
     required:
       text: text
 output:
   endpoint: /get/json
-  queue: zero
+  queue: file
   type: json
