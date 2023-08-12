@@ -1,3 +1,23 @@
+"""
+This module implements a simple file-queue. It is used to pass files between the different stages of the pipeline.
+The file-queue is implemented as a directory structure, where each directory represents a stage in the pipeline.
+The files are moved between the directories as they progress through the pipeline.
+
+There are three directories:
+    - STAGED_PATH: The directory where the files are placed when they are staged for processing.
+    - SOURCE_PATH: The directory where the files are placed when they are queued for processing.
+    - PREPARED_PATH: The directory where the files are placed when they were already processed.
+
+The files are moved between the directories as follows:
+    - STAGED_PATH -> SOURCE_PATH: When the file is staged for processing, it is moved from the STAGED_PATH to the
+        SOURCE_PATH.
+    - SOURCE_PATH -> PREPARED_PATH: When the file is queued for processing, it is moved from the SOURCE_PATH to the
+        PREPARED_PATH.
+
+Every file has a corresponding metadata file. The metadata file is a JSON file with the same name as the file, but with
+the .json extension. The metadata file contains information about the file, such as the time it was last updated.
+"""
+
 import json
 import os
 import time

@@ -96,7 +96,7 @@ class Daemon:
 
     def load(self) -> None:
         """
-        This method is called after the daemon is initialized, but before it is daemonized.
+        This method is called after the daemon is initialized and daemonized.
         Allows for loading of any resources that should be available to the daemon and its children. Intended to be
         overwritten by subclasses. Use env-vars to pass data to the daemon.
         """

@@ -1,5 +1,10 @@
 import logging
-import multiprocessing as mp
+
+try:
+    import torch.multiprocessing as mp
+except ImportError:
+    import multiprocessing as mp
+
 import os
 import time
 from pathlib import Path
@@ -41,6 +46,12 @@ class AiZeroDaemon(AiForkDaemon):
     def ai(self, input: AiInput) -> Dict[str, Any]:
         raise NotImplementedError("You must implement ai(input: AiInput) -> Dict[str, Any]")
 
+    def worker_load(self) -> None:
+        """
+        Method called when a worker is initialized. For example, you can load a model here.
+        """
+        logger.info("Initializing worker %s", self.worker_id)
+
     def get_socket_address(self, env_var: str, default_value: Optional[str] = None) -> str:
         socket_path = Path(os.getenv(env_var, default_value)).with_suffix(self.model_suffix)
         socket_path.parent.mkdir(parents=True, exist_ok=True)
@@ -56,6 +67,8 @@ class AiZeroDaemon(AiForkDaemon):
         context = zmq.Context()
         socket = context.socket(zmq.REP)
         socket.connect(self.worker_address)
+
+        self.worker_load()
 
         served_request: int = 1
         errors: int = 0
