@@ -46,12 +46,13 @@ if __name__ == "__main__":
         app.route(endpoint["endpoint"], methods=[method])(callback)
 
     if load_zmq:
-        app.logger.info("Loading ZeroMQ")
-        zmq_mixin = ZeroQueueMixin()
-        context = zmq.Context()
-        g.zmq_context = context
-        g.zmq_worker_timeout = zmq_mixin.worker_timeout
-        g.zmq_client_address = zmq_mixin.client_address
+        with app.app_context():
+            app.logger.info("Loading ZeroMQ")
+            zmq_mixin = ZeroQueueMixin()
+            context = zmq.Context()
+            g.zmq_context = context
+            g.zmq_worker_timeout = zmq_mixin.worker_timeout
+            g.zmq_client_address = zmq_mixin.client_address
 
     @app.route("/", methods=["GET", "POST"])
     def get_root():
