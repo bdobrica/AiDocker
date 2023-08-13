@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import json
+import logging
 import os
 from pathlib import Path
 
@@ -27,6 +28,8 @@ if __name__ == "__main__":
     else:
         endpoints.append(config["output"])
 
+    do_debug = os.getenv("DEBUG", "false").lower() in ("true", "1", "on")
+
     load_zmq = False
     for endpoint in endpoints:
         parts = endpoint["endpoint"].strip("/").split("/")
@@ -51,6 +54,9 @@ if __name__ == "__main__":
             app.config["zmq_worker_timeout"] = zmq_mixin.worker_timeout
             app.config["zmq_client_address"] = zmq_mixin.client_address
 
+    if do_debug:
+        app.logger.setLevel(logging.DEBUG)
+
     @app.route("/", methods=["GET", "POST"])
     def get_root():
         return Response(
@@ -59,4 +65,4 @@ if __name__ == "__main__":
             mimetype="application/json",
         )
 
-    app.run(host="0.0.0.0", debug=(os.getenv("DEBUG", "false").lower() in ("true", "1", "on")))
+    app.run(host="0.0.0.0", debug=())
