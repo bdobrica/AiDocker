@@ -2,8 +2,10 @@ import os
 from pathlib import Path
 from typing import Optional
 
+from .modelmixin import ModelMixin
 
-class ZeroQueueMixin:
+
+class ZeroQueueMixin(ModelMixin):
     @property
     def workers_number(self) -> int:
         return int(os.getenv("MAX_FORK", 8))
