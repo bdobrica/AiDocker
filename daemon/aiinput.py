@@ -3,10 +3,10 @@ from pathlib import Path
 from typing import Any, Optional
 
 from .daemon import PathLike
-from .filequeue import FileQueue
+from .filequeuemixin import FileQueueMixin
 
 
-class AiInput(FileQueue):
+class AiInput(FileQueueMixin):
     DEFAULT_EXTENSION = os.getenv("DEFAULT_EXTENSION", "png").lower()
 
     def _move_staged_file(self) -> None:

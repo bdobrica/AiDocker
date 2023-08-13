@@ -1,17 +1,12 @@
-import os
-
 import zmq
-from flask import Response, _app_ctx_stack, request
+from flask import Response, request
 
 from .. import __version__
+from .helpers import get_socket
 
 
 def get_json() -> Response:
-    context: zmq.Context = getattr(_app_ctx_stack.top, "zmq_context")
-    client_address: str = getattr(_app_ctx_stack.top, "zmq_client_address")
-    socket: zmq.Socket = context.socket(zmq.REQ)
-    socket.setsockopt(zmq.RCVTIMEO, int(1000 * float(os.getenv("ZMQ_TIMEOUT", "1.0"))))
-    socket.connect(client_address)
+    socket = get_socket()
     socket.send_json(request.json)
 
     try:

@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 import json
+import os
 from pathlib import Path
 
 import yaml
-from flask import Flask, Response, _app_ctx_stack
+import zmq
+from flask import Flask, Response, g
+
+from daemon import ZeroQueueMixin
 
 from .callbacks import __version__, file_queue, zero_queue
 
@@ -24,6 +28,7 @@ if __name__ == "__main__":
     else:
         endpoints.append(config["output"])
 
+    load_zmq = False
     for endpoint in endpoints:
         parts = endpoint["endpoint"].strip("/").split("/")
         method = parts[0].upper()
@@ -34,8 +39,19 @@ if __name__ == "__main__":
         }.get(endpoint["queue"], None)
         if module is None or not hasattr(module, callback_name):
             continue
+        if endpoint["queue"] == "zero":
+            load_zmq = True
         callback = getattr(module, callback_name)
+        app.logger.info("Registering endpoint %s / %s with queue %s", endpoint["endpoint"], method, endpoint["queue"])
         app.route(endpoint["endpoint"], methods=[method])(callback)
+
+    if load_zmq:
+        app.logger.info("Loading ZeroMQ")
+        zmq_mixin = ZeroQueueMixin()
+        context = zmq.Context()
+        g.zmq_context = context
+        g.zmq_worker_timeout = zmq_mixin.worker_timeout
+        g.zmq_client_address = zmq_mixin.client_address
 
     @app.route("/", methods=["GET", "POST"])
     def get_root():
@@ -45,4 +61,4 @@ if __name__ == "__main__":
             mimetype="application/json",
         )
 
-    app.run(host="0.0.0.0", debug=True)
+    app.run(host="0.0.0.0", debug=(os.getenv("DEBUG", "false").lower() in ("true", "1", "on")))
