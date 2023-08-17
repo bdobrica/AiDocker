@@ -42,21 +42,34 @@ class FileQueueMixin:
         with open(meta_file, "w") as fp:
             json.dump(metadata, fp)
 
+    @staticmethod
+    def get_staged_path() -> Path:
+        return Path(os.getenv("STAGED_PATH", "/tmp/ai/staged"))
+
+    @staticmethod
+    def get_source_path() -> Path:
+        return Path(os.getenv("SOURCE_PATH", "/tmp/ai/source"))
+
+    @staticmethod
+    def get_prepared_path() -> Path:
+        return Path(os.getenv("PREPARED_PATH", "/tmp/ai/prepared"))
+
     @property
     def staged_path(self) -> Path:
-        return Path(os.getenv("STAGED_PATH", "/tmp/ai/staged"))
+        return FileQueueMixin.get_staged_path()
 
     @property
     def source_path(self) -> Path:
-        return Path(os.getenv("SOURCE_PATH", "/tmp/ai/source"))
+        return FileQueueMixin.get_source_path()
 
     @property
     def prepared_path(self) -> Path:
-        return Path(os.getenv("PREPARED_PATH", "/tmp/ai/prepared"))
+        return FileQueueMixin.get_prepared_path()
 
-    def get_input_files(self, batch_size: Optional[int] = None) -> List[Path]:
+    @staticmethod
+    def get_input_files(batch_size: Optional[int] = None) -> List[Path]:
         input_files = sorted(
-            [f for f in self.staged_path.glob("*") if f.is_file() and f.suffix != ".json"],
+            [f for f in FileQueueMixin.get_staged_path().glob("*") if f.is_file() and f.suffix != ".json"],
             key=lambda f: f.stat().st_mtime,
         )
         if input_files:
@@ -65,9 +78,10 @@ class FileQueueMixin:
             return input_files
         return []
 
-    def get_input_file(self) -> Optional[Path]:
+    @staticmethod
+    def get_input_file() -> Optional[Path]:
         try:
-            return next(self.get_input_files(batch_size=1))
+            return next(FileQueueMixin.get_input_files(batch_size=1))
         except StopIteration:
             return None
 
