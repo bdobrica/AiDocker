@@ -10,8 +10,16 @@ from redis import Redis
 
 
 class TextItem:
-    def __init__(self, text: str, page: Optional[int], paragraph: Optional[int], path: Optional[Union[str, Path]]):
+    def __init__(
+        self,
+        text: str,
+        search_space: str = "",
+        page: Optional[int] = None,
+        paragraph: Optional[int] = None,
+        path: Optional[Union[str, Path]] = None,
+    ):
         self.text = re.sub(r"\s+", " ", text).strip()
+        self.search_space = search_space
         self.page = page
         self.paragraph = paragraph
         if isinstance(path, str):
@@ -27,6 +35,7 @@ class TextItem:
     def _dup(self, text: str = None):
         return TextItem(
             text=text or self.text,
+            search_space=self.search_space,
             page=self.page,
             paragraph=self.paragraph,
             path=self.path,
@@ -34,11 +43,15 @@ class TextItem:
 
     @property
     def key(self) -> str:
-        return sha256(self.text.encode("utf-8")).hexdigest()
+        digest = sha256(self.text.encode("utf-8")).hexdigest()
+        if self.search_space:
+            return f"{self.search_space}:{digest}"
+        return digest
 
     def asdict(self):
         return {
             "text": self.text,
+            "search_space": self.search_space,
             "page": self.page if self.page is not None else -1,
             "paragraph": self.paragraph if self.paragraph is not None else -1,
             "path": self.path.as_posix() or "",

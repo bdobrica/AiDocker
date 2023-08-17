@@ -14,10 +14,12 @@ class AiBuildBatch(Batch):
     def __init__(self, staged_files: Union[PathLike, Iterable[PathLike]], redis: Redis) -> None:
         super().__init__(staged_files=staged_files)
         self.redis = redis
+        self.prefix = ""
 
     def get_text_item(self) -> Generator[TextItem, None, None]:
         for source_file in self.source_files:
-            yield from read_text(source_file)
+            search_space = self.get_metadata(source_file).get("search_space", "")
+            yield from read_text(source_file, search_space)
             # TODO: need to check if this update is really in the right place
             self._update_metadata(source_file, {"processed": "true"})
 
@@ -38,4 +40,4 @@ class AiBuildBatch(Batch):
 
         model_output = model_output.cpu().numpy()
         for item, vector in zip(self._buffer, model_output):
-            item.store(self.redis, vector.flatten())
+            item.store(self.redis, vector.flatten(), self.prefix)

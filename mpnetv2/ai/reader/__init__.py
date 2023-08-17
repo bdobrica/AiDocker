@@ -11,6 +11,6 @@ READERS = {
 }
 
 
-def read_text(path: Path, max_length: int = 512, overlap: int = 0) -> List[TextItem]:
-    items = [item.split(max_length=max_length, overlap=overlap) for item in READERS[path.suffix](path)]
+def read_text(path: Path, search_space: str, max_length: int = 512, overlap: int = 0) -> List[TextItem]:
+    items = [item.split(max_length=max_length, overlap=overlap) for item in READERS[path.suffix](path, search_space)]
     return [item for sublist in items for item in sublist]

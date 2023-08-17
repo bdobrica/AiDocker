@@ -15,6 +15,7 @@ from .aiqueryinput import AiQueryInput
 
 
 class AiQueryDaemon(Daemon):
+    @staticmethod
     def mean_pooling(model_output, attention_mask) -> torch.Tensor:
         token_embeddings = model_output[0]
         input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()

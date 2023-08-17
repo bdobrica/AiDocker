@@ -21,9 +21,18 @@ class AiBuildDaemon(Daemon):
         input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
         return torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(input_mask_expanded.sum(1), min=1e-9)
 
-    def create_redix_vector_index(self) -> None:
+    def create_redix_vector_index(self, search_space: Optional[str] = None) -> None:
+        index_name = [
+            item
+            for item in [
+                self.model_name,
+                os.environ.get("DOC_PREFIX", "doc"),
+                search_space or "",
+            ]
+            if item
+        ].join(":")
         try:
-            self.redis.ft(self.model_name).info()
+            self.redis.ft(index_name).info()
         except:
             schema = (
                 TextField("text", weight=1.0),
@@ -40,8 +49,8 @@ class AiBuildDaemon(Daemon):
                     },
                 ),
             )
-            definition = IndexDefinition(prefix=["doc:"], index_type=IndexType.HASH)
-            self.redis.ft(self.model_name).create_index(fields=schema, definition=definition)
+            definition = IndexDefinition(prefix=[f"{index_name}:"], index_type=IndexType.HASH)
+            self.redis.ft(index_name).create_index(fields=schema, definition=definition)
 
     def load(self) -> None:
         # Initialize
@@ -59,10 +68,12 @@ class AiBuildDaemon(Daemon):
             port=int(os.getenv("REDIS_PORT", 6379)),
             db=int(os.getenv("REDIS_DB", 0)),
         )
-        self.create_redix_vector_index()
 
     def queue(self) -> None:
         while staged_files := self.input_type.get_input_files():
+            search_spaces = set(self.get_metadata(staged_file).get("search_space", "") for staged_file in staged_files)
+            for search_space in search_spaces:
+                self.create_redix_vector_index(search_space=search_space)
             model_input = self.input_type(staged_files, redis=self.redis)
             for prepared_input in model_input.prepare(self.batch_size):
                 model_output = self.ai(prepared_input)

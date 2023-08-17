@@ -22,7 +22,7 @@ import json
 import os
 import time
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 
 class FileQueueMixin:
@@ -70,6 +70,26 @@ class FileQueueMixin:
             return next(self.get_input_files(batch_size=1))
         except StopIteration:
             return None
+
+    def get_metadata_file_path(self, file: Path) -> Path:
+        if file.absolute().is_relative_to(self.staged_path):
+            return file.with_suffix(".json")
+        file_name = file.name
+        # Sometimes from one job you can get multiple prepared files eg. when using generative models
+        if file.absolute().is_relative_to(self.prepared_path):
+            file_name = file.stem.split("-")[0] + file.suffix
+        return (self.staged_path / file.name).with_suffix(".json")
+
+    def get_metadata(self, file: Path) -> dict:
+        return self._load_metadata((self.get_metadata_file_path(file)))
+
+    def set_metadata(self, file: Path, key: Union[Dict[str, Any], str], value: Optional[Any]) -> "FileQueueMixin":
+        if isinstance(key, dict):
+            data = key
+        else:
+            data = {key: value}
+        self._update_metadata(self.get_metadata_file_path(file), data)
+        return self
 
     def get_queued_files(self) -> List[Path]:
         return list(self.source_path.iterdir())
