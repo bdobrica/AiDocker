@@ -1,4 +1,5 @@
 import logging
+import os
 
 try:
     import torch.multiprocessing as mp
@@ -15,6 +16,7 @@ from .aiinput import AiInput
 from .zeroqueuemixin import ZeroQueueMixin
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG if os.getenv("DEBUG", "").lower() in ("1", "true", "yes") else logging.WARNING)
 
 
 class AiZeroDaemon(AiForkDaemon, ZeroQueueMixin):

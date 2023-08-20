@@ -1,3 +1,5 @@
+import json
+
 import zmq
 from flask import Response, current_app, request
 
@@ -21,4 +23,4 @@ def get_json() -> Response:
 
     response["version"] = __version__
 
-    return Response(response, mimetype="application/json")
+    return Response(json.dumps(response, default=str), mimetype="application/json")

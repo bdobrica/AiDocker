@@ -7,6 +7,7 @@ from .aibatch import AiBatch
 from .daemon import Daemon, PathLike
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG if os.getenv("DEBUG", "").lower() in ("1", "true", "yes") else logging.WARNING)
 
 
 class AiBatchDaemon(Daemon):

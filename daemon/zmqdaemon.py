@@ -2,7 +2,6 @@ import os
 from pathlib import Path
 from typing import Optional
 
-import yaml
 import zmq
 
 from .daemon import Daemon
