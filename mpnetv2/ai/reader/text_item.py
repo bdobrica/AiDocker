@@ -6,6 +6,7 @@ from typing import Generator, List, Optional, Union
 
 import numpy as np
 from redis import Redis
+from redis.commands.search.document import Document
 from redis.commands.search.query import Query
 
 # C:\Users\bdobr\AppData\Roaming\nltk_data
@@ -90,7 +91,7 @@ class TextItem:
             },
         )
 
-    def match(self, vector: np.ndarray, docs: int = 10) -> List["TextItem"]:
+    def match(self, vector: np.ndarray, docs: int = 10) -> List[Document]:
         query = (
             Query("*=>[KNN 5 @vector $vec as score]")
             .sort_by("score")
@@ -99,7 +100,7 @@ class TextItem:
         )
 
         query_params = {"vec": vector.flatten().astype(np.float32).tobytes()}
-        docs = (
+        return (
             self.redis.ft(self.prefix)
             .search(
                 query=query,
@@ -107,4 +108,3 @@ class TextItem:
             )
             .docs
         )
-        return [TextItem(**doc) for doc in docs]

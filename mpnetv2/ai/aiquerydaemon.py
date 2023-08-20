@@ -48,12 +48,14 @@ class AiQueryDaemon(Daemon):
             model_output_t = self.mean_pooling(model_output_t, encoded_input_t["attention_mask"])
             model_output: np.ndarray = model_output_t.cpu().numpy()
 
-            results = {}
+            results = []
             for model_input, vector in zip(model_inputs, model_output):
-                results[model_input.index] = {
-                    "text": model_input.text,
-                    "matches": [item.asdict() for item in model_input.match(vector)],
-                }
+                results.append(
+                    {
+                        "text": model_input.text,
+                        "matches": [{"text": item.text, "score": item.score} for item in model_input.match(vector)],
+                    }
+                )
 
             return {"results": results}
 
