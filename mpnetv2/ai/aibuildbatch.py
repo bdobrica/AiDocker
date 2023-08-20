@@ -40,4 +40,6 @@ class AiBuildBatch(Batch):
 
         model_output = model_output.cpu().numpy()
         for item, vector in zip(self._buffer, model_output):
-            item.store(self.redis, vector.flatten(), self.prefix)
+            item: TextItem
+            vector: Tensor
+            item.store(self.redis, vector.flatten())
