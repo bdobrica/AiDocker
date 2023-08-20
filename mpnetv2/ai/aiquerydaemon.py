@@ -53,7 +53,9 @@ class AiQueryDaemon(Daemon):
                 results.append(
                     {
                         "text": model_input.text,
-                        "matches": [{"text": item.text, "score": item.score} for item in model_input.match(vector)],
+                        "matches": [
+                            {"text": item.text, "score": item.score} for item in model_input.match(self.redis, vector)
+                        ],
                     }
                 )
 

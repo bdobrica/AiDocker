@@ -91,9 +91,9 @@ class TextItem:
             },
         )
 
-    def match(self, vector: np.ndarray, docs: int = 10) -> List[Document]:
+    def match(self, redis: Redis, vector: np.ndarray, docs: int = 10) -> List[Document]:
         query = (
-            Query("*=>[KNN 5 @vector $vec as score]")
+            Query(f"*=>[KNN {docs} @vector $vec as score]")
             .sort_by("score")
             .return_fields("text", "page", "paragraph", "path", "score")
             .dialect(2)
@@ -101,7 +101,7 @@ class TextItem:
 
         query_params = {"vec": vector.flatten().astype(np.float32).tobytes()}
         return (
-            self.redis.ft(self.prefix)
+            redis.ft(self.prefix)
             .search(
                 query=query,
                 query_params=query_params,
