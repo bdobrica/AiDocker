@@ -23,15 +23,17 @@ class AiBuildDaemon(Daemon, FileQueueMixin):
         return torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(input_mask_expanded.sum(1), min=1e-9)
 
     def create_redix_vector_index(self, search_space: Optional[str] = None) -> None:
-        index_name = [
-            item
-            for item in [
-                self.model_name,
-                os.environ.get("DOC_PREFIX", "doc"),
-                search_space or "",
+        index_name = ":".join(
+            [
+                item
+                for item in [
+                    self.model_name,
+                    os.environ.get("DOC_PREFIX", "doc"),
+                    search_space or "",
+                ]
+                if item
             ]
-            if item
-        ].join(":")
+        )
         try:
             self.redis.ft(index_name).info()
         except:
