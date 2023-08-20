@@ -103,18 +103,6 @@ class FileQueueMixin:
     def prepared_path(self) -> Path:
         return FileQueueMixin.get_prepared_path()
 
-    @property
-    def staged_files(self) -> List[Path]:
-        return FileQueueMixin.get_staged_files()
-
-    @property
-    def source_files(self) -> List[Path]:
-        return FileQueueMixin.get_source_files()
-
-    @property
-    def prepared_files(self) -> List[Path]:
-        return FileQueueMixin.get_prepared_files()
-
     def get_metadata_file_path(self, file: Path) -> Path:
         if file.absolute().is_relative_to(self.staged_path):
             return file.with_suffix(".json")
@@ -138,7 +126,7 @@ class FileQueueMixin:
         return self
 
     def get_queued_files(self) -> List[Path]:
-        return list(self.source_path.iterdir())
+        return FileQueueMixin.get_source_files()
 
     def get_queue_size(self) -> int:
         return len(self.get_queued_files())
