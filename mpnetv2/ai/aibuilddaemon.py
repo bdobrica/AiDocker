@@ -10,12 +10,11 @@ from redis.commands.search.indexDefinition import IndexDefinition, IndexType
 from transformers import AutoModel, AutoTokenizer
 
 from daemon import AiBatchDaemon as Daemon
-from daemon import FileQueueMixin
 
 from .aibuildbatch import TextItem
 
 
-class AiBuildDaemon(Daemon, FileQueueMixin):
+class AiBuildDaemon(Daemon):
     @staticmethod
     def mean_pooling(model_output, attention_mask) -> torch.Tensor:
         token_embeddings = model_output[0]
@@ -74,10 +73,12 @@ class AiBuildDaemon(Daemon, FileQueueMixin):
 
     def queue(self) -> None:
         while staged_files := self.input_type.get_input_files():
-            search_spaces = set(self.get_metadata(staged_file).get("search_space", "") for staged_file in staged_files)
+            model_input = self.input_type(staged_files, redis=self.redis)
+            search_spaces = set(
+                model_input.get_metadata(staged_file).get("search_space", "") for staged_file in staged_files
+            )
             for search_space in search_spaces:
                 self.create_redix_vector_index(search_space=search_space)
-            model_input = self.input_type(staged_files, redis=self.redis)
             for prepared_input in model_input.prepare(self.batch_size):
                 model_output = self.ai(prepared_input)
                 model_input.serve(model_output)
