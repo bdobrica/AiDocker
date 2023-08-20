@@ -10,11 +10,12 @@ from redis.commands.search.indexDefinition import IndexDefinition, IndexType
 from transformers import AutoModel, AutoTokenizer
 
 from daemon import AiBatchDaemon as Daemon
+from daemon import FileQueueMixin
 
 from .aibuildbatch import TextItem
 
 
-class AiBuildDaemon(Daemon):
+class AiBuildDaemon(Daemon, FileQueueMixin):
     @staticmethod
     def mean_pooling(model_output, attention_mask) -> torch.Tensor:
         token_embeddings = model_output[0]
