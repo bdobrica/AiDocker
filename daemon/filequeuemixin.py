@@ -54,24 +54,30 @@ class FileQueueMixin:
     def get_prepared_path() -> Path:
         return Path(os.getenv("PREPARED_PATH", "/tmp/ai/prepared"))
 
-    @property
-    def staged_path(self) -> Path:
-        return FileQueueMixin.get_staged_path()
-
-    @property
-    def source_path(self) -> Path:
-        return FileQueueMixin.get_source_path()
-
-    @property
-    def prepared_path(self) -> Path:
-        return FileQueueMixin.get_prepared_path()
-
     @staticmethod
-    def get_input_files(batch_size: Optional[int] = None) -> List[Path]:
-        input_files = sorted(
+    def get_staged_files() -> List[Path]:
+        return sorted(
             [f for f in FileQueueMixin.get_staged_path().glob("*") if f.is_file() and f.suffix != ".json"],
             key=lambda f: f.stat().st_mtime,
         )
+
+    @staticmethod
+    def get_source_files() -> List[Path]:
+        return sorted(
+            [f for f in FileQueueMixin.get_source_path().glob("*") if f.is_file()],
+            key=lambda f: f.stat().st_mtime,
+        )
+
+    @staticmethod
+    def get_prepared_files() -> List[Path]:
+        return sorted(
+            [f for f in FileQueueMixin.get_prepared_path().glob("*") if f.is_file()],
+            key=lambda f: f.stat().st_mtime,
+        )
+
+    @staticmethod
+    def get_input_files(batch_size: Optional[int] = None) -> List[Path]:
+        input_files = FileQueueMixin.get_staged_files()
         if input_files:
             if batch_size:
                 return input_files[:batch_size]
@@ -84,6 +90,30 @@ class FileQueueMixin:
             return next(FileQueueMixin.get_input_files(batch_size=1))
         except StopIteration:
             return None
+
+    @property
+    def staged_path(self) -> Path:
+        return FileQueueMixin.get_staged_path()
+
+    @property
+    def source_path(self) -> Path:
+        return FileQueueMixin.get_source_path()
+
+    @property
+    def prepared_path(self) -> Path:
+        return FileQueueMixin.get_prepared_path()
+
+    @property
+    def staged_files(self) -> List[Path]:
+        return FileQueueMixin.get_staged_files()
+
+    @property
+    def source_files(self) -> List[Path]:
+        return FileQueueMixin.get_source_files()
+
+    @property
+    def prepared_files(self) -> List[Path]:
+        return FileQueueMixin.get_prepared_files()
 
     def get_metadata_file_path(self, file: Path) -> Path:
         if file.absolute().is_relative_to(self.staged_path):
