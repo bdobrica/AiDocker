@@ -5,10 +5,8 @@ try:
 except ImportError:
     import multiprocessing as mp
 
-import os
 import time
-from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 import zmq
 

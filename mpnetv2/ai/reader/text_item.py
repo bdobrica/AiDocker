@@ -1,10 +1,12 @@
+import os
 import re
 from hashlib import sha256
 from pathlib import Path
-from typing import Generator, Optional, Union
+from typing import Generator, List, Optional, Union
 
 import numpy as np
 from redis import Redis
+from redis.commands.search.query import Query
 
 # C:\Users\bdobr\AppData\Roaming\nltk_data
 
@@ -17,6 +19,7 @@ class TextItem:
         page: Optional[int] = None,
         paragraph: Optional[int] = None,
         path: Optional[Union[str, Path]] = None,
+        score: Optional[float] = None,
     ):
         self.text = re.sub(r"\s+", " ", text).strip()
         self.search_space = search_space
@@ -25,6 +28,7 @@ class TextItem:
         if isinstance(path, str):
             path = Path(path)
         self.path = path
+        self.score = score
 
     def __str__(self):
         return self.text
@@ -42,11 +46,14 @@ class TextItem:
         )
 
     @property
+    def prefix(self) -> str:
+        pieces = [os.getenv("DOC_PREFIX", "doc"), self.search_space]
+        return ":".join([piece for piece in pieces if piece])
+
+    @property
     def key(self) -> str:
         digest = sha256(self.text.encode("utf-8")).hexdigest()
-        if self.search_space:
-            return f"{self.search_space}:{digest}"
-        return digest
+        return f"{self.prefix}:{digest}"
 
     def asdict(self):
         return {
@@ -82,3 +89,22 @@ class TextItem:
                 "vector": vector.astype(np.float32).tobytes(),
             },
         )
+
+    def match(self, vector: np.ndarray, docs: int = 10) -> List["TextItem"]:
+        query = (
+            Query("*=>[KNN 5 @vector $vec as score]")
+            .sort_by("score")
+            .return_fields("text", "page", "paragraph", "path", "score")
+            .dialect(2)
+        )
+
+        query_params = {"vec": vector.flatten().astype(np.float32).tobytes()}
+        docs = (
+            self.redis.ft(self.prefix)
+            .search(
+                query=query,
+                query_params=query_params,
+            )
+            .docs
+        )
+        return [TextItem(**doc) for doc in docs]
