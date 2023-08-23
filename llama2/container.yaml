@@ -1,0 +1,12 @@
+name: llama2
+description: Facebook's generative text model.
+port: 5014
+weights:
+  - llama2/tokenizer.model
+  - llama2/llama-2-7b-chat/consolidated.pth
+  - llama2/llama-2-7b-chat/params.json
+input:
+  - endpoint: /put/text
+    queue: zero
+    required:
+      text: text
