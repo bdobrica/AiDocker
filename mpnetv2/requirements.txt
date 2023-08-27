@@ -8,3 +8,4 @@ torch
 torchaudio
 torchvision
 transformers
+openai
