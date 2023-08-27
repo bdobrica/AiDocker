@@ -11,6 +11,7 @@ from transformers import AutoModel, AutoTokenizer
 from daemon import AiZeroDaemon as Daemon
 
 from .aiqueryinput import AiQueryInput
+from .llama import Llama
 
 
 class AiQueryDaemon(Daemon):
@@ -22,47 +23,30 @@ class AiQueryDaemon(Daemon):
 
     def worker_load(self) -> None:
         # Initialize
-        MODEL_PATH = os.getenv("MODEL_PATH", "/opt/app/mpnet-base-v2")
-        MODEL_DEVICE = os.getenv("MODEL_DEVICE", "cpu")
-        if MODEL_DEVICE == "cuda" and not torch.cuda.is_available():
-            MODEL_DEVICE = "cpu"
-        self.device = torch.device(MODEL_DEVICE)
+        MODEL_PATH = os.getenv("MODEL_PATH", "/opt/app/llama2")
+        if not torch.cuda.is_available():
+            raise RuntimeError("CUDA is not available. The LLAMA2 model requires CUDA.")
 
         # Load model
-        self.tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
-        self.model = AutoModel.from_pretrained(MODEL_PATH)
-        self.redis = Redis(
-            host=os.getenv("REDIS_HOST", "localhost"),
-            port=int(os.getenv("REDIS_PORT", 6379)),
-            db=int(os.getenv("REDIS_DB", 0)),
+        self.model = Llama.build(
+            ckpt_dir=os.path.join(MODEL_PATH, "llama-2-7b-chat"),
+            tokenizer_path=os.path.join(MODEL_PATH, "tokenizer.model"),
+            max_seq_len=int(os.getenv("LLAMA2_MAX_SEQ_LEN", 128)),
+            max_batch_size=int(os.getenv("LLAMA2_MAX_BATCH_SIZE", 4)),
         )
 
     def ai(self, input: AiQueryInput) -> Dict[str, Any]:
         try:
-            model_inputs = input.prepare()
-            encoded_input_t = self.tokenizer(
-                [item.text for item in model_inputs], padding=True, truncation=True, return_tensors="pt"
+            model_input = input.prepare()
+            model_output = self.model.text_completion(
+                model_input.prompts,
+                max_gen_len=model_input.max_gen_len,
+                temperature=model_input.temperature,
+                top_p=model_input.top_p,
             )
-            with torch.no_grad():
-                model_output_t = self.model(**encoded_input_t)
-            model_output_t = self.mean_pooling(model_output_t, encoded_input_t["attention_mask"])
-            model_output: np.ndarray = model_output_t.cpu().numpy()
-
             results = []
-            for model_input, vector in zip(model_inputs, model_output):
-                results.append(
-                    {
-                        "text": model_input.text,
-                        "matches": sorted(
-                            [
-                                {"text": item.text, "score": item.score}
-                                for item in model_input.match(self.redis, vector)
-                            ],
-                            key=lambda item: item["score"],
-                            reverse=True,
-                        ),
-                    }
-                )
+            for prompt, result in zip(model_input.prompts, model_output):
+                results.append({"text": prompt, "completion": result["generation"]})
 
             return {"results": results}
 
