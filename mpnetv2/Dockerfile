@@ -1,4 +1,4 @@
-FROM python:3.9-slim-bullseye
+FROM python:3.9-slim-bookworm
 
 ### CREATING FOLDERS ###
 RUN mkdir -p /opt/app/run
@@ -7,7 +7,7 @@ RUN mkdir -p /tmp/ai/source
 RUN mkdir -p /tmp/ai/prepared
 
 ### INSTALLING BASE PYTHON PACKAGES ###
-RUN apt-get update && apt-get install -y python3-opencv
+RUN apt-get update && apt-get install -y jq
 
 ### MAKE SURE TO INSTALL REQUIREMENTS FIRST, SO THAT THE CACHE CAN BE USED ###
 COPY mpnetv2/requirements.txt /opt/app

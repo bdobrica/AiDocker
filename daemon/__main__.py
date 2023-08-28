@@ -16,13 +16,13 @@ if __name__ == "__main__":
     pidfile_path = Path(os.getenv("PIDFILE_PATH", f"/opt/app/run/{args.daemon}.pid"))
     pidfile_path.parent.mkdir(parents=True, exist_ok=True)
 
-    daemons = {
-        "queuecleaner": QueueCleaner,
-        "zmqdaemon": ZMQDaemon,
-    }
-    if args.daemon not in daemons:
+    if args.daemon.lower in ("queuecleaner", "cleaner"):
+        daemon = QueueCleaner(pidfile=pidfile_path, chroot=chroot_path)
+    elif args.daemon.lower in ("zmqdaemon", "broker"):
+        daemon = ZMQDaemon(pidfile=pidfile_path, chroot=chroot_path)
+    else:
         raise ValueError(f"Unknown daemon: {args.daemon}")
-    daemon = daemons[args.daemon](pidfile=pidfile_path, chroot=chroot_path)
+
     if not hasattr(daemon, args.action):
         raise ValueError(f"Unknown action: {args.action}")
     action = getattr(daemon, args.action)()
