@@ -108,7 +108,7 @@ function show_usage {
 }
 
 function parse_arguments {
-    while getopts ":hc:adn:" opt; do
+    while getopts ":hc:adn:e:" opt; do
         case "${opt}" in
             h)
                 show_usage
