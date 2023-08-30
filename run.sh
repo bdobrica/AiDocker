@@ -6,6 +6,7 @@ debug_mode=false
 container=""
 docker_args=()
 network=""
+env_file="./docker.env"
 
 function detect_docker_command {
     if pgrep dockerd >/dev/null && [ -x "$(command -v docker)" ]; then
@@ -67,12 +68,19 @@ function run_container {
         docker_args+=(-p 127.0.0.1:${port}:5000/tcp)
     fi
 
+    if [ -f "${env_file}" ]; then
+        echo "Container environment variables:"
+        cat "${env_file}" | while read line; do
+            echo " >> ${line}"
+        done
+    fi
+
     if [ "${debug_mode}" = true ]; then
         echo "Running ${model_name} on port ${port} in debug mode ..."
         $docker run \
             ${docker_args[@]} \
             --rm \
-            --env-file ./docker.env \
+            --env-file $env_file \
             -e DEBUG=true \
             -it \
             --entrypoint /bin/bash \
@@ -95,6 +103,7 @@ function show_usage {
     echo "  -a  Run all containers"
     echo "  -d  Enable debug mode"
     echo "  -n  Run connected to this network"
+    echo "  -e  Run with this environment file"
     exit 0
 }
 
@@ -122,6 +131,18 @@ function parse_arguments {
             n)
                 echo "Connecting to network ${OPTARG}"
                 network="${OPTARG}"
+                if ! $docker network inspect "${network}" >/dev/null; then
+                    echo "Network ${network} does not exist"
+                    exit 1
+                fi
+                ;;
+            e)
+                echo "Using environment file ${OPTARG}"
+                env_file="${OPTARG}"
+                if [ ! -f "${env_file}" ]; then
+                    echo "Environment file ${env_file} does not exist"
+                    exit 1
+                fi
                 ;;
             *)
                 show_usage
