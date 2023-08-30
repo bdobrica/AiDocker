@@ -22,8 +22,6 @@ output:
   queue: file
   type: json
 daemons:
-  - daemon/broker
-  - daemon/cleaner
   - api
-  - ai/queue
+  - ai/query
   - ai/build
