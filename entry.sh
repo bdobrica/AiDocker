@@ -11,9 +11,11 @@ function yq { python3 -c "import json,sys,yaml;print(json.dumps(yaml.safe_load(s
 cat "${CONFIG_PATH}" | yq -r '.input[].queue'| sort -u | while read queue; do
     case $queue in
         "file")
-            /usr/bin/env python3 -m daemon -d cleaner;;
+            echo "Starting file queue cleaner ..."
+            /usr/bin/env python3 -m daemon -d cleaner & ;;
         "zero")
-            /usr/bin/env python3 -m daemon -d broker;;
+            echo "Starting ZeroMQ broker ..."
+            /usr/bin/env python3 -m daemon -d broker & ;;
         *)
             echo "Unknown queue type: $queue" >&2; exit 1;;
     esac
