@@ -26,3 +26,6 @@ cat "${CONFIG_PATH}" | yq -r '.daemons[]' | sort -u | while read daemon; do
     echo "Starting daemon: python3 $python_args"
     /usr/bin/env python3 $python_args &
 done
+
+# Trusty old infinite loop
+while true; do sleep 1; done
