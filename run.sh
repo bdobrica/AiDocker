@@ -68,9 +68,8 @@ function run_container {
             exit 1
         fi
         docker_args+=("--network" "${network}")
-    else
-        docker_args+=(-p 127.0.0.1:${port}:5000/tcp)
     fi
+    docker_args+=(-p 127.0.0.1:${port}:5000/tcp)
 
     if [ -f "${env_file}" ]; then
         echo "Container environment variables:"
@@ -94,7 +93,7 @@ function run_container {
         $docker run \
             ${docker_args[@]} \
             --rm \
-            --env-file ./docker.env \
+            --env-file $env_file \
             -d \
             ${model_name} ${container_args[@]}
     fi
