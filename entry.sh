@@ -20,5 +20,7 @@ cat "${CONFIG_PATH}" | yq -r '.input[].queue'| sort -u | while read queue; do
 done
 
 cat "${CONFIG_PATH}" | yq -r '.daemons[]' | sort -u | while read daemon; do
-    /usr/bin/env python3 $(echo $daemon | sed -e 's/\([a-z_]\+\)\/\([a-z_]\+\)/\1 -d \2/g' -e 's/.\+/-m \0/')
+    python_args=$(echo $daemon | sed -e 's/\([a-z_]\+\)\/\([a-z_]\+\)/\1 -d \2/g' -e 's/.\+/-m \0/')
+    echo "Starting daemon: python3 $python_args"
+    /usr/bin/env python3 $python_args &
 done
