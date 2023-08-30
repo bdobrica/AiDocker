@@ -63,6 +63,10 @@ function run_container {
     fi
 
     if [ -n "${network}" ]; then
+        if ! $docker network inspect "${network}" >/dev/null; then
+            echo "Network ${network} does not exist"
+            exit 1
+        fi
         docker_args+=("--network" "${network}")
     else
         docker_args+=(-p 127.0.0.1:${port}:5000/tcp)
@@ -131,10 +135,6 @@ function parse_arguments {
             n)
                 echo "Connecting to network ${OPTARG}"
                 network="${OPTARG}"
-                if ! $docker network inspect "${network}" >/dev/null; then
-                    echo "Network ${network} does not exist"
-                    exit 1
-                fi
                 ;;
             e)
                 echo "Using environment file ${OPTARG}"
