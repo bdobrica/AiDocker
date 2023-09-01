@@ -4,12 +4,60 @@
 <head>
     <meta charset="utf-8">
     <title>title</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="script.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
 <body>
     <!-- page content -->
+    <div class="chat">
+        <div class="chat__title"></div>
+        <div class="messages">
+            <div class="message assistant">
+                <div class="message__outer">
+                    <div class="message__inner">
+                        <div class="message__bubble">
+                            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin porta efficitur ipsum at
+                                malesuada. Fusce tincidunt, lacus ut vehicula venenatis, nisi dolor tincidunt dolor, sed
+                                euismod
+                                metus velit nec justo. Integer eleifend facilisis mauris id malesuada.</p>
+
+                            <p>Pellentesque gravida dapibus magna, vel varius magna sodales vitae. Proin mattis leo at
+                                sollicitudin ornare. Morbi convallis augue diam, nec ultrices eros gravida interdum. Nam
+                                ac
+                                magna eget mauris fermentum ultrices nec ut nulla. Aenean porta, mauris in gravida
+                                sodales, leo
+                                velit dignissim ipsum, id cursus tortor massa nec elit.</p>
+
+                        </div>
+                        <div class="message__actions"></div>
+                        <div class="message__spacer"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="message user">
+                <div class="message__outer">
+                    <div class="message__inner">
+                        <div class="message__bubble">
+                            <p> Sed ut justo sem. Fusce semper ultricies luctus. In non lectus at ligula suscipit
+                                ultrices. Sed
+                                aodio dolor. Proin eu condimentum est. Nullam vulputate id purus id ullamcorper. Nunc
+                                mauris
+                                felis, pharetra eu erat vel, gravida semper mauris. In condimentum nisi arcu, eget
+                                facilisis
+                                risus semper ut. </p>
+                        </div>
+                        <div class="message__actions"></div>
+                        <div class="message__spacer"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="text-box">
+            <textarea rows="3"></textarea>
+            <button class="send">Send</button>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 
 </html>
