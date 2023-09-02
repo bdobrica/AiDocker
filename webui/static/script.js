@@ -20,8 +20,23 @@
             m.classList.remove("user");
             m.classList.add("assistant");
         }
-
         w.appendChild(m);
     },
-    s:function(t){alert("send message:"+t);this.a(t);}
+    r:async function(u,d){
+        var r=await fetch(u,{
+            method:'POST',
+            headers:{
+                'Content-Type':'application/json'
+            },
+            body:JSON.stringify(d)
+        });
+        var j=await r.json();
+        return j;
+    },
+    s:function(t){
+        this.a(t);
+        this.r('/api/chat',{text:t}).then(function(d){
+            this.a(d.text);
+        }.bind(this));
+    }
 }).i();
