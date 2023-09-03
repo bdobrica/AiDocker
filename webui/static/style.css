@@ -96,7 +96,7 @@ body {
     width: 5px;
     height: 5px;
     display: inline-block;
-    background: #b0b0b0;
+    background: #ffffff;
     border-radius: 50%;
     animation: bounce 1.3s linear infinite;
 }
