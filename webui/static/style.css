@@ -38,8 +38,7 @@ body {
     margin-top: 1em;
 }
 
-.message__bubble,
-.loading__bubble {
+.message__bubble {
     padding: 0.05em 0.7em;
 }
 
@@ -91,6 +90,11 @@ body {
     height: 120px;
     font-weight: bold;
     cursor: pointer;
+}
+
+.loading {
+    margin-left: 1em;
+    padding: 0.05em 0.7em;
 }
 
 .ellipsis {
