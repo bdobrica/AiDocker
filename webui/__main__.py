@@ -15,7 +15,7 @@ def index():
 def chat() -> dict:
     data = request.get_json()
     if "prompt" not in data:
-        raise ValueError("Missing text field")
+        raise ValueError("Missing prompt field")
 
     chat_model_host = os.getenv("CHAT_MODEL_HOST", "localhost:5000")
 
