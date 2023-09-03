@@ -38,7 +38,8 @@ body {
     margin-top: 1em;
 }
 
-.message__bubble {
+.message__bubble,
+.loading__bubble {
     padding: 0.05em 0.7em;
 }
 
