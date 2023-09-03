@@ -28,7 +28,7 @@ def chat() -> dict:
 
     print("response", response)
 
-    return {"answer": response["answer"]}
+    return {"answer": response["results"][0]["answer"]}
 
 
 if __name__ == "__main__":
