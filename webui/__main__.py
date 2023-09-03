@@ -21,7 +21,7 @@ def chat() -> dict:
 
     response = requests.put(
         f"http://{chat_model_host}/put/text",
-        json={"text": data["prompt"]},
+        json={"text": data["prompt"], "search_space": "moby"},
     )
     response.raise_for_status()
     response = response.json()
