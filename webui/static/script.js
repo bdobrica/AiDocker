@@ -37,7 +37,7 @@
     s:function(t){
         this.a(t);
         this.r('/api/chat',{prompt:t}).then(function(r){
-            this.a(r.answer);
+            this.a(r.answer.content);
         }.bind(this));
     }
 }).i();
