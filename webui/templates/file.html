@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>AiDocker WebUI - File Handler</title>
+    <link rel="stylesheet" href="{{ url_for('static/css', filename='file.css') }}">
+</head>
+
+<body>
+    <!-- page content -->
+    <div class="file">
+        <div class="file__form">
+            <input type="file" name="file" />
+            <button class="send">Upload</button>
+        </div>
+    </div>
+    <div class="file__response">
+
+    </div>
+    <script src="{{ url_for('static/js', filename='file.js') }}"></script>
+</body>
+
+</html>

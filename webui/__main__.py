@@ -11,6 +11,16 @@ def index():
     return render_template("index.html")
 
 
+@app.route("/file")
+def file_page():
+    return render_template("file.html")
+
+
+@app.route("/chat")
+def chat_page():
+    return render_template("chat.html")
+
+
 @app.route("/api/chat", methods=["POST"])
 def chat() -> dict:
     data = request.get_json()
