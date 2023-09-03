@@ -5,7 +5,6 @@ max_port=5000
 debug_mode=false
 container=""
 docker_args=()
-network=""
 env_file="./docker.env"
 
 function detect_docker_command {
@@ -62,13 +61,6 @@ function run_container {
         max_port="${port}"
     fi
 
-    if [ -n "${network}" ]; then
-        if ! $docker network inspect "${network}" >/dev/null; then
-            echo "Network ${network} does not exist"
-            exit 1
-        fi
-        docker_args+=("--network" "${network}")
-    fi
     docker_args+=(-p 127.0.0.1:${port}:5000/tcp)
 
     if [ -f "${env_file}" ]; then
@@ -93,7 +85,7 @@ function run_container {
         $docker run \
             ${docker_args[@]} \
             --rm \
-            --env-file $env_file \
+            --env-file ./docker.env \
             -d \
             ${model_name} ${container_args[@]}
     fi
@@ -107,11 +99,12 @@ function show_usage {
     echo "  -d  Enable debug mode"
     echo "  -n  Run connected to this network"
     echo "  -e  Run with this environment file"
+    echo "  -v  Run with this volume mounted under /opt/app, read-only"
     exit 0
 }
 
 function parse_arguments {
-    while getopts ":hc:adn:e:" opt; do
+    while getopts ":hc:adn:e:v:" opt; do
         case "${opt}" in
             h)
                 show_usage
@@ -133,7 +126,7 @@ function parse_arguments {
                 ;;
             n)
                 echo "Connecting to network ${OPTARG}"
-                network="${OPTARG}"
+                docker_args+=("--network" "${OPTARG}")
                 ;;
             e)
                 echo "Using environment file ${OPTARG}"
@@ -142,6 +135,10 @@ function parse_arguments {
                     echo "Environment file ${env_file} does not exist"
                     exit 1
                 fi
+                ;;
+            v)
+                echo "Using volume ${OPTARG} for /opt/app"
+                docker_args+=("-v" "$(realpath ${OPTARG}):/opt/app:ro")
                 ;;
             *)
                 show_usage
