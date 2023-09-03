@@ -8,7 +8,7 @@
             t.value='';
         }.bind(this));
     },
-    a:function(t){
+    a:function(t)   {
         var w=this.q(".messages")[0];
         var ms=this.q(".messages .message");
         var m=ms[ms.length-1].cloneNode(true);
@@ -34,10 +34,16 @@
         var j=await r.json();
         return j;
     },
+    l:function(e){
+        var l=this.q('.loading')[0];
+        if(e)l.style.display='block';else l.style.display='none';
+    },
     s:function(t){
         this.a(t);
+        this.l(true);
         this.r('/api/chat',{prompt:t}).then(function(r){
             this.a(r.answer.content);
+            this.l(false);
         }.bind(this));
     }
 }).i();

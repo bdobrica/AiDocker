@@ -95,6 +95,7 @@ body {
 .loading {
     margin-left: 1em;
     padding: 0.05em 0.7em;
+    display: none;
 }
 
 .ellipsis {
