@@ -3,8 +3,9 @@
     i:function(){
         this.q('.send')[0].addEventListener('click',function(e){
             e.preventDefault();
-            var t=this.q('.text-box textarea')[0].value;
-            this.s(t);
+            var t=this.q('.text-box textarea')[0];
+            this.s(t.value);
+            t.value='';
         }.bind(this));
     },
     a:function(t){
@@ -35,7 +36,7 @@
     },
     s:function(t){
         this.a(t);
-        this.r('/api/chat',{text:t}).then(function(d){
+        this.r('/api/chat',{prompt:t}).then(function(d){
             this.a(d.text);
         }.bind(this));
     }
