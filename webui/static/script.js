@@ -36,8 +36,8 @@
     },
     s:function(t){
         this.a(t);
-        this.r('/api/chat',{prompt:t}).then(function(d){
-            this.a(d.text);
+        this.r('/api/chat',{prompt:t}).then(function(r){
+            this.a(r.answer);
         }.bind(this));
     }
 }).i();
