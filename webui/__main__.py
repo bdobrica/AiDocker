@@ -26,6 +26,8 @@ def chat() -> dict:
     response.raise_for_status()
     response = response.json()
 
+    print("response", response)
+
     return {"answer": response["answer"]}
 
 
