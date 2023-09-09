@@ -23,7 +23,7 @@ def chat_page():
 
 
 @app.route("/api/document", methods=["POST"])
-def document() -> dict:
+def document_api() -> dict:
     if "document" not in request.files:
         raise ValueError("Missing document field")
 
@@ -47,7 +47,7 @@ def document() -> dict:
 
 
 @app.route("/api/status/<token>", methods=["GET"])
-def status(token: str) -> dict:
+def status_api(token: str) -> dict:
     index_model_host = os.getenv("INDEX_MODEL_HOST", "localhost:5000")
     response = requests.get(f"http://{index_model_host}/get/status/", json={"token": token})
     response.raise_for_status()
@@ -56,7 +56,7 @@ def status(token: str) -> dict:
 
 
 @app.route("/api/chat", methods=["POST"])
-def chat() -> dict:
+def chat_api() -> dict:
     data = request.get_json()
     if "prompt" not in data:
         raise ValueError("Missing prompt field")
