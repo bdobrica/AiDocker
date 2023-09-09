@@ -29,7 +29,7 @@
     },
     r:async function(u){
         var d=new FormData();
-        d.append('file',this.q('[name="file"]')[0].files[0]);
+        d.append('document',this.q('[name="document"]')[0].files[0]);
         d.append("search_space",this.s.options[this.s.selectedIndex].value);
         var r=await fetch(u,{
             method:'POST',
