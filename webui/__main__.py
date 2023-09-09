@@ -1,10 +1,27 @@
 import os
+import sqlite3
 
 import requests
-from flask import Flask, render_template, request
+from flask import Flask, g, render_template, request
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
+
+
+def open_sqlitedb_connection():
+    db = getattr(g, "_database", None)
+    if db is None:
+        database_path = os.getenv("DATABASE_PATH", "database.db")
+        db = sqlite3.connect(database_path)
+        setattr(g, "_database", db)
+    return db
+
+
+@app.teardown_appcontext
+def close_sqlitedb_connection(exception):
+    db = getattr(g, "_database", None)
+    if db is not None:
+        db.close()
 
 
 @app.route("/")
@@ -13,11 +30,16 @@ def index():
 
 
 @app.route("/document")
-def file_page():
-    return render_template("document.html")
+def document_page():
+    conn = open_sqlitedb_connection()
+    cursor = conn.cursor()
+    cursor.execute("CREATE TABLE IF NOT EXISTS search_spaces (name TEXT UNIQUE)")
+    cursor.execute("SELECT * FROM search_spaces")
+    search_spaces = cursor.fetchall()
+    return render_template("document.html", search_spaces=search_spaces)
 
 
-@app.route("/chat")
+@app.route("/chat/<search_space>")
 def chat_page():
     return render_template("chat.html")
 
@@ -31,6 +53,16 @@ def document_api() -> dict:
     if document.filename == "":
         raise ValueError("Missing document name")
 
+    search_space = request.form.get("search_space", "")
+    if search_space == "":
+        raise ValueError("Missing search_space field")
+
+    conn = open_sqlitedb_connection()
+    cursor = conn.cursor()
+    cursor.execute("CREATE TABLE IF NOT EXISTS search_spaces (name TEXT UNIQUE)")
+    cursor.execute("INSERT OR IGNORE INTO search_spaces VALUES (?)", (search_space,))
+    conn.commit()
+
     index_model_host = os.getenv("INDEX_MODEL_HOST", "localhost:5000")
 
     docname = secure_filename(document.filename)
@@ -38,7 +70,7 @@ def document_api() -> dict:
     response = requests.put(
         f"http://{index_model_host}/put/document",
         files={"document": (docname, document.stream, document.mimetype)},
-        data={"search_space": request.form.get("search_space", "")},
+        data={"search_space": search_space},
     )
 
     response.raise_for_status()

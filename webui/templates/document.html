@@ -12,6 +12,12 @@
     <div class="file">
         <div class="file__form">
             <input type="file" name="file" />
+            <select name="search_space">
+                {{ for search_space in search_spaces }}
+                <option value="{{ search_space }}">{{ search_space }}</option>
+                {{ endfor }}
+            </select>
+            <input type="text" name="add_search_space" placeholder="Add search space" />
             <button class="send">Upload</button>
         </div>
     </div>
