@@ -12,9 +12,9 @@ def index():
     return render_template("index.html")
 
 
-@app.route("/file")
+@app.route("/document")
 def file_page():
-    return render_template("file.html")
+    return render_template("document.html")
 
 
 @app.route("/chat")
