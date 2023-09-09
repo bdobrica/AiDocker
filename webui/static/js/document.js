@@ -21,16 +21,16 @@
         }.bind(this));
         this.q('button.send')[0].addEventListener('click',function(e){
             e.preventDefault();
-            this.r('/api/document').then(function(r){
+            var d=new FormData();
+            d.append('document',this.q('[name="document"]')[0].files[0]);
+            d.append("search_space",this.s.options[this.s.selectedIndex].value);    
+            this.r('/api/document', d).then(function(r){
                 console.log(r);
                 this.k=r.token;
             }.bind(this));
         }.bind(this));
     },
-    r:async function(u){
-        var d=new FormData();
-        d.append('document',this.q('[name="document"]')[0].files[0]);
-        d.append("search_space",this.s.options[this.s.selectedIndex].value);
+    r:async function(u,d){
         var r=await fetch(u,{
             method:'POST',
             body:d
