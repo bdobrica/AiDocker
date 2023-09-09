@@ -1,5 +1,6 @@
 import os
 import sqlite3
+from pathlib import Path
 
 import requests
 from flask import Flask, g, render_template, request
@@ -11,7 +12,8 @@ app = Flask(__name__)
 def open_sqlitedb_connection():
     db = getattr(g, "_database", None)
     if db is None:
-        database_path = os.getenv("DATABASE_PATH", "database.db")
+        database_path = Path(os.getenv("DATABASE_PATH", "/opt/db/database.db"))
+        database_path.parent.mkdir(parents=True, exist_ok=True)
         db = sqlite3.connect(database_path)
         setattr(g, "_database", db)
     return db
