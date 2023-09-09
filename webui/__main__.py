@@ -37,7 +37,7 @@ def document_page():
     cursor = conn.cursor()
     cursor.execute("CREATE TABLE IF NOT EXISTS search_spaces (name TEXT UNIQUE)")
     cursor.execute("SELECT * FROM search_spaces")
-    search_spaces = cursor.fetchall()
+    search_spaces = [row[0] for row in cursor.fetchall()]
     return render_template("document.html", search_spaces=search_spaces)
 
 
