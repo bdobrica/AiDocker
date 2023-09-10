@@ -42,8 +42,8 @@ def document_page():
 
 
 @app.route("/chat/<search_space>")
-def chat_page():
-    return render_template("chat.html")
+def chat_page(search_space: str):
+    return render_template("chat.html", search_space=search_space)
 
 
 @app.route("/api/document", methods=["POST"])

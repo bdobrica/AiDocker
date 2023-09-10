@@ -6,7 +6,7 @@
 
         this.s.addEventListener('change',function(e){
             e.preventDefault();
-            if (!this.s.options[this.s.selectedIndex].value) {
+            if (this.s.options[this.s.selectedIndex].value=='add') {
                 this.s.style.display='none';
                 this.t.style.display='inline-block';
             }
@@ -17,6 +17,21 @@
                 this.s.style.display='inline-block';
                 this.t.style.display='none';
                 this.s.add(new Option(this.t.value,this.t.value));
+            }
+        }.bind(this));
+        this.t.addEventListener("keyup", function(e){
+            console.log(e.keyCode);
+            if (e.keyCode === 13) {
+                e.preventDefault();
+                this.t.dispatchEvent(new Event('change'));
+                return;
+            }
+            if (e.keyCode === 27) {
+                e.preventDefault();
+                this.s.style.display='inline-block';
+                this.t.style.display='none';
+                this.t.value='';
+                return;
             }
         }.bind(this));
         this.q('button.send')[0].addEventListener('click',function(e){

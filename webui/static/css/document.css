@@ -25,9 +25,42 @@ body {
     border-top-right-radius: 10px;
 }
 
-.document__form {
-    max-width: 90%;
+.document__form {}
+
+.document__form__field {
+    padding: 0.5em 1em;
+}
+
+.document__form__field input[type="text"] {
     border-radius: 10px;
-    background-color: #79C7C5;
+    border: 1px solid #b0b0b0;
+    height: 2em;
+    box-sizing: border-box;
+}
+
+.document__form__field input[name="add_search_space"] {
+    display: none;
+}
+
+.document__form__field button {
+    background: #64b75e;
+    color: #ffffff;
+    border-radius: 10px;
+    border: 0;
+    height: 2em;
+    width: 6em;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.document__response {
     margin-top: 1em;
+    padding: 1em;
+    border-top: 1px solid #b0b0b0;
+    background: #e0e0e0;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
 }

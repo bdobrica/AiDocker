@@ -12,18 +12,26 @@
     <div class="document">
         <div class="document__title"></div>
         <div class="document__form">
-            <input type="file" name="document" />
-            <select name="search_space">
-                {% for search_space in search_spaces -%}
-                <option value="{{ search_space }}">{{ search_space }}</option>
-                {% endfor -%}
-                <option value="">Add search space</option>
-            </select>
-            <input type="text" name="add_search_space" placeholder="Add search space" />
-            <button class="send">Upload</button>
+            <div class="document__form__field">
+                <input type="file" name="document" />
+            </div>
+            <div class="document__form__field">
+                <label>Search space</label>
+                <select name="search_space">
+                    <option value="">select search space</option>
+                    {% for search_space in search_spaces -%}
+                    <option value="{{ search_space }}">{{ search_space }}</option>
+                    {% endfor -%}
+                    <option value="add">add new search space</option>
+                </select>
+                <input type="text" name="add_search_space" placeholder="Add search space" />
+            </div>
+            <div class="document__form__field">
+                <button class="send">Upload</button>
+            </div>
         </div>
+        <div class="document__response"></div>
     </div>
-    <div class="document__response">
 
     </div>
     <script src="{{ url_for('static', filename='js/document.js') }}"></script>
