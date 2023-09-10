@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import time
 from hashlib import md5, sha256
@@ -6,7 +7,10 @@ from hashlib import md5, sha256
 from flask import Response, request
 
 from .. import __version__
-from .helpers import get_metadata_path, get_prepared_paths, get_staged_path
+from ..mimetypes import get_extension
+from .helpers import get_metadata_path, get_staged_path
+
+logger = logging.getLogger(__name__)
 
 
 def put_document() -> Response:
@@ -25,8 +29,11 @@ def put_document() -> Response:
     document_hash.update(document_data)
     document_token = document_hash.hexdigest()
 
-    with open("/opt/app/mimetypes.json", "r") as fp:
-        document_extension = json.load(fp).get(document_type, ".docx")
+    document_extension = ".docx"
+    try:
+        document_extension = get_extension(document_type)
+    except ValueError:
+        logger.warning("unknown document type: %s. using default extension .docx", document_type)
 
     document_metadata = {
         **request.form,
