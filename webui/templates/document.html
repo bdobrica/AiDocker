@@ -9,8 +9,9 @@
 
 <body>
     <!-- page content -->
-    <div class="file">
-        <div class="file__form">
+    <div class="document">
+        <div class="document__title"></div>
+        <div class="document__form">
             <input type="file" name="document" />
             <select name="search_space">
                 {% for search_space in search_spaces -%}
@@ -22,7 +23,7 @@
             <button class="send">Upload</button>
         </div>
     </div>
-    <div class="file__response">
+    <div class="document__response">
 
     </div>
     <script src="{{ url_for('static', filename='js/document.js') }}"></script>
