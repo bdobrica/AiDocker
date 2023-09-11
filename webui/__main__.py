@@ -1,12 +1,15 @@
 import os
 import sqlite3
+import uuid
 from pathlib import Path
+from typing import Union
 
 import requests
-from flask import Flask, g, render_template, request
+from flask import Flask, Response, g, redirect, render_template, request, session
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
+Flask.secret_key = uuid.uuid4().hex
 
 
 def open_sqlitedb_connection():
@@ -27,12 +30,37 @@ def close_sqlitedb_connection(exception):
 
 
 @app.route("/")
-def index():
-    return render_template("index.html")
+def index() -> str:
+    username = session.get("username", "")
+    return render_template("index.html", username=username)
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login_page() -> Union[Response, str]:
+    if request.method == "POST":
+        username = request.form.get("username", "")
+        password = request.form.get("password", "")
+        if username == os.getenv("WEB_UI_USERNAME", "admin") and password == os.getenv("WEB_UI_PASSWORD", "admin"):
+            session["username"] = username
+            return redirect(request.referrer)
+        else:
+            session["username"] = ""
+            del session["username"]
+            return render_template("login.html", username=username, error="Invalid username or password")
+    return render_template("login.html", username="", error="")
+
+
+@app.route("/logout")
+def logout_page() -> Response:
+    session["username"] = ""
+    del session["username"]
+    return redirect(request.referrer)
 
 
 @app.route("/document")
-def document_page():
+def document_page() -> str:
+    if not session.get("username", ""):
+        return render_template("login.html", username="", error="You must be logged in to access this page")
     conn = open_sqlitedb_connection()
     cursor = conn.cursor()
     cursor.execute("CREATE TABLE IF NOT EXISTS search_spaces (name TEXT UNIQUE)")
@@ -42,12 +70,15 @@ def document_page():
 
 
 @app.route("/chat/<search_space>")
-def chat_page(search_space: str):
+def chat_page(search_space: str) -> str:
     return render_template("chat.html", search_space=search_space)
 
 
 @app.route("/api/document", methods=["POST"])
 def document_api() -> dict:
+    if not session.get("username", ""):
+        raise ValueError("You must be logged in to access this page")
+
     if "document" not in request.files:
         raise ValueError("Missing document field")
 
@@ -82,6 +113,9 @@ def document_api() -> dict:
 
 @app.route("/api/status/<token>", methods=["GET"])
 def status_api(token: str) -> dict:
+    if not session.get("username", ""):
+        raise ValueError("You must be logged in to access this page")
+
     index_model_host = os.getenv("INDEX_MODEL_HOST", "localhost:5000")
     response = requests.get(f"http://{index_model_host}/get/status/", json={"token": token})
     response.raise_for_status()

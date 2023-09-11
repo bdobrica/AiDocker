@@ -1,0 +1,13 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,200&display=swap');
+
+body {
+    background: linear-gradient(to bottom left, #f9f9f9 100%, #FFFFFF 100%);
+}
+
+.logout {
+    text-align: center;
+}
+
+.logout__inner a {
+    color: #64b75e;
+}

@@ -4,10 +4,17 @@
 <head>
     <meta charset="utf-8">
     <title>AiDocker WebUI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
 </head>
 
 <body>
-    <!-- page content -->
+    {% if username %}
+    <div class="logout">
+        <div class="logout_inner"><a href="/logout">Logout</a></div>
+    </div>
+    {% else %}
+    {% include 'login.html' %}
+    {% endif %}
 </body>
 
 </html>
