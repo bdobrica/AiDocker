@@ -70,12 +70,13 @@ function run_container {
         done
     fi
 
+    docker_args+=(--rm)
+    docker_args+=(--env-file "${env_file}")
+
     if [ "${debug_mode}" = true ]; then
         echo "Running ${model_name} on port ${port} in debug mode ..."
         $docker run \
             ${docker_args[@]} \
-            --rm \
-            --env-file $env_file \
             -e DEBUG=true \
             -it \
             --entrypoint /bin/bash \
@@ -84,8 +85,6 @@ function run_container {
         echo "Running ${model_name} on port ${port} ..."
         $docker run \
             ${docker_args[@]} \
-            --rm \
-            --env-file ./docker.env \
             -d \
             ${model_name} ${container_args[@]}
     fi
@@ -160,7 +159,7 @@ if [ "${container}" != "all" ]; then
     run_container "${container}/Dockerfile"
 else
     if [ "${debug_mode}" = true ]; then
-        echo "Debug mode is not supported for all containers"
+        echo "Debug mode is not supported when starting all containers"
         exit 1
     fi
     echo "Running all containers ..."
