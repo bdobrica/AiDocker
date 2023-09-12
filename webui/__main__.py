@@ -144,4 +144,6 @@ def chat_api() -> dict:
 
 
 if __name__ == "__main__":
+    print("index", os.getenv("INDEX_MODEL_HOST", "localhost:5000"))
+    print("chat", os.getenv("CHAT_MODEL_HOST", "localhost:5000"))
     app.run(host="0.0.0.0", debug="run")
