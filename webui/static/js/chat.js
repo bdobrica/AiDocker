@@ -22,6 +22,7 @@
             m.classList.add("assistant");
         }
         w.appendChild(m);
+        w.scrollTop=w.scrollHeight;
     },
     r:async function(u,d){
         var r=await fetch(u,{
