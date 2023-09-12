@@ -35,7 +35,7 @@
         return j;
     },
     l:function(e){
-        var l=this.q('.loading')[0];
+        var l=this.q('.chat__loading')[0];
         if(e)l.style.display='block';else l.style.display='none';
     },
     s:function(t){
