@@ -3,7 +3,7 @@
     i:function(){
         this.q('.send')[0].addEventListener('click',function(e){
             e.preventDefault();
-            var t=this.q('.text-box textarea')[0];
+            var t=this.q('.chat__text__box textarea')[0];
             this.s(t.value);
             t.value='';
         }.bind(this));
