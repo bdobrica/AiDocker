@@ -19,14 +19,14 @@ if __name__ == "__main__":
         config = yaml.load(fp, Loader=yaml.SafeLoader)
 
     endpoints = []
-    if isinstance(config["input"], list):
-        endpoints.extend(config["input"])
-    else:
-        endpoints.append(config["input"])
-    if isinstance(config["output"], list):
-        endpoints.extend(config["output"])
-    else:
-        endpoints.append(config["output"])
+    inputs = config.get("inputs", [])
+    if not isinstance(inputs, list):
+        inputs = [inputs]
+    endpoints.extend(inputs)
+    outputs = config.get("outputs", [])
+    if not isinstance(outputs, list):
+        outputs = [outputs]
+    endpoints.extend(outputs)
 
     do_debug = os.getenv("DEBUG", "false").lower() in ("true", "1", "on")
 
