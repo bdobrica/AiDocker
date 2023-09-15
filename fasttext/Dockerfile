@@ -10,7 +10,7 @@ RUN mkdir -p /tmp/ai/prepared
 RUN apt-get update && apt-get install -y jq
 
 ### MAKE SURE TO INSTALL REQUIREMENTS FIRST, SO THAT THE CACHE CAN BE USED ###
-COPY mpnetv2/requirements.txt /opt/app
+COPY fasttext/requirements.txt /opt/app
 RUN python3 -m pip install --upgrade pip
 RUN python3 -m pip install -r /opt/app/requirements.txt
 
