@@ -3,7 +3,7 @@ description: Given an text, detect the language of it.
 port: 5014
 weights:
   - fasttext/lid.176.bin
-input:
+inputs:
   - endpoint: /put/text
     queue: zero
     required:
