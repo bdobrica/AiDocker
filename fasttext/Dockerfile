@@ -7,7 +7,7 @@ RUN mkdir -p /tmp/ai/source
 RUN mkdir -p /tmp/ai/prepared
 
 ### INSTALLING BASE PYTHON PACKAGES ###
-RUN apt-get update && apt-get install -y jq
+RUN apt-get update && apt-get install -y jq build-essential python3-dev
 
 ### MAKE SURE TO INSTALL REQUIREMENTS FIRST, SO THAT THE CACHE CAN BE USED ###
 COPY fasttext/requirements.txt /opt/app
