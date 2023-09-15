@@ -8,6 +8,6 @@ input:
     queue: zero
     required:
       text: text
-daemon:
+daemons:
   - api
   - ai/query
