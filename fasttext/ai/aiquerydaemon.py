@@ -12,7 +12,7 @@ from .aiqueryinput import AiQueryInput
 class AiQueryDaemon(Daemon):
     def worker_load(self) -> None:
         # Initialize
-        MODEL_PATH = os.getenv("MODEL_PATH", "/opt/app/fasttext/lid.176.bin")
+        MODEL_PATH = os.getenv("MODEL_PATH", "/opt/app/lid.176.bin")
         self.model = fasttext.load_model(MODEL_PATH)
 
     def ai(self, input: AiQueryInput) -> Dict[str, Any]:

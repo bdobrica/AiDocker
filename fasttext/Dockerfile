@@ -15,7 +15,7 @@ RUN python3 -m pip install --upgrade pip
 RUN python3 -m pip install -r /opt/app/requirements.txt
 
 ### COPYING FILES ###
-COPY fasttext/fasttext /opt/app/fasttext
+COPY fasttext/lid.176.bin /opt/app
 COPY fasttext/container.yaml /opt/app
 COPY fasttext/ai /opt/app/ai
 COPY daemon /opt/app/daemon
