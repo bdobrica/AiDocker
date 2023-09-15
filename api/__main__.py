@@ -65,4 +65,4 @@ if __name__ == "__main__":
             mimetype="application/json",
         )
 
-    app.run(host="0.0.0.0", debug=())
+    app.run(host="0.0.0.0", debug=do_debug)
