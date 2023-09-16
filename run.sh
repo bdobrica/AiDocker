@@ -1,11 +1,12 @@
 #!/bin/bash
 
 # --events-backend=file
-max_port=5000
 debug_mode=false
 container=""
 docker_args=()
 env_file="./docker.env"
+
+function yq { python3 -c "import json,sys,yaml;print(json.dumps(yaml.safe_load(sys.stdin)))" | jq "$@"; }
 
 function detect_docker_command {
     if pgrep dockerd >/dev/null && [ -x "$(command -v docker)" ]; then
@@ -38,6 +39,18 @@ function detect_cuda {
     fi
 }
 
+function get_next_port {
+    printf "%s\n%s\n%s\n" "$(\
+        find . -name port.txt | while read f; do \
+            printf "%05d\n" $(cat $f); done \
+        | sort | tail -n 1 \
+    )" "$(\
+        find . -name container.yaml | while read f; do \
+            printf "%05d\n" $(cat $f | yq -r '.port'); done \
+        | sort | tail -n 1 \
+    )" "05000" | sort | tail -n 1 | awk "{print $1 + 1}"
+}
+
 function run_container {
     local dockerfile="$1"
     shift
@@ -45,20 +58,22 @@ function run_container {
     local model_dir=$(dirname "${dockerfile}")
     local model_name=$(basename "${model_dir}")
     local docker=$(detect_docker_command)
+    local config_file="${model_dir}/container.yaml"
+    local port=""
 
-    if [ -f "${model_dir}/port.txt" ]; then
+    if [ -f "${config_file}" ]; then
+        echo "Found container.yaml, searching for port ..."
+        port=$(cat "${config_file}" | yq -r '.port')
+    elif [ -f "${model_dir}/port.txt" ]; then
+        echo "Found port.txt, searching for port ..."
         port=$(cat "${model_dir}/port.txt" | tr -d "\r" | tr -d "\n")
-        if [ -e "${port}" ]; then
-            port=$[max_port + 1]
-            echo "${port}" > "${model_dir}/port.txt"
-        fi
-    else
-        port=$[max_port + 1]
-        echo "${port}" > "${model_dir}/port.txt"
     fi
 
-    if [ "${port}" -gt "${max_port}" ]; then
-        max_port="${port}"
+    if [ -z "${port}" ]; then
+        echo "No port found, searching for next available port ..."
+        port=$(get_next_port)
+        echo "Found port ${port}. Saving to port.txt ..."
+        echo "${port}" > "${model_dir}/port.txt"
     fi
 
     docker_args+=(-p 127.0.0.1:${port}:5000/tcp)
