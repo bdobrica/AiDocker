@@ -1,5 +1,7 @@
 #!/bin/bash
 
+function yq { python3 -c "import json,sys,yaml;print(json.dumps(yaml.safe_load(sys.stdin)))" | jq "$@"; }
+
 function detect_docker_command {
     if pgrep dockerd >/dev/null && [ -x "$(command -v docker)" ]; then
         if [ "${EUID}" -ne 0 ]; then
@@ -20,16 +22,25 @@ function build_container {
     local model_dir=$(dirname ${dockerfile})
     local model_name=$(basename ${model_dir})
     local weights_file="${model_dir}/weights.txt"
+    local config_file="${model_dir}/container.yaml"
     local docker=$(detect_docker_command)
+    local weights=()
 
     echo "Building ${model_name} ..."
 
-    if [ -f "${weights_file}" ]; then
-        echo "Found weights.txt, downloading weights ..."
-        cat "${weights_file}" | while read line; do
-            line=$(echo ${line} | tr -d "\r" | tr -d "\n")
-            if [ -n "${line}" ]; then
-                local weight_file=${model_dir}/${line#*/}
+    if [ -f "${config_file}" ]; then
+        echo "Found container.yaml, searching for weights ..."
+        weights=( $(cat "${config_file}" | yq -r '.weights[]') ) 
+    elif [ -f "${weights_file}" ]; then
+        echo "Found weights.txt, searching for weights ..."
+        weights=( $(cat "${weights_file}" | tr -d "\r" | tr -d "\n") )
+    fi
+
+    if [ "${#weights[@]}" -gt 0 ]; then
+        echo "Found weights, downloading weights ..."
+        for weight in "${weights[@]}"; do
+            if [ -n "${weight}" ]; then
+                local weight_file=${model_dir}/${weight#*/}
                 if [ ! -f "${weight_file}" ]; then
                     echo "Creating directory $(dirname ${weight_file})"
                     mkdir -p $(dirname ${weight_file})
@@ -41,7 +52,7 @@ function build_container {
             fi
         done
     else
-        echo "No weights.txt found, skipping weights download"
+        echo "No weights found, skipping weights download"
     fi
     
     $docker build -f "${dockerfile}" -t "${model_name}" .
