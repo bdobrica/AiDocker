@@ -37,7 +37,7 @@ function build_container {
     fi
 
     if [ "${#weights[@]}" -gt 0 ]; then
-        echo "Found weights, downloading weights ..."
+        echo "Downloading model weights ..."
         for weight in "${weights[@]}"; do
             if [ -n "${weight}" ]; then
                 local weight_file=${model_dir}/${weight#*/}
