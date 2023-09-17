@@ -138,12 +138,8 @@ def chat_api() -> dict:
     response.raise_for_status()
     response = response.json()
 
-    print("answer", response["results"][0]["answer"])
-
     return {"answer": response["results"][0]["answer"]}
 
 
 if __name__ == "__main__":
-    print("index", os.getenv("INDEX_MODEL_HOST", "localhost:5000"))
-    print("chat", os.getenv("CHAT_MODEL_HOST", "localhost:5000"))
-    app.run(host="0.0.0.0", debug="run")
+    app.run(host="0.0.0.0", debug=os.getenv("DEBUG", "false").lower() in ("true", "1", "on"))
