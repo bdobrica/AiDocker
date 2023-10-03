@@ -1,16 +1,16 @@
-from flask import render_template, request, session
+import os
 
-from ..tools.db import open_sqlitedb_connection
+import requests
+from flask import render_template, request, session
+from werkzeug.utils import secure_filename
+
+from ..orm import Document, SearchSpace
 
 
 def document_page() -> str:
     if not session.get("username", ""):
         return render_template("login.html", username="", error="You must be logged in to access this page")
-    conn = open_sqlitedb_connection()
-    cursor = conn.cursor()
-    cursor.execute("CREATE TABLE IF NOT EXISTS search_spaces (name TEXT UNIQUE)")
-    cursor.execute("SELECT * FROM search_spaces")
-    search_spaces = [row[0] for row in cursor.fetchall()]
+    search_spaces = SearchSpace.select()
     return render_template("document.html", search_spaces=search_spaces)
 
 
@@ -29,22 +29,33 @@ def document_api() -> dict:
     if search_space == "":
         raise ValueError("Missing search_space field")
 
-    conn = open_sqlitedb_connection()
-    cursor = conn.cursor()
-    cursor.execute("CREATE TABLE IF NOT EXISTS search_spaces (name TEXT UNIQUE)")
-    cursor.execute("INSERT OR IGNORE INTO search_spaces VALUES (?)", (search_space,))
-    conn.commit()
+    search_spaces = SearchSpace.select(id=search_space)
+    if search_spaces:
+        search_space = search_spaces[0]
+    else:
+        search_space = SearchSpace(
+            id=search_space,
+            name=search_space,
+        ).insert()
 
     index_model_host = os.getenv("INDEX_MODEL_HOST", "localhost:5000")
 
     docname = secure_filename(document.filename)
 
-    response = requests.put(
-        f"http://{index_model_host}/put/document",
-        files={"document": (docname, document.stream, document.mimetype)},
-        data={"search_space": search_space},
-    )
+    # response = requests.put(
+    #    f"http://{index_model_host}/put/document",
+    #    files={"document": (docname, document.stream, document.mimetype)},
+    #    data={"search_space": search_space},
+    # )
 
-    response.raise_for_status()
-    response = response.json()
+    # response.raise_for_status()
+    # response = response.json()
+    response = {"token": "test"}
+
+    _ = Document(
+        search_space=search_space,
+        token=response["token"],
+        name=docname,
+    ).insert()
+
     return {"token": response["token"]}

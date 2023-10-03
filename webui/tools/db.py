@@ -1,30 +1,28 @@
 import os
 from collections.abc import Iterable
-from functools import cached_property
-from pathlib import Path
-from typing import List, Optional, Type
+from typing import List, Optional, Tuple, Type
 
 import sqlalchemy
 from flask import g
 from pydantic import BaseModel
 
 
-def open_sqlitedb_connection() -> sqlalchemy.engine:
+def get_db_connection() -> sqlalchemy.Engine:
     """Opens a new database connection if there is none yet for the current application context."""
 
-    db = getattr(g, "_database", None)
+    db: sqlalchemy.Engine = getattr(g, "_database", None)
     if db is None:
-        db_conn_string = os.getenv("DATABASE_CONN_STRING", "sqlite:///opt/db/database.db")
+        db_conn_string = os.getenv("DATABASE_CONN_STRING", "sqlite:///database.db")
         db = sqlalchemy.create_engine(db_conn_string, echo=True)
         setattr(g, "_database", db)
     return db
 
 
-def close_sqlitedb_connection(exception: Exception) -> None:
+def dispose_db_engine(exception: Exception) -> None:
     """Closes the database again at the end of the request. Intended for use with `flask.Flask.teardown_appcontext`."""
-    db = getattr(g, "_database", None)
+    db: sqlalchemy.Engine = getattr(g, "_database", None)
     if db is not None:
-        db.close()
+        db.dispose()
 
 
 class OrmBase(BaseModel):
@@ -52,12 +50,14 @@ class OrmBase(BaseModel):
         """
         return cls.__prefix__ + cls._get_snakecase_name()
 
-    @cached_property
-    def __db__(self) -> sqlalchemy.engine:
+    @classmethod
+    @property
+    def __db__(cls) -> sqlalchemy.engine:
         """Returns the database connection."""
-        return open_sqlitedb_connection()
+        return get_db_connection()
 
-    def _get_columns(self) -> List[sqlalchemy.Column]:
+    @classmethod
+    def _get_columns(cls) -> List[sqlalchemy.Column]:
         """Returns the columns for the table, based on the fields of the model."""
         type_mapping = {
             int: sqlalchemy.Integer,
@@ -66,13 +66,13 @@ class OrmBase(BaseModel):
             float: sqlalchemy.Numeric,
         }
         columns = []
-        for key, field in self.__fields__.items():
+        for key, field in cls.__fields__.items():
             if issubclass(field.type_, OrmBase):
                 columns.append(
                     sqlalchemy.Column(
                         key,
-                        sqlalchemy.Integer,
-                        sqlalchemy.ForeignKey(field.type_._get_table_name()),
+                        type_mapping.get(field.type_.__fields__.get("id"), sqlalchemy.String),
+                        sqlalchemy.ForeignKey(f"{field.type_._get_table_name()}.id"),
                     )
                 )
             elif field.type_ in type_mapping:
@@ -81,7 +81,7 @@ class OrmBase(BaseModel):
                         key,
                         type_mapping[field.type_],
                         primary_key=key == "id",
-                        autoincrement=key == "id",
+                        autoincrement=key == "id" and field.type_ == int,
                         nullable=field.default is None,
                     )
                 )
@@ -94,45 +94,86 @@ class OrmBase(BaseModel):
                 )
         return columns
 
-    def create(self) -> "OrmBase":
+    @classmethod
+    def create(cls) -> Type["OrmBase"]:
         """Creates the table for the model if it does not exist yet."""
-        with self.__db__.connect() as conn:
-            if not self.__db__.dialect.has_table(conn, self._get_table_name()):
+        with cls.__db__.connect() as conn:
+            if not cls.__db__.dialect.has_table(conn, cls._get_table_name()):
                 metadata = sqlalchemy.MetaData()
-                table = sqlalchemy.Table(self._get_table_name(), metadata, *self._get_columns())
-                metadata.create_all(self.__db__)
-                setattr(self.__class__, "__table__", table)
-            elif not hasattr(self.__class__, "__table__"):
+                metadata.reflect(bind=conn)
+                table = sqlalchemy.Table(cls._get_table_name(), metadata, *cls._get_columns())
+                metadata.create_all(cls.__db__)
+                setattr(cls.__class__, "__table__", table)
+            elif not hasattr(cls.__class__, "__table__"):
                 metadata = sqlalchemy.MetaData()
-                table = metadata.tables[self._get_table_name()]
-                setattr(self.__class__, "__table__", table)
-        return self
+                metadata.reflect(bind=conn)
+                table = metadata.tables[cls._get_table_name()]
+                setattr(cls, "__table__", table)
+        return cls
 
-    def select(self, **kwargs) -> List["OrmBase"]:
+    @classmethod
+    def select(cls, **kwargs) -> List["OrmBase"]:
         """Queries the table for records matching the given criteria."""
-        if not hasattr(self.__class__, "__table__"):
-            self.create()
+        if not hasattr(cls, "__table__"):
+            cls.create()
 
         args = []
         for key, value in kwargs.items():
-            if key in self.__fields__:
+            if key in cls.__fields__:
                 if isinstance(value, Iterable) and not isinstance(value, str):
-                    args.append(getattr(self.__table__.c, key).in_(value))
+                    args.append(getattr(cls.__table__.c, key).in_(value))
                 else:
-                    args.append(getattr(self.__table__.c, key) == value)
+                    args.append(getattr(cls.__table__.c, key) == value)
 
-        query = sqlalchemy.select(self.__table__).where(*args)
-        with self.__db__.connect() as conn:
+        query = sqlalchemy.select(cls.__table__).where(*args)
+        with cls.__db__.connect() as conn:
             result = conn.execute(query)
-        return [self.__class__.parse_obj(row) for row in result.mappings().all()]
+        return [cls.parse_obj(row) for row in result.mappings().all()]
+
+    @classmethod
+    def select_paginated(cls, page: int = 0, per_page: int = 10, **kwargs) -> Tuple[List["OrmBase"], int, int]:
+        """Queries the table for records matching the given criteria."""
+        if not hasattr(cls, "__table__"):
+            cls.create()
+
+        args = []
+        for key, value in kwargs.items():
+            if key in cls.__fields__:
+                if isinstance(value, Iterable) and not isinstance(value, str):
+                    args.append(getattr(cls.__table__.c, key).in_(value))
+                else:
+                    args.append(getattr(cls.__table__.c, key) == value)
+
+        count_query = sqlalchemy.select(sqlalchemy.func.count()).select_from(cls.__table__).where(*args)
+        with cls.__db__.connect() as conn:
+            result = conn.execute(count_query)
+            count = result.scalar()
+            pages = count // per_page + 1
+            if page < 0:
+                page = 0
+            elif page > pages:
+                page = pages - 1
+
+            query = (
+                sqlalchemy.select(cls.__table__)
+                .where(*args)
+                .order_by(cls.__table__.c.id)
+                .offset(page * per_page)
+                .limit(per_page)
+            )
+            result = conn.execute(query)
+
+        return [cls.parse_obj(row) for row in result.mappings().all()], page, pages
 
     def insert(self) -> "OrmBase":
         """Inserts a new record into the table based on the model."""
         if not hasattr(self.__class__, "__table__"):
             self.create()
-        query = sqlalchemy.insert(self.__class__.__table__).values(
-            **{key: getattr(self, key) for key in self.__fields__ if key != "id"}
-        )
+        data = {key: getattr(self, key) for key in self.__fields__}
+        for key, value in data.items():
+            if isinstance(value, OrmBase):
+                data[key] = value.id
+        query = sqlalchemy.insert(self.__class__.__table__).values(**data)
         with self.__db__.connect() as conn:
             result = conn.execute(query)
             self.id = result.inserted_primary_key[0]

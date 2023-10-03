@@ -2,9 +2,10 @@
 <html lang="en">
 
 <head>
-    <meta charset="utf-8">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>AiDocker WebUI - File Handler</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/document.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/document.css') }}" />
 </head>
 
 <body>
@@ -20,7 +21,7 @@
                 <select name="search_space">
                     <option value="">select search space</option>
                     {% for search_space in search_spaces -%}
-                    <option value="{{ search_space }}">{{ search_space }}</option>
+                    <option value="{{ search_space.name }}">{{ search_space.name }}</option>
                     {% endfor -%}
                     <option value="add">add new search space</option>
                 </select>

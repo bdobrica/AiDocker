@@ -1,0 +1,80 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,200&display=swap');
+
+body {
+    background: linear-gradient(to bottom left, #f9f9f9 100%, #FFFFFF 100%);
+}
+
+.documents * {
+    font-size: 15pt;
+    font-family: 'Nunito Sans', sans-serif;
+}
+
+.documents {
+    width: 90%;
+    margin: 0 auto;
+    background: #f5f5f5;
+    border-radius: 10px;
+}
+
+.documents__title {
+    padding: 1em;
+    border-bottom: 1px solid #b0b0b0;
+    background-color: #b0b0b0;
+    color: #333333;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+.documents table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.documents table th,
+.documents table td {
+    text-align: left;
+    padding-left: 1em;
+    padding-right: 1em;
+}
+
+.documents table th:last-child,
+.documents table td:last-child {
+    text-align: right;
+}
+
+.documents table tbody tr:nth-child(odd) {
+    background: #e0e0e0;
+}
+
+.documents table tbody tr:nth-child(even) {
+    background: #f5f5f5;
+}
+
+.documents table tbody tr:hover {
+    background: #b0b0b0;
+}
+
+.documents table tbody tr td:last-child a {
+    color: #64b75e;
+}
+
+.documents__pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-direction: row;
+    margin-top: 1em;
+    padding: 1em;
+    border-top: 1px solid #b0b0b0;
+    background: #e0e0e0;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
+
+.logout {
+    text-align: center;
+}
+
+.logout__inner a {
+    color: #64b75e;
+}
