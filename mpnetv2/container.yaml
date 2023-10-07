@@ -13,6 +13,10 @@ input:
     queue: file
     required:
       document: document
+  - endpoint: /delete/document
+    queue: file
+    required:
+      token: token
   - endpoint: /put/text
     queue: zero
     required:

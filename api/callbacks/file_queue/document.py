@@ -57,3 +57,36 @@ def put_document() -> Response:
         status=200,
         mimetype="application/json",
     )
+
+
+def delete_document() -> Response:
+    document_token = request.form.get("token")
+    if not document_token:
+        return Response(
+            json.dumps({"error": "missing token"}),
+            status=400,
+            mimetype="application/json",
+        )
+
+    document_extension = ".delete"
+    document_metadata = {
+        **request.form,
+        **{
+            "type": "application/x-delete",
+            "upload_time": time.time(),
+            "processed": "false",
+        },
+    }
+    meta_file = get_metadata_path(document_token)
+    with meta_file.open("w") as fp:
+        json.dump(document_metadata, fp)
+
+    staged_file = get_staged_path(document_token, document_extension)
+    with staged_file.open("w") as fp:
+        fp.write("")
+
+    return Response(
+        json.dumps({"token": document_token, "version": __version__}),
+        status=200,
+        mimetype="application/json",
+    )
