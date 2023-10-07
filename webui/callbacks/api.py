@@ -1,20 +1,13 @@
 import os
 
 import requests
-from flask import render_template, request, session
+from flask import request, session
 from werkzeug.utils import secure_filename
 
 from ..orm import Document, SearchSpace
 
 
-def document_page() -> str:
-    if not session.get("username", ""):
-        return render_template("login.html", username="", error="You must be logged in to access this page")
-    search_spaces = SearchSpace.select()
-    return render_template("document.html", search_spaces=search_spaces)
-
-
-def document_api() -> dict:
+def add_document_api() -> dict:
     if not session.get("username", ""):
         raise ValueError("You must be logged in to access this page")
 
@@ -59,3 +52,40 @@ def document_api() -> dict:
     ).insert()
 
     return {"token": response["token"]}
+
+
+def delete_document_api(document_id: int) -> dict:
+    if not session.get("username", ""):
+        raise ValueError("You must be logged in to access this page")
+
+    document = Document.select(id=document_id)
+    if not document:
+        raise ValueError("Invalid document id")
+
+    document = document[0]
+
+    index_model_host = os.getenv("INDEX_MODEL_HOST", "localhost:5000")
+
+    # response = requests.delete(
+    #    f"http://{index_model_host}/delete/document",
+    #    data={"token": document.token},
+    # )
+
+    # response.raise_for_status()
+    # response = response.json()
+    response = {"token": "test"}
+
+    document.delete()
+
+    return {"token": response["token"]}
+
+
+def status_api(token: str) -> dict:
+    if not session.get("username", ""):
+        raise ValueError("You must be logged in to access this page")
+
+    index_model_host = os.getenv("INDEX_MODEL_HOST", "localhost:5000")
+    response = requests.get(f"http://{index_model_host}/get/status/", json={"token": token})
+    response.raise_for_status()
+    response = response.json()
+    return {"status": response["status"]}

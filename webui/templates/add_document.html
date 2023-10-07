@@ -5,13 +5,18 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>AiDocker WebUI - File Handler</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/document.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/add_document.css') }}" />
 </head>
 
 <body>
     <!-- page content -->
     <div class="document">
-        <div class="document__title">Add document to search space</div>
+        <div class="document__title">
+            <div class="document__title__content">Add document to search space</div>
+            <div class="documents__title__action">
+                <a href="/documents">All Documents</a>
+            </div>
+        </div>
         <div class="document__form">
             <div class="document__form__field">
                 <input type="file" name="document" />
@@ -37,7 +42,7 @@
     <div class="logout">
         <div class="logout_inner"><a href="/logout">Logout</a></div>
     </div>
-    <script src="{{ url_for('static', filename='js/document.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/add_document.js') }}"></script>
 </body>
 
 </html>

@@ -1,6 +1,6 @@
 import os
 from collections.abc import Iterable
-from typing import List, Optional, Tuple, Type
+from typing import Generator, List, Optional, Tuple, Type
 
 import sqlalchemy
 from flask import g
@@ -112,7 +112,7 @@ class OrmBase(BaseModel):
         return cls
 
     @classmethod
-    def select(cls, **kwargs) -> List["OrmBase"]:
+    def select(cls, **kwargs) -> Generator["OrmBase", None, None]:
         """Queries the table for records matching the given criteria."""
         if not hasattr(cls, "__table__"):
             cls.create()
@@ -128,7 +128,8 @@ class OrmBase(BaseModel):
         query = sqlalchemy.select(cls.__table__).where(*args)
         with cls.__db__.connect() as conn:
             result = conn.execute(query)
-        return [cls.parse_obj(row) for row in result.mappings().all()]
+        for row in result.mappings().all():
+            yield cls.parse_obj(row)
 
     @classmethod
     def select_paginated(cls, page: int = 0, per_page: int = 10, **kwargs) -> Tuple[List["OrmBase"], int, int]:

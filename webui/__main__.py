@@ -4,10 +4,12 @@ import uuid
 from flask import Flask, g, render_template, session
 
 from .callbacks import (
+    add_document_api,
+    add_document_page,
     chat_api,
     chat_page,
-    document_api,
-    document_page,
+    delete_document_api,
+    delete_document_page,
     documents_page,
     login_page,
     logout_page,
@@ -27,14 +29,19 @@ def index() -> str:
 
 dispose_db_engine = app.teardown_appcontext(dispose_db_engine)
 
-chat_api = app.route("/api/chat", methods=["POST"])(chat_api)
-chat_page = app.route("/chat/<search_space>")(chat_page)
-document_api = app.route("/api/document", methods=["POST"])(document_api)
-document_page = app.route("/document")(document_page)
-documents_page = app.route("/documents/<search_space>/<page>", defaults={"page": 0})(documents_page)
-login_page = app.route("/login", methods=["GET", "POST"])(login_page)
-logout_page = app.route("/logout")(logout_page)
-status_api = app.route("/api/status/<token>", methods=["GET"])(status_api)
+_ = app.route("/api/chat", methods=["POST"])(chat_api)
+_ = app.route("/api/document", methods=["DELETE"])(delete_document_api)
+_ = app.route("/api/document", methods=["PUT"])(add_document_api)
+_ = app.route("/api/status/<token>", methods=["GET"])(status_api)
+_ = app.route("/chat/<search_space>")(chat_page)
+_ = app.route("/documents")(documents_page)
+_ = app.route("/documents/<search_space>")(documents_page)
+_ = app.route("/documents/<search_space>/page=<page>")(documents_page)
+_ = app.route("/documents/add")(add_document_page)
+_ = app.route("/documents/delete/<document_id>")(delete_document_page)
+_ = app.route("/documents/page=<page>")(documents_page)
+_ = app.route("/login", methods=["GET", "POST"])(login_page)
+_ = app.route("/logout")(logout_page)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", debug=os.getenv("DEBUG", "false").lower() in ("true", "1", "on"))

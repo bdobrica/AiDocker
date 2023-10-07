@@ -23,6 +23,28 @@ body {
     color: #333333;
     border-top-left-radius: 10px;
     border-top-right-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.document__title__content {}
+
+.documents__title__action {}
+
+.documents__title__action a {
+    display: block;
+    background: #64b75e;
+    border-radius: 10px;
+    border: 0;
+    height: 2em;
+    line-height: 2em;
+    text-decoration: none;
+    padding-left: 1em;
+    padding-right: 1em;
+    cursor: pointer;
+    text-align: center;
+    color: #ffffff;
 }
 
 .document__form {}
