@@ -1,2 +1,4 @@
 flask
+pydantic
 requests
+sqlalchemy
