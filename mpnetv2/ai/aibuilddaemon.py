@@ -21,7 +21,7 @@ class AiBuildDaemon(Daemon):
         input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
         return torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(input_mask_expanded.sum(1), min=1e-9)
 
-    def create_redix_vector_index(self, search_space: Optional[str] = None) -> None:
+    def create_redis_vector_index(self, search_space: Optional[str] = None) -> None:
         pieces = [os.getenv("DOC_PREFIX", "doc"), search_space or ""]
         index_name = ":".join([piece for piece in pieces if piece])
         try:
@@ -69,7 +69,7 @@ class AiBuildDaemon(Daemon):
                 model_input.get_metadata(staged_file).get("search_space", "") for staged_file in staged_files
             )
             for search_space in search_spaces:
-                self.create_redix_vector_index(search_space=search_space)
+                self.create_redis_vector_index(search_space=search_space)
             for prepared_input in model_input.prepare(self.batch_size):
                 model_output = self.ai(prepared_input)
                 model_input.serve(model_output)

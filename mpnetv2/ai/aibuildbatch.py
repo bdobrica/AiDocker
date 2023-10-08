@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import os
+from pathlib import Path
 from typing import Generator, Iterable, List, Optional, Union
 
 from redis import Redis
@@ -14,7 +16,26 @@ class AiBuildBatch(Batch):
     def __init__(self, staged_files: Union[PathLike, Iterable[PathLike]], redis: Redis) -> None:
         super().__init__(staged_files=staged_files)
         self.redis = redis
-        self.prefix = ""
+        self._remove_items()
+
+    def _remove_item(self, source_file: Path) -> None:
+        search_space = self.get_metadata(source_file).get("search_space", "")
+        pieces = [os.getenv("DOC_PREFIX", "doc"), search_space, source_file.stem]
+        prefix = ":".join([piece for piece in pieces if piece])
+        removed_items = 0
+        for key in self.redis.scan_iter(f"{prefix}:*"):
+            self.redis.delete(key)
+            removed_items += 1
+        self._update_metadata(source_file, {"processed": "true", "removed_items": removed_items})
+        source_file.unlink()
+        self.source_files.remove(source_file)
+
+    def _remove_items(self):
+        to_remove = [source_file for source_file in self.source_files if source_file.suffix == ".delete"]
+        if not to_remove:
+            return
+        for source_file in to_remove:
+            self._remove_item(source_file)
 
     def get_text_item(self) -> Generator[TextItem, None, None]:
         for source_file in self.source_files:

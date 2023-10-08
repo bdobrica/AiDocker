@@ -11,6 +11,7 @@ def pdf_reader(path: Path, search_space: Optional[str] = None) -> List[TextItem]
     return [
         TextItem(
             text=page.extract_text(),
+            token=path.stem,
             search_space=search_space or "",
             page=page_index,
             paragraph=None,

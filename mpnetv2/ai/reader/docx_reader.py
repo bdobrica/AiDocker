@@ -11,6 +11,7 @@ def docx_reader(path: Path, search_space: Optional[str] = None) -> List[TextItem
     return [
         TextItem(
             text=paragraph.text,
+            token=path.stem,
             search_space=search_space or "",
             page=None,
             paragraph=paragraph_index,

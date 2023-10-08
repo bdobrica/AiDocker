@@ -16,6 +16,7 @@ class TextItem:
     def __init__(
         self,
         text: str,
+        token: str = "",
         search_space: str = "",
         page: Optional[int] = None,
         paragraph: Optional[int] = None,
@@ -23,6 +24,7 @@ class TextItem:
         score: Optional[float] = None,
     ):
         self.text = re.sub(r"\s+", " ", text).strip()
+        self.token = token
         self.search_space = search_space
         self.page = page
         self.paragraph = paragraph
@@ -48,7 +50,7 @@ class TextItem:
 
     @property
     def prefix(self) -> str:
-        pieces = [os.getenv("DOC_PREFIX", "doc"), self.search_space]
+        pieces = [os.getenv("DOC_PREFIX", "doc"), self.search_space, self.token]
         return ":".join([piece for piece in pieces if piece])
 
     @property
