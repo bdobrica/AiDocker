@@ -35,14 +35,14 @@ def add_document_api() -> dict:
 
     docname = secure_filename(document.filename)
 
-    # response = requests.put(
-    #    f"http://{index_model_host}/put/document",
-    #    files={"document": (docname, document.stream, document.mimetype)},
-    #    data={"search_space": search_space},
-    # )
+    response = requests.put(
+        f"http://{index_model_host}/put/document",
+        files={"document": (docname, document.stream, document.mimetype)},
+        data={"search_space": search_space},
+    )
 
-    # response.raise_for_status()
-    # response = response.json()
+    response.raise_for_status()
+    response = response.json()
     response = {"token": "test"}
 
     _ = Document(
@@ -66,13 +66,13 @@ def delete_document_api(document_id: int) -> dict:
 
     index_model_host = os.getenv("INDEX_MODEL_HOST", "localhost:5000")
 
-    # response = requests.delete(
-    #    f"http://{index_model_host}/delete/document",
-    #    data={"token": document.token},
-    # )
+    response = requests.delete(
+        f"http://{index_model_host}/delete/document",
+        data={"token": document.token, "search_space": document.search_space},
+    )
 
-    # response.raise_for_status()
-    # response = response.json()
+    response.raise_for_status()
+    response = response.json()
     response = {"token": "test"}
 
     document.delete()
