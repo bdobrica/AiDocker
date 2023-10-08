@@ -15,7 +15,7 @@ def login_page() -> Union[Response, str]:
             session["username"] = ""
             del session["username"]
             return render_template("login.html", username=username, error="Invalid username or password")
-    return render_template("login.html", username="", error="")
+    return render_template("login.html", page_title="Login", username="", error="")
 
 
 def logout_page() -> Response:

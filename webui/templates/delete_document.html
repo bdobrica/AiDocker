@@ -1,41 +1,30 @@
-<!DOCTYPE html>
-<html lang="en">
+{% include 'header.html' %}
 
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>AiDocker WebUI - File Handler</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/delete_document.css') }}" />
-</head>
-
-<body>
-    <!-- page content -->
-    <div class="document">
-        <div class="document__title">
-            <div class="document__title__content">Delete document {{ document.name }}</div>
-            <div class="documents__title__action">
-                <a href="/documents">All Documents</a>
-            </div>
+<div class="document">
+    <div class="document__title">
+        <div class="document__title__content">Delete document {{ document.name }}</div>
+        <div class="documents__title__action">
+            <a href="/documents">All Documents</a>
         </div>
-        <div class="document__form">
-            <div class="document__form__field">
-                Name: {{ document.name }}
-            </div>
-            <div class="document__form__field">
-                Search space: {{ document.search_space.name }}
-            </div>
-            <div class="document__form__field">
-                <button class="action action__delete">Delete</button>
-                <a class="action action__cancel" href="/documents">Cancel</a>
-            </div>
+    </div>
+    <div class="document__form">
+        <div class="document__form__field">
+            Name: {{ document.name }}
         </div>
-        <div class="document__response"></div>
+        <div class="document__form__field">
+            Search space: {{ document.search_space.name }}
+        </div>
+        <div class="document__form__field">
+            <button class="action action__delete">Delete</button>
+            <a class="action action__cancel" href="/documents">Cancel</a>
+        </div>
     </div>
+    <div class="document__response"></div>
+</div>
 
-    <div class="logout">
-        <div class="logout_inner"><a href="/logout">Logout</a></div>
-    </div>
-    <script src="{{ url_for('static', filename='js/delete_document.js') }}"></script>
-</body>
+<div class="logout">
+    <div class="logout_inner"><a href="/logout">Logout</a></div>
+</div>
+<script src="{{ url_for('static', filename='js/delete_document.js') }}"></script>
 
-</html>
+{% include 'footer.html' %}

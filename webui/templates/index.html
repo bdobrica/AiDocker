@@ -1,21 +1,11 @@
-<!DOCTYPE html>
-<html lang="en">
+{% include 'header.html' %}
 
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>AiDocker WebUI</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}" />
-</head>
+{% if username %}
+<div class="logout">
+    <div class="logout_inner"><a href="/logout">Logout</a></div>
+</div>
+{% else %}
+{% include 'login_form.html' %}
+{% endif %}
 
-<body>
-    {% if username %}
-    <div class="logout">
-        <div class="logout_inner"><a href="/logout">Logout</a></div>
-    </div>
-    {% else %}
-    {% include 'login.html' %}
-    {% endif %}
-</body>
-
-</html>
+{% include 'footer.html' %}

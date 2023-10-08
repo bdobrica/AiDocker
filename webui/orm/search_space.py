@@ -9,6 +9,7 @@ from ..tools import OrmBase
 class SearchSpace(OrmBase):
     id: Optional[str] = None
     name: str
+    language: Optional[str] = None
 
     @root_validator(pre=True)
     def validate_name(cls, values):

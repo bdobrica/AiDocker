@@ -1,8 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,200&display=swap');
-
-body {
-    background: linear-gradient(to bottom left, #f9f9f9 100%, #FFFFFF 100%);
-}
+/** document action page [ **/
 
 .document * {
     font-size: 15pt;
@@ -64,15 +60,30 @@ body {
     display: none;
 }
 
-.document__form__field button {
-    background: #64b75e;
+.document__form__field .action {
     color: #ffffff;
     border-radius: 10px;
     border: 0;
     height: 2em;
-    width: 6em;
+    line-height: 2em;
+    padding-left: 1em;
+    padding-right: 1em;
     font-weight: bold;
     cursor: pointer;
+    display: inline-block;
+    text-decoration: none;
+}
+
+.action__add {
+    background: #64b75e;
+}
+
+.action__delete {
+    background: #ff0000;
+}
+
+.action__cancel {
+    background: #b0b0b0;
 }
 
 .document__response {
@@ -87,10 +98,4 @@ body {
     flex-wrap: nowrap;
 }
 
-.logout {
-    text-align: center;
-}
-
-.logout__inner a {
-    color: #64b75e;
-}
+/** ] document action page **/

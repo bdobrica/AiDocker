@@ -1,79 +1,70 @@
-<!DOCTYPE html>
-<html lang="en">
+{% include 'header.html' %}
 
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>AiDocker WebUI - File Handler</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/documents.css') }}" />
-</head>
-
-<body>
-    <!-- page content -->
-    <div class="documents">
-        <div class="documents__title">
-            <div class="documents__title__content">
-                {% if search_space -%}
-                Documents in {{ search_space.name }}
-                {% else -%}
-                Documents
-                {% endif -%}
-            </div>
-            <div class="documents__title__action">
-                <a href="/documents/add">Add</a>
-            </div>
+<div class="documents">
+    <div class="documents__title">
+        <div class="documents__title__content">
+            {% if search_space -%}
+            Documents in {{ search_space.name }}
+            {% else -%}
+            Documents
+            {% endif -%}
         </div>
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Search Space</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for document in documents -%}
-                <tr>
-                    <td>{{ document.id }}</td>
-                    <td>{{ document.name }}</td>
-                    <td><a href="/documents/{{ document.search_space.id }}">{{ document.search_space.name }}</a></td>
-                    <td><a href="/documents/delete/{{ document.id }}">Delete</a></td>
-                </tr>
-                {% endfor -%}
-            </tbody>
-            <tfoot>
-                <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Search Space</th>
-                    <th>Actions</th>
-                </tr>
-            </tfoot>
-        </table>
-        <div class="documents__pagination">
-            <div class="documents__pagination__prev">
-                {% if current_page_no > 0 -%}
-                <a href="/documents/{{ search_space.id if search_space }}/page={{ current_page_no - 1 }}">Prev</a>
-                {% endif -%}
-            </div>
-            {% for page_no in range(pages): -%}
-            <div class="documents__pagination__page">
-                <a href="/documents/{{ search_space.id if search_space }}/page={{ page_no }}">{{ page_no + 1 }}</a>
-            </div>
+        <div class="documents__title__action">
+            <a href="/documents/add">Add</a>
+        </div>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Search Space</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for document in documents -%}
+            <tr>
+                <td>{{ document.id }}</td>
+                <td>{{ document.name }}</td>
+                <td><a href="/documents/{{ document.search_space.id }}">{{ document.search_space.name }}</a></td>
+                <td><a href="/documents/delete/{{ document.id }}">Delete</a></td>
+            </tr>
             {% endfor -%}
-            <div class="documents__pagination__next">
-                {% if pages > current_page_no + 1 -%}
-                <a href="/documents/{{ search_space.id if search_space }}/page={{ current_page_no + 1 }}">Next</a>
-                {% endif -%}
-            </div>
+        </tbody>
+        <tfoot>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Search Space</th>
+                <th>Actions</th>
+            </tr>
+        </tfoot>
+    </table>
+    <div class="documents__pagination">
+        <div class="documents__pagination__prev">
+            {% if current_page_no > 0 -%}
+            <a href="/documents/{{ search_space.id if search_space }}/page={{ current_page_no - 1 }}">Prev</a>
+            {% endif -%}
+        </div>
+        {% if pages > 1 -%}
+        {% for page_no in range(pages): -%}
+        <div class="documents__pagination__page">
+            <a href="/documents/{{ search_space.id if search_space }}/page={{ page_no }}">{{ page_no + 1 }}</a>
+        </div>
+        {% endfor -%}
+        {% endif -%}
+        <div class="documents__pagination__next">
+            {% if pages > current_page_no + 1 -%}
+            <a href="/documents/{{ search_space.id if search_space }}/page={{ current_page_no + 1 }}">Next</a>
+            {% endif -%}
         </div>
     </div>
+</div>
 
-    <div class="logout">
-        <div class="logout_inner"><a href="/logout">Logout</a></div>
-    </div>
-    <script src="{{ url_for('static', filename='js/documents.js') }}"></script>
-</body>
+<div class="logout">
+    <div class="logout_inner"><a href="/logout">Logout</a></div>
+</div>
+<script src="{{ url_for('static', filename='js/documents.js') }}"></script>
 
-</html>
+{% include 'footer.html' %}
