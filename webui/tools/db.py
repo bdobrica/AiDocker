@@ -86,10 +86,10 @@ class OrmBase(BaseModel):
             float: sqlalchemy.Numeric,
         }
         columns = []
-        for key, field in cls.module_fields.items():
+        for key, field in cls.model_fields.items():
             field_type = _get_base_type(field.annotation)
             if not isinstance(field_type, Iterable) and issubclass(field_type, OrmBase):
-                id_field = field_type.module_fields.get("id")
+                id_field = field_type.model_fields.get("id")
                 if id_field is None:
                     raise ValueError(f"Model {field_type.__name__} does not have an id field.")
                 id_field_type = _get_base_type(id_field.annotation)
