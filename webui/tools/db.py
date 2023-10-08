@@ -97,7 +97,7 @@ class OrmBase(BaseModel):
                     sqlalchemy.Column(
                         key,
                         type_mapping.get(id_field_type, sqlalchemy.String),
-                        sqlalchemy.ForeignKey(f"{field_type._get_table_name()}.id"),
+                        sqlalchemy.ForeignKey(f"{field_type.create().__table__}.id"),
                     )
                 )
             elif field_type in type_mapping:
@@ -122,6 +122,8 @@ class OrmBase(BaseModel):
     @classmethod
     def create(cls) -> Type["OrmBase"]:
         """Creates the table for the model if it does not exist yet."""
+        if getattr(cls, "__table__", None) is not None:
+            return cls
         with cls.__db__.connect() as conn:
             if not cls.__db__.dialect.has_table(conn, cls._get_table_name()):
                 metadata = sqlalchemy.MetaData()
