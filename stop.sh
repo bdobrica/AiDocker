@@ -2,7 +2,11 @@
 
 function detect_docker_command {
     if pgrep dockerd >/dev/null && [ -x "$(command -v docker)" ]; then
-        echo "sudo docker"
+        if [ "${EUID}" -ne 0 ]; then
+            echo "sudo docker"
+        else
+            echo "docker"
+        fi
     elif [ -x "$(command -v podman)" ]; then
         echo "podman"
     else
