@@ -1,10 +1,30 @@
 import os
 from collections.abc import Iterable
-from typing import Generator, List, Optional, Tuple, Type
+from typing import Generator, List, Optional, Tuple, Type, Union, get_args, get_origin
 
 import sqlalchemy
 from flask import g
 from pydantic import BaseModel
+
+
+def _is_optional(type_: Type) -> bool:
+    """Returns True if the given type is Optional."""
+    return get_origin(type_) is Union and type(None) in get_args(type_)
+
+
+def _get_optional_type(type_: Type) -> Type:
+    return [arg for arg in get_args(type_) if arg is not type(None)]
+
+
+def _get_base_type(type_: Type) -> Type:
+    if _is_optional(type_):
+        types = _get_optional_type(type_)
+        if isinstance(types, Iterable) and len(types) == 1:
+            return types[0]
+        else:
+            return types
+    else:
+        return type_
 
 
 def get_db_connection() -> sqlalchemy.Engine:
@@ -66,22 +86,27 @@ class OrmBase(BaseModel):
             float: sqlalchemy.Numeric,
         }
         columns = []
-        for key, field in cls.__fields__.items():
-            if issubclass(field.type_, OrmBase):
+        for key, field in cls.module_fields.items():
+            field_type = _get_base_type(field.annotation)
+            if not isinstance(field_type, Iterable) and issubclass(field_type, OrmBase):
+                id_field = field_type.module_fields.get("id")
+                if id_field is None:
+                    raise ValueError(f"Model {field_type.__name__} does not have an id field.")
+                id_field_type = _get_base_type(id_field.annotation)
                 columns.append(
                     sqlalchemy.Column(
                         key,
-                        type_mapping.get(field.type_.__fields__.get("id"), sqlalchemy.String),
-                        sqlalchemy.ForeignKey(f"{field.type_._get_table_name()}.id"),
+                        type_mapping.get(id_field_type, sqlalchemy.String),
+                        sqlalchemy.ForeignKey(f"{field_type._get_table_name()}.id"),
                     )
                 )
-            elif field.type_ in type_mapping:
+            elif field_type in type_mapping:
                 columns.append(
                     sqlalchemy.Column(
                         key,
-                        type_mapping[field.type_],
+                        type_mapping[field_type],
                         primary_key=key == "id",
-                        autoincrement=key == "id" and field.type_ == int,
+                        autoincrement=key == "id" and field_type == int,
                         nullable=field.default is None,
                     )
                 )
@@ -119,7 +144,7 @@ class OrmBase(BaseModel):
 
         args = []
         for key, value in kwargs.items():
-            if key in cls.__fields__:
+            if key in cls.model_fields:
                 if isinstance(value, Iterable) and not isinstance(value, str):
                     args.append(getattr(cls.__table__.c, key).in_(value))
                 else:
@@ -139,7 +164,7 @@ class OrmBase(BaseModel):
 
         args = []
         for key, value in kwargs.items():
-            if key in cls.__fields__:
+            if key in cls.model_fields:
                 if isinstance(value, Iterable) and not isinstance(value, str):
                     args.append(getattr(cls.__table__.c, key).in_(value))
                 else:
@@ -170,7 +195,7 @@ class OrmBase(BaseModel):
         """Inserts a new record into the table based on the model."""
         if not hasattr(self.__class__, "__table__"):
             self.create()
-        data = {key: getattr(self, key) for key in self.__fields__}
+        data = {key: getattr(self, key) for key in self.model_fields}
         for key, value in data.items():
             if isinstance(value, OrmBase):
                 data[key] = value.id
@@ -192,7 +217,7 @@ class OrmBase(BaseModel):
         query = (
             sqlalchemy.update(self.__table__)
             .where(self.__table__.c.id == self.id)
-            .values(**{key: getattr(self, key) for key in self.__fields__ if key != "id"})
+            .values(**{key: getattr(self, key) for key in self.model_fields if key != "id"})
         )
         with self.__db__.connect() as conn:
             _ = conn.execute(query)
