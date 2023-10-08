@@ -19,7 +19,7 @@ def documents_page(search_space: Optional[str] = None, page: int = 0) -> str:
         "documents.html",
         page_title="Document Management",
         search_space=search_space,
-        documents=4 * documents,
+        documents=documents,
         pages=pages,
         current_page_no=page,
     )
