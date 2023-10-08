@@ -154,7 +154,7 @@ class OrmBase(BaseModel):
         with cls.__db__.connect() as conn:
             result = conn.execute(query)
         for row in result.mappings().all():
-            yield cls.parse_obj(row)
+            yield cls.parse_obj(dict(row))
 
     @classmethod
     def select_paginated(cls, page: int = 0, per_page: int = 10, **kwargs) -> Tuple[List["OrmBase"], int, int]:
