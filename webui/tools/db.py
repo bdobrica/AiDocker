@@ -189,7 +189,7 @@ class OrmBase(BaseModel):
             )
             result = conn.execute(query)
 
-        return [cls.parse_obj(row) for row in result.mappings().all()], page, pages
+        return [cls.parse_obj(dict(row)) for row in result.mappings().all()], page, pages
 
     def insert(self) -> "OrmBase":
         """Inserts a new record into the table based on the model."""
