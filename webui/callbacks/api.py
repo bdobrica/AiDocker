@@ -40,7 +40,6 @@ def add_document_api() -> dict:
 
     response.raise_for_status()
     response = response.json()
-    response = {"token": "test"}
 
     _ = Document(
         search_space=search_space,
@@ -68,7 +67,6 @@ def delete_document_api(document_id: int) -> dict:
 
     response.raise_for_status()
     response = response.json()
-    response = {"token": "test"}
 
     document.delete()
 
