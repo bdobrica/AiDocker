@@ -201,6 +201,7 @@ class OrmBase(BaseModel):
         if not hasattr(self.__class__, "__table__"):
             print("create")
             self.__class__.create()
+        print("table", self.__class__.__table__)
         data = {key: getattr(self, key) for key in self.model_fields}
         for key, value in data.items():
             if isinstance(value, OrmBase):
