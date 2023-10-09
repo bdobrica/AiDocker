@@ -15,6 +15,7 @@
             Search space: {{ document.search_space.name }}
         </div>
         <div class="document__form__field">
+            <input type="hidden" name="document_id" value="{{ document.id }}">
             <button class="action action__delete">Delete</button>
             <a class="action action__cancel" href="/documents">Cancel</a>
         </div>

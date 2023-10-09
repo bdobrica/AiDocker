@@ -9,6 +9,7 @@
             if (this.s.options[this.s.selectedIndex].value=='add') {
                 this.s.style.display='none';
                 this.t.style.display='inline-block';
+                this.t.focus();
             }
         }.bind(this));
         this.t.addEventListener('change',function(e){
@@ -17,6 +18,7 @@
                 this.s.style.display='inline-block';
                 this.t.style.display='none';
                 this.s.add(new Option(this.t.value,this.t.value));
+                this.s.selectedIndex=this.s.options.length-1;
             }
         }.bind(this));
         this.t.addEventListener("keyup", function(e){
@@ -34,7 +36,7 @@
                 return;
             }
         }.bind(this));
-        this.q('button.send')[0].addEventListener('click',function(e){
+        this.q('.action__add')[0].addEventListener('click',function(e){
             e.preventDefault();
             var d=new FormData();
             d.append('document',this.q('[name="document"]')[0].files[0]);
