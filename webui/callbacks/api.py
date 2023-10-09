@@ -22,10 +22,8 @@ def add_document_api() -> dict:
     if search_space == "":
         raise ValueError("Missing search_space field")
 
-    search_spaces = SearchSpace.select(id=search_space)
-    if search_spaces:
-        search_space = search_spaces[0]
-    else:
+    search_space = next(SearchSpace.select(id=search_space), None)
+    if not search_space:
         search_space = SearchSpace(
             id=search_space,
             name=search_space,
@@ -58,11 +56,9 @@ def delete_document_api(document_id: int) -> dict:
     if not session.get("username", ""):
         raise ValueError("You must be logged in to access this page")
 
-    document = Document.select(id=document_id)
+    document = next(Document.select(id=document_id), None)
     if not document:
         raise ValueError("Invalid document id")
-
-    document = document[0]
 
     index_model_host = os.getenv("INDEX_MODEL_HOST", "localhost:5000")
 
