@@ -117,7 +117,6 @@ class OrmBase(BaseModel):
                         sqlalchemy.String,
                     )
                 )
-        print(columns)
         return columns
 
     @classmethod
@@ -197,7 +196,7 @@ class OrmBase(BaseModel):
     def insert(self) -> "OrmBase":
         """Inserts a new record into the table based on the model."""
         if not hasattr(self.__class__, "__table__"):
-            self.create()
+            self.__class__.create()
         data = {key: getattr(self, key) for key in self.model_fields}
         for key, value in data.items():
             if isinstance(value, OrmBase):
@@ -212,7 +211,7 @@ class OrmBase(BaseModel):
     def update(self) -> "OrmBase":
         """Updates an existing record in the table based on the model."""
         if not hasattr(self.__class__, "__table__"):
-            self.create()
+            self.__class__.create()
 
         if self.id is None:
             return self.insert()
