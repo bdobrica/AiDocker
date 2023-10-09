@@ -117,6 +117,7 @@ class OrmBase(BaseModel):
                         sqlalchemy.String,
                     )
                 )
+        print(columns)
         return columns
 
     @classmethod
