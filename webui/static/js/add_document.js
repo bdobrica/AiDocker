@@ -47,7 +47,7 @@
     },
     r:async function(u,d){
         var r=await fetch(u,{
-            method:'POST',
+            method:'PUT',
             body:d
         });
         var j=await r.json();
