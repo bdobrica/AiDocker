@@ -18,15 +18,14 @@ def add_document_api() -> dict:
     if document.filename == "":
         raise ValueError("Missing document name")
 
-    search_space = request.form.get("search_space", "")
-    if search_space == "":
+    search_space_ = request.form.get("search_space", "")
+    if search_space_ == "":
         raise ValueError("Missing search_space field")
 
-    search_space = next(SearchSpace.select(id=search_space), None)
+    search_space = next(SearchSpace.select(id=search_space_), None)
     if not search_space:
         search_space = SearchSpace(
-            id=search_space,
-            name=search_space,
+            name=search_space_,
         ).insert()
 
     index_model_host = os.getenv("INDEX_MODEL_HOST", "localhost:5000")
