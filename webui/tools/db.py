@@ -132,8 +132,8 @@ class OrmBase(BaseModel):
                 metadata.reflect(bind=conn)
                 table = sqlalchemy.Table(cls._get_table_name(), metadata, *cls._get_columns())
                 metadata.create_all(cls.__db__)
-                setattr(cls.__class__, "__table__", table)
-            elif not hasattr(cls.__class__, "__table__"):
+                setattr(cls, "__table__", table)
+            elif not hasattr(cls, "__table__"):
                 metadata = sqlalchemy.MetaData()
                 metadata.reflect(bind=conn)
                 table = metadata.tables[cls._get_table_name()]
