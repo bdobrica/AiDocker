@@ -123,9 +123,7 @@ class OrmBase(BaseModel):
     def create(cls) -> Type["OrmBase"]:
         """Creates the table for the model if it does not exist yet."""
         if getattr(cls, "__table__", None) is not None:
-            print("table exists", cls.__table__)
             return cls
-        print("create table")
         with cls.__db__.connect() as conn:
             if not cls.__db__.dialect.has_table(conn, cls._get_table_name()):
                 metadata = sqlalchemy.MetaData()
@@ -197,11 +195,8 @@ class OrmBase(BaseModel):
 
     def insert(self) -> "OrmBase":
         """Inserts a new record into the table based on the model."""
-        print("class", self.__class__)
         if not hasattr(self.__class__, "__table__"):
-            print("create")
             self.__class__.create()
-        print("table", self.__class__.__table__)
         data = {key: getattr(self, key) for key in self.model_fields}
         for key, value in data.items():
             if isinstance(value, OrmBase):
