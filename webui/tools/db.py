@@ -123,6 +123,7 @@ class OrmBase(BaseModel):
     def create(cls) -> Type["OrmBase"]:
         """Creates the table for the model if it does not exist yet."""
         if getattr(cls, "__table__", None) is not None:
+            print("table exists", cls.__table__)
             return cls
         print("create table")
         with cls.__db__.connect() as conn:
