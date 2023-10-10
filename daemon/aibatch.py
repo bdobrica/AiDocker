@@ -16,6 +16,8 @@ class AiBatch(FileQueueMixin):
             for staged_file in self.staged_files
             if (self.source_path / staged_file.name).is_file()
         ]
+        for source_file in self.source_files:
+            self._update_metadata(source_file, {"processed": "false", "state": "queued"})
 
     def __init__(self, staged_files: Union[PathLike, Iterable[PathLike]]):
         if isinstance(staged_files, (str, Path)):
