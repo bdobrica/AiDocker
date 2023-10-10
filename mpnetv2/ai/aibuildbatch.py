@@ -23,10 +23,11 @@ class AiBuildBatch(Batch):
         pieces = [os.getenv("DOC_PREFIX", "doc"), search_space, source_file.stem]
         prefix = ":".join([piece for piece in pieces if piece])
         removed_items = 0
+        self._update_metadata(source_file, {"processed": "false", "state": "deleting"})
         for key in self.redis.scan_iter(f"{prefix}:*"):
             self.redis.delete(key)
             removed_items += 1
-        self._update_metadata(source_file, {"processed": "true", "removed_items": removed_items})
+        self._update_metadata(source_file, {"processed": "true", "state": "done", "removed_items": removed_items})
         source_file.unlink()
         self.source_files.remove(source_file)
 
@@ -40,9 +41,10 @@ class AiBuildBatch(Batch):
     def get_text_item(self) -> Generator[TextItem, None, None]:
         for source_file in self.source_files:
             search_space = self.get_metadata(source_file).get("search_space", "")
+            self._update_metadata(source_file, {"processed": "false", "state": "processing"})
             yield from read_text(source_file, search_space)
             # TODO: need to check if this update is really in the right place
-            self._update_metadata(source_file, {"processed": "true"})
+            self._update_metadata(source_file, {"processed": "true", "state": "done"})
 
     def prepare(self, batch_size: int) -> Generator[List[TextItem], None, None]:
         self._buffer: List[TextItem] = []
