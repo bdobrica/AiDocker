@@ -1,20 +1,12 @@
 import json
 import os
 import time
-from pathlib import Path
 
 from flask import Response, request
 
 from .. import __version__
 from ..mimetypes import get_url
-from .helpers import (
-    clean_files,
-    get_json_path,
-    get_metadata_path,
-    get_prepared_paths,
-    get_source_paths,
-    get_staged_paths,
-)
+from .helpers import clean_files, get_json_path, get_metadata_path, get_prepared_paths
 
 
 def get_json() -> Response:
@@ -36,7 +28,7 @@ def get_json() -> Response:
     except:
         clean_files(file_token)
         return Response(
-            json.dumps({"error": "corrupted image metadata", "version": __version__}),
+            json.dumps({"error": "corrupted metadata", "version": __version__}),
             status=400,
             mimetype="application/json",
         )
@@ -74,45 +66,25 @@ def get_json() -> Response:
                 "version": __version__,
                 "inference_time": float(file_metadata.get("update_time", 0))
                 - float(file_metadata.get("upload_time", 0)),
+                **file_metadata,
             }
         )
         clean_files(file_token)
 
         return Response(json.dumps(json_data), status=200, mimetype="application/json")
 
-    prepared_files = get_prepared_paths(file_token)
-    if prepared_files:
-        output = {
+    file_metadata.update(
+        {
             "token": file_token,
-            "status": "success",
             "version": __version__,
             "inference_time": float(file_metadata.get("update_time", 0)) - float(file_metadata.get("upload_time", 0)),
         }
-        if len(prepared_files) == 1:
-            output["url"] = get_url(prepared_files[0])
-        else:
-            output["urls"] = [get_url(file) for file in prepared_files]
-
-        return Response(json.dumps(output), status=200, mimetype="application/json")
-
-    source_files = get_source_paths(file_token)
-    if source_files:
-        return Response(
-            json.dumps({"wait": "true", "status": "processing", "version": __version__}),
-            status=200,
-            mimetype="application/json",
-        )
-
-    staged_files = get_staged_paths(file_token)
-    if staged_files:
-        return Response(
-            json.dumps({"wait": "true", "status": "not queued", "version": __version__}),
-            status=200,
-            mimetype="application/json",
-        )
-
-    return Response(
-        json.dumps({"error": "unknown token", "version": __version__}),
-        status=400,
-        mimetype="application/json",
     )
+    prepared_files = get_prepared_paths(file_token)
+    if prepared_files:
+        if len(prepared_files) == 1:
+            file_metadata["url"] = get_url(prepared_files[0])
+        else:
+            file_metadata["urls"] = [get_url(file) for file in prepared_files]
+
+    return Response(json.dumps(prepared_files), status=200, mimetype="application/json")
