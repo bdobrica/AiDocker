@@ -22,9 +22,9 @@ input:
     required:
       text: text
 output:
-  endpoint: /get/json
-  queue: file
-  type: json
+  - endpoint: /get/json
+    queue: file
+    type: json
 daemons:
   - api
   - ai/query
