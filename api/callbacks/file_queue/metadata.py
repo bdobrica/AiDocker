@@ -87,4 +87,4 @@ def get_json() -> Response:
         else:
             file_metadata["urls"] = [get_url(file) for file in prepared_files]
 
-    return Response(json.dumps(prepared_files), status=200, mimetype="application/json")
+    return Response(json.dumps(file_metadata), status=200, mimetype="application/json")
