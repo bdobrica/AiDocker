@@ -21,11 +21,11 @@ if __name__ == "__main__":
     endpoints = []
     input = config.get("input", [])
     if not isinstance(input, list):
-        inputs = [input]
+        input = [input]
     endpoints.extend(input)
     output = config.get("output", [])
     if not isinstance(output, list):
-        outputs = [output]
+        output = [output]
     endpoints.extend(output)
 
     do_debug = os.getenv("DEBUG", "false").lower() in ("true", "1", "on")
