@@ -117,7 +117,9 @@ class FileQueueMixin:
     def get_metadata(self, file: Path) -> dict:
         return self._load_metadata((self.get_metadata_file_path(file)))
 
-    def set_metadata(self, file: Path, key: Union[Dict[str, Any], str], value: Optional[Any]) -> "FileQueueMixin":
+    def set_metadata(
+        self, file: Path, key: Union[Dict[str, Any], str], value: Optional[Any] = None
+    ) -> "FileQueueMixin":
         if isinstance(key, dict):
             data = key
         else:
