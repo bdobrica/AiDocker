@@ -17,17 +17,18 @@ class AiBuildBatch(Batch):
         super().__init__(staged_files=staged_files)
         self.redis = redis
         self._remove_items()
+        self._finished = []
 
     def _remove_item(self, source_file: Path) -> None:
         search_space = self.get_metadata(source_file).get("search_space", "")
         pieces = [os.getenv("DOC_PREFIX", "doc"), search_space, source_file.stem]
         prefix = ":".join([piece for piece in pieces if piece])
         removed_items = 0
-        self._update_metadata(source_file, {"processed": "false", "state": "deleting"})
+        self.set_metadata(source_file, {"processed": "false", "state": "deleting"})
         for key in self.redis.scan_iter(f"{prefix}:*"):
             self.redis.delete(key)
             removed_items += 1
-        self._update_metadata(source_file, {"processed": "true", "state": "done", "removed_items": removed_items})
+        self.set_metadata(source_file, {"processed": "true", "state": "done", "removed_items": removed_items})
         source_file.unlink()
         self.source_files.remove(source_file)
 
@@ -41,10 +42,10 @@ class AiBuildBatch(Batch):
     def get_text_item(self) -> Generator[TextItem, None, None]:
         for source_file in self.source_files:
             search_space = self.get_metadata(source_file).get("search_space", "")
-            self._update_metadata(source_file, {"processed": "false", "state": "processing"})
+            self.set_metadata(source_file, {"processed": "false", "state": "processing"})
             yield from read_text(source_file, search_space)
             # TODO: need to check if this update is really in the right place
-            self._update_metadata(source_file, {"processed": "true", "state": "done"})
+            self._finished.append(source_file)
 
     def prepare(self, batch_size: int) -> Generator[List[TextItem], None, None]:
         self._buffer: List[TextItem] = []
@@ -66,3 +67,7 @@ class AiBuildBatch(Batch):
             item: TextItem
             vector: Tensor
             item.store(self.redis, vector.flatten())
+
+        while self._finished:
+            source_file = self._finished.pop()
+            self.set_metadata(source_file, {"processed": "true", "state": "done"})
