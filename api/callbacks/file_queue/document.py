@@ -1,3 +1,6 @@
+"""
+Document processing callbacks using the file queue.
+"""
 import json
 import logging
 import os
@@ -14,6 +17,20 @@ logger = logging.getLogger(__name__)
 
 
 def put_document() -> Response:
+    """
+    Upload a document to the file queue.
+    The document will be hashed using API_FILE_HASHER (default: SHA256) and stored at /tmp/ai/staged/<hash>.<extension>.
+    Also creates a metadata file at /tmp/ai/staged/<hash>.json with the following metadata:
+    - type (str): the MIME type of the document
+    - upload_time (time.time): the time the document was uploaded
+    - processed (bool): whether the document has been processed yet
+    Request details:
+    - enctype: multipart/form-data
+    - method: PUT
+    - form data:
+        - document: the document to upload
+        - other: any other metadata to store with the document.
+    """
     document_file = request.files.get("document")
     if not document_file:
         return Response(
@@ -25,7 +42,7 @@ def put_document() -> Response:
     document_type = document_file.mimetype
     document_data = document_file.read()
 
-    document_hash = ({"MD5": md5, "SHA256": sha256}.get(os.getenv("API_CSV_HASHER", "SHA256").upper()) or sha256)()
+    document_hash = ({"MD5": md5, "SHA256": sha256}.get(os.getenv("API_FILE_HASHER", "SHA256").upper()) or sha256)()
     document_hash.update(document_data)
     document_token = document_hash.hexdigest()
 
@@ -59,8 +76,18 @@ def put_document() -> Response:
     )
 
 
-def delete_document() -> Response:
-    document_token = request.form.get("token")
+def delete_document(document_token: str) -> Response:
+    """
+    Does not actually delete the document, but marks it for deletion by creating an empty application/x-delete file
+    with the same token as the document under /tmp/ai/staged/<token>.delete path.
+    Request details:
+    - method: DELETE
+    - path: /<endpoint>/<document_token>
+    - form data (optional):
+        - other: any other metadata to store with the document.
+    - json data (optional):
+        - other: any other metadata to store with the document.
+    """
     if not document_token:
         return Response(
             json.dumps({"error": "missing token"}),
@@ -68,9 +95,16 @@ def delete_document() -> Response:
             mimetype="application/json",
         )
 
+    if request.mimetype == "application/json":
+        other_data = request.json
+    elif request.mimetype == "application/x-www-form-urlencoded":
+        other_data = request.form
+    else:
+        other_data = {}
+
     document_extension = ".delete"
     document_metadata = {
-        **request.form,
+        **other_data,
         **{
             "type": "application/x-delete",
             "upload_time": time.time(),

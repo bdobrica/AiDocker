@@ -19,7 +19,7 @@ Given an image, extract the background of the image and keep only what is consid
             - a color hexadecimal code (e.g. `#ff0000` for red)
             - an URL to an image; the URL must be accessible from within the container
     - response: `{"token": <token>, "version": <version>}`
-        - `token`: hash of the image file; can be configured via the `API_IMAGE_HASHER` environment variable; default is `SHA256`
+        - `token`: hash of the image file; can be configured via the `API_FILE_HASHER` environment variable; default is `SHA256`
         - `version`: version of the model
     - CURL example: `curl -s -F 'background=#ff0000' -F "image=@<path/to/image/file>" <SERVER>/put/image`
 - endpoint: `/get/json`

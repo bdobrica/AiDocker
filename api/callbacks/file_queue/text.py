@@ -1,3 +1,6 @@
+"""
+Text processing callbacks using the file queue.
+"""
 import json
 import os
 import time
@@ -13,7 +16,36 @@ from .helpers import clean_files, get_metadata_path, get_prepared_paths, get_sta
 
 
 def put_text() -> Response:
-    text_data = request.form.get("text", "")
+    """
+    Create a text file in the file queue from a string passed in the request.
+    The text file will be hashed using API_TEXT_HASHER (default: SHA256) and stored at /tmp/ai/staged/<hash>.txt.
+    Also creates a metadata file at /tmp/ai/metadata/<hash>.json with the following metadata:
+    - type (str): the MIME type of the text file
+    - upload_time (time.time): the time the text file was uploaded
+    - processed (bool): whether the text file has been processed yet
+    Request details:
+    - method: PUT
+    - form data (optional):
+        - text: the text to upload
+        - other: any other metadata to store with the text.
+    - json data (optional):
+        - text: the text to upload
+        - other: any other metadata to store with the text.
+    """
+    if request.mimetype == "application/json":
+        text_data = request.json.get("text", "")
+        other_data = {k: v for k, v in request.json.items() if k != "text"}
+    elif request.mimetype == "multipart/form-data":
+        text_data = request.form.get("text", "")
+        other_data = {k: v for k, v in request.form.items() if k != "text"}
+    elif request.mimetype == "application/x-www-form-urlencoded":
+        text_data = request.files.get("text")
+        if text_data:
+            text_data = text_data.read()
+        other_data = request.form
+    else:
+        text_data = None
+        other_data = {}
 
     if not text_data:
         return Response(
@@ -28,7 +60,7 @@ def put_text() -> Response:
     text_extension = ".txt"
 
     text_metadata = {
-        **request.form,
+        **other_data,
         **{
             "type": "text/plain",
             "upload_time": time.time(),
@@ -51,7 +83,16 @@ def put_text() -> Response:
     )
 
 
-def get_test(text_file) -> Response:
+def get_text(text_file: str) -> Response:
+    """
+    Return a text file from the file queue.
+    If the text file has been processed, the text is returned. The function is intended to be called with the URL/URLs
+    returned by the endpoint handled with metadata.get_json function.
+    Request details:
+    - method: GET
+    - path: /<endpoint>/<text_token>
+    :param text_file: the text file to retrieve
+    """
     text_file = Path(text_file)
     text_token = text_file.stem.split("_", 2)[0]
 

@@ -18,7 +18,7 @@ Given an image, detect and extract body parts that are considered indecent. It c
         - `fast`: (optional) can be either `yes` or `no`; defaults to `no`; it affects the speed and the quality of the detection
         - `censor`: (optional) can be either `yes` or `no`; defaults to `no`; if set to `yes`, it will produce an image as a result with the body parts censored; the censoring algorithm can be set via the `API_NUDENET_CENSOR_TYPE` environment variable and it defaults to `blackbox`; it can be either `blackbox` or `blur`
     - response: `{"token": <token>, "version": <version>}`
-        - `token`: hash of the image file; can be configured via the `API_IMAGE_HASHER` environment variable; default is `SHA256`
+        - `token`: hash of the image file; can be configured via the `API_FILE_HASHER` environment variable; default is `SHA256`
         - `version`: version of the model
     - CURL example: `curl -s -F "censor=yes" -F "image=@<path/to/image/file>" <SERVER>/put/image`
 - endpoint: `/get/json`

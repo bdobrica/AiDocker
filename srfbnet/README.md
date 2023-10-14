@@ -18,7 +18,7 @@ Given an image, upscale the image by a factor of 2, 3 or 4 and return the upscal
         - `image`: image file
         - `scale`: (optional) an integer representing the scale factor; must be 2, 3 or 4; if not specified, it defaults to 2
     - response: `{"token": <token>, "version": <version>}`
-        - `token`: hash of the image file; can be configured via the `API_IMAGE_HASHER` environment variable; default is `SHA256`
+        - `token`: hash of the image file; can be configured via the `API_FILE_HASHER` environment variable; default is `SHA256`
         - `version`: version of the model
     - CURL example: `curl -s -F 'scale=2' -F "image=@<path/to/image/file>" <SERVER>/put/image`
 - endpoint: `/get/json`

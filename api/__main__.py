@@ -1,4 +1,17 @@
 #!/usr/bin/env python3
+"""
+Main entrypoint for the API server.
+
+This file is responsible for loading the configuration, registering the endpoints, and starting the server.
+It loads the configuration from /opt/app/container.yaml, which is a YAML file with the following structure:
+- input (list): a list of input endpoints to register
+    - endpoint (str): the endpoint to register
+    - queue (str): the queue to use for this endpoint (file or zero)
+- output (list): a list of output endpoints to register
+    - endpoint (str): the endpoint to register
+    - queue (str): the queue to use for this endpoint (file or zero)
+"""
+import inspect
 import json
 import logging
 import os
@@ -44,8 +57,14 @@ if __name__ == "__main__":
         if endpoint["queue"] == "zero":
             load_zmq = True
         callback = getattr(module, callback_name)
+        signature = inspect.signature(callback)
+        for param in signature.parameters:
+            if param == "self":
+                continue
+            parts.append(f"<{param}>")
+        endpoint_path = "/" + "/".join(part for part in parts if part)
         app.logger.info("Registering endpoint %s / %s with queue %s", endpoint["endpoint"], method, endpoint["queue"])
-        app.route(endpoint["endpoint"], methods=[method])(callback)
+        app.route(endpoint_path, methods=[method])(callback)
 
     if load_zmq:
         with app.app_context():

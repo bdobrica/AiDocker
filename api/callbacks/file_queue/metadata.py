@@ -1,18 +1,38 @@
+"""
+File queue calls are asynchronous, so you need to poll the API to see if your file is ready. This contains the callback
+functions that you need to do that.
+"""
 import json
 import os
 import time
 
-from flask import Response, request
+from flask import Response
 
 from .. import __version__
 from ..mimetypes import get_url
-from .helpers import clean_files, get_json_path, get_metadata_path, get_prepared_paths
+from .helpers import (
+    clean_files,
+    get_metadata_path,
+    get_prepared_path,
+    get_prepared_paths,
+)
 
 
-def get_json() -> Response:
+def get_json(file_token: str) -> Response:
+    """
+    Checks the status of a file in the file queue:
+    - reads the file metadata to check if the file has expired or not; files expire after API_CLEANER_FILE_LIFETIME; if
+        the file has expired, it is deleted and an error is returned
+    - if the file has not expired, checks if the file has been processed and a JSON output file has been created; if
+        the file has been processed, the JSON output file is returned
+    - if the file has been processed, but there's no JSON output file, some output files may have been created; if there
+        are such files, `url` or `urls` is added to the metadata and returned
+    - if the file has not been processed, the metadata is returned
+    Request details:
+    - method: GET
+    - path: /<endpoint>/<file_token>
+    """
     lifetime = float(os.getenv("API_CLEANER_FILE_LIFETIME", "1800.0"))
-
-    file_token = request.json.get("token")
 
     meta_file = get_metadata_path(file_token)
     if not meta_file.is_file():
@@ -41,7 +61,7 @@ def get_json() -> Response:
             mimetype="application/json",
         )
 
-    json_file = get_json_path(file_token)
+    json_file = get_prepared_path(file_token)
     if json_file.is_file():
         with json_file.open("r") as fp:
             try:

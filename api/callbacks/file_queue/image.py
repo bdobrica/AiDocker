@@ -1,3 +1,6 @@
+"""
+Image file queue callbacks.
+"""
 import json
 import logging
 import os
@@ -16,6 +19,20 @@ logger = logging.getLogger(__name__)
 
 
 def put_image() -> Response:
+    """
+    Upload an image to the file queue.
+    The image will be hashed using API_FILE_HASHER (default: SHA256) and stored at /tmp/ai/staged/<hash>.<extension>.
+    Also creates a metadata file at /tmp/ai/staged/<hash>.json with the following metadata:
+    - type (str): the MIME type of the image
+    - upload_time (time.time): the time the image was uploaded
+    - processed (bool): whether the image has been processed yet
+    Request details:
+    - enctype: multipart/form-data
+    - method: PUT
+    - form data:
+        - image: the image to upload
+        - other: any other metadata to store with the image.
+    """
     image_file = request.files.get("image")
     if not image_file:
         return Response(
@@ -27,7 +44,7 @@ def put_image() -> Response:
     image_type = image_file.mimetype
     image_data = image_file.read()
 
-    image_hash = ({"MD5": md5, "SHA256": sha256}.get(os.getenv("API_IMAGE_HASHER", "SHA256").upper()) or sha256)()
+    image_hash = ({"MD5": md5, "SHA256": sha256}.get(os.getenv("API_FILE_HASHER", "SHA256").upper()) or sha256)()
     image_hash.update(image_data)
     image_token = image_hash.hexdigest()
 
@@ -61,7 +78,17 @@ def put_image() -> Response:
     )
 
 
-def get_image(image_file) -> Response:
+def get_image(image_file: str) -> Response:
+    """
+    Get an image from the file queue.
+    If the image has been processed, the image is returned. The function is intended to be called with the URL/URLs
+    returned by the endpoint handled with metadata.get_json function.
+    Request details:
+    - method: GET
+    - path: /<endpoint>/<image_name>
+    :param image_file: the image file to get
+    :return: the image
+    """
     image_file = Path(image_file)
     image_token = image_file.stem.split("_", 2)[0]
 

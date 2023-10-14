@@ -1,3 +1,7 @@
+"""
+This module contains the AiBatchDaemon class, which is a type of daemon that is designed to extract batches of files
+from a file queue and process them.
+"""
 import logging
 import os
 import time
