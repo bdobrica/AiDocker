@@ -37,10 +37,10 @@ class AiForkDaemon(Daemon):
         logger.info("Restarting worker %s", worker_id)
         self.workers_pool.append(worker_id)
 
-    def fork_worker(self, worker_id: int, staged_file: Path) -> None:
-        logger.info("Starting worker %s processing %s", worker_id, staged_file)
+    def fork_worker(self, worker_id: int, staged_batch: Any) -> None:
+        logger.info("Starting worker %s processing %s", worker_id, staged_batch)
 
-        model_input = self.input_type(staged_file)
+        model_input = self.input_type(staged_batch)
         model_output = self.ai(model_input.prepare())
         model_input.serve(model_output)
 
@@ -50,9 +50,9 @@ class AiForkDaemon(Daemon):
         self.workers_pool = list(range(self.workers_number))
 
         with mp_context.Pool(processes=self.workers_number) as pool:
-            while self.workers_pool and (staged_file := self.input_type.get_input_file()):
+            while self.workers_pool and (staged_batch := self.input_type.get_input_batch()):
                 worker_id = self.workers_pool.pop(0)
-                pool.apply_async(self.fork_worker, [worker_id, staged_file], callback=self.requeue_worker)
+                pool.apply_async(self.fork_worker, [worker_id, staged_batch], callback=self.requeue_worker)
 
     def run(self):
         signal.signal(signal.SIGCHLD, signal.SIG_IGN)
