@@ -3,7 +3,7 @@ File queue batch extraction and processing. Intended to be used by the AiBatchDa
 """
 import os
 from pathlib import Path
-from typing import Any, Iterable, List, Optional, Union
+from typing import Any, Iterable, Optional
 
 from .daemon import PathLike
 from .filequeuemixin import FileQueueMixin
@@ -25,13 +25,11 @@ class AiBatch(FileQueueMixin):
         for source_file in self.source_files:
             self.set_metadata(source_file, {"processed": "false", "state": "queued"})
 
-    def __init__(self, staged_files: Union[PathLike, Iterable[PathLike]]):
+    def __init__(self, staged_files: Iterable[PathLike]) -> None:
         """
         Initialize the batch.
         :param staged_files: The files that are part of the current batch.
         """
-        if isinstance(staged_files, (str, Path)):
-            staged_files = [staged_files]
         self.staged_files = [Path(staged_file) for staged_file in staged_files if Path(staged_file).is_file()]
         self.meta_files = [staged_file.with_suffix(".json") for staged_file in self.staged_files]
         self.metadata = [AiBatch._load_metadata(meta_file) for meta_file in self.meta_files]

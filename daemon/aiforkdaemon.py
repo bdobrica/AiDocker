@@ -3,8 +3,7 @@ import multiprocessing as mp
 import os
 import signal
 import time
-from pathlib import Path
-from typing import Any, Optional, Type
+from typing import Any, Type
 
 from .aiinput import AiInput
 from .daemon import Daemon, PathLike
@@ -50,9 +49,9 @@ class AiForkDaemon(Daemon):
         self.workers_pool = list(range(self.workers_number))
 
         with mp_context.Pool(processes=self.workers_number) as pool:
-            while self.workers_pool and (staged_batch := self.input_type.get_input_batch()):
+            while self.workers_pool and (input_batch := self.input_type.get_input_batch(batch_size=1)):
                 worker_id = self.workers_pool.pop(0)
-                pool.apply_async(self.fork_worker, [worker_id, staged_batch], callback=self.requeue_worker)
+                pool.apply_async(self.fork_worker, [worker_id, input_batch], callback=self.requeue_worker)
 
     def run(self):
         signal.signal(signal.SIGCHLD, signal.SIG_IGN)

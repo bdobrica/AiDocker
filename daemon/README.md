@@ -4,9 +4,10 @@ The module contains services and daemons that can be used to implement the machi
 
 ## Overview ##
 
-The main class define in this modules is the [Daemon](./daemon.py) class. This is the basis for a service or daemon that can be run in the background. It extends the [ModelMixin](./modelmixin.py) which provides the basic methods for loading the model configuration, and provides two methods that are intended to be extend to provide functionality:
+The main class define in this modules is the [Daemon](./daemon.py) class. This is the basis for a service or daemon that can be run in the background. It extends the [ModelMixin](./modelmixin.py) which provides the basic methods for loading the model configuration, and provides several methods that are intended to be extend to provide functionality:
 - `run()` - this method is called when the daemon is started; it doesn't return and should be an infinite loop
 - `load()` - this method is called when the daemon is started, after the call to `daemonize()`; it should be used to load the model and any other resources that are needed
+- `get_input_batch(batch_size: int) -> Iterable[Any]` - this method is called to get a batch of input data; it should return an iterable of input data
 Otherwise, the `Daemon` class provides basic functionality for start, stop, debug and daemonize the daemon.
 
 Next in the daemon object hierarchy are the `Ai*Daemon` classes. They are initialized with the same parameters as `Daemon` while adding an `input_type` parameter that specifies the type of the model input, an `Ai*Input` descendent. The `input_type` is used to instantiate an object with the current batch of input data, and always has `prepare()` and `serve()` methods for converting the input batch into something a machine learning can handle (usually a numpy array or a tensor) and respectively, getting the model output (again, numpy array or tensor typed) and converting it into the expected format. This makes the `Ai*Input` class the perfect place to store feature engineering and post-processing code. On the other hand, the `Ai*Daemon` has an `ai(input)` method that takes as input the output of `Ai*Input.prepare()` and produces and output that can be directly passed to `Ai*Input.serve()`. The `ai(input)` must be implemented specifically for each model type and can make use of `load()` method inherited from `Daemon` to load the model and any other resources needed. The `Ai*Daemon` has a `queue()` method that's dependent on the type of queue chosen, that selects a batch of input data, creates the `Ai*Input` object and feeds it to the `ai(input)` method and then passes it to the `serve()` method. The `queue()` method is run in an infinite loop by the `run()` method overriden from `Daemon`. Here's how the whole process works in python inspired pseudo-code:
@@ -41,7 +42,7 @@ def AiDaemon::ai(model_input: np.ndarray) -> np.ndarray:
 # the Daemon.run infinite loop
 while True:
     # the Ai*Daemon.queue() method
-    while input_batch := get_batch_from_queue():
+    while input_batch := AiDaemon.input_type.get_input_batch():
         model_input = AiDaemon.input_type(input_batch) # an Ai*Input object
         model_output = AiDaemon.ai(model_input.prepare())
         Ai*Output.serve(model_output)

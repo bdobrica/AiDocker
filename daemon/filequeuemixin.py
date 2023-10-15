@@ -76,20 +76,13 @@ class FileQueueMixin:
         )
 
     @staticmethod
-    def get_input_files(batch_size: Optional[int] = None) -> List[Path]:
+    def get_input_batch(batch_size: Optional[int] = None) -> List[Path]:
         input_files = FileQueueMixin.get_staged_files()
         if input_files:
             if batch_size:
                 return input_files[:batch_size]
             return input_files
         return []
-
-    @staticmethod
-    def get_input_file() -> Optional[Path]:
-        try:
-            return next(FileQueueMixin.get_input_files(batch_size=1))
-        except StopIteration:
-            return None
 
     @property
     def staged_path(self) -> Path:

@@ -68,8 +68,8 @@ class AiBatchDaemon(Daemon):
         - STAGED_PATH: The path to the staged folder. Defaults to /tmp/ai/staged.
         - BATCH_SIZE: The number of files to process in a single batch. Defaults to 8.
         """
-        while staged_files := self.input_type.get_input_files(self.batch_size):
-            model_input = self.input_type(staged_files)
+        while input_batch := self.input_type.get_input_batch(self.batch_size):
+            model_input = self.input_type(input_batch)
             model_output = self.ai(model_input.prepare())
             model_input.serve(model_output)
 

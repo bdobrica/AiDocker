@@ -63,10 +63,10 @@ class AiBuildDaemon(Daemon):
         )
 
     def queue(self) -> None:
-        while staged_files := self.input_type.get_input_files():
-            model_input = self.input_type(staged_files, redis=self.redis)
+        while input_batch := self.input_type.get_input_batch():
+            model_input = self.input_type(input_batch, redis=self.redis)
             search_spaces = set(
-                model_input.get_metadata(staged_file).get("search_space", "") for staged_file in staged_files
+                model_input.get_metadata(staged_file).get("search_space", "") for staged_file in input_batch
             )
             for search_space in search_spaces:
                 self.create_redis_vector_index(search_space=search_space)
