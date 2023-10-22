@@ -17,12 +17,26 @@ from .reader import TextItem
 
 class AiQueryDaemon(Daemon):
     @staticmethod
-    def mean_pooling(model_output, attention_mask) -> torch.Tensor:
+    def mean_pooling(model_output: torch.Tensor, attention_mask: torch.Tensor) -> torch.Tensor:
+        """
+        Mean Pooling - Take attention mask into account for correct averaging
+        :param model_output: Model output
+        :param attention_mask: Attention mask
+        :return: Mean pooled vector
+        """
         token_embeddings = model_output[0]
         input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
         return torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(input_mask_expanded.sum(1), min=1e-9)
 
     def worker_load(self) -> None:
+        """
+        A method that is called once when the worker is started. It loads the model and the tokenizer.
+        :envvar MODEL_PATH: Path to the model, e.g. "/opt/app/mpnet-base-v2"
+        :envvar MODEL_DEVICE: Device to run the model on, e.g. "cpu" or "cuda"
+        :envvar REDIS_HOST: Hostname of the Redis server, e.g. "localhost"
+        :envvar REDIS_PORT: Port of the Redis server, e.g. 6379
+        :envvar REDIS_DB: Redis database, e.g. 0
+        """
         # Initialize
         MODEL_PATH = os.getenv("MODEL_PATH", "/opt/app/mpnet-base-v2")
         MODEL_DEVICE = os.getenv("MODEL_DEVICE", "cpu")
@@ -40,6 +54,13 @@ class AiQueryDaemon(Daemon):
         )
 
     def call_chat_bot(self, query: str, search_results: str) -> str:
+        """
+        Calls the OpenAI chat bot to generate an answer to the query. The search results are passed as additional
+        information to the chat bot.
+        :param query: Query to be answered (natural language), e.g. "What is the capital of Germany?"
+        :param search_results: Search results that are passed to the chat bot (natural language)
+        :return: Answer to the query (natural language), e.g. "Berlin"
+        """
         if openai.api_key is None:
             openai.api_key = os.getenv("OPENAI_API_KEY")
 
@@ -60,6 +81,32 @@ class AiQueryDaemon(Daemon):
         return completion.choices[0].message
 
     def ai(self, input: AiQueryInput) -> Dict[str, Any]:
+        """
+        The main method of the worker. It's applied to the AiQueryInput object and returns a dictionary with the
+        results. Here's an example of the returned dictionary:
+        ```json
+        {
+            "results": [
+                {
+                    "text": "What is the capital of Germany?",
+                    "matches": [
+                        {
+                            "text": "Berlin",
+                            "score": 0.9
+                        },
+                        {
+                            "text": "Munich",
+                            "score": 0.8
+                        }
+                    ],,
+                    "answer": "Berlin"
+                }
+            ]
+        }
+        ```
+        :param input: AiQueryInput object
+        :return: Dictionary with the results
+        """
         try:
             model_inputs = input.prepare()
             encoded_input_t = self.tokenizer(

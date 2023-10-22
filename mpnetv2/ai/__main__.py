@@ -1,3 +1,19 @@
+"""
+The main entry point of the AI module, which starts the AI daemon(s). There are 2 daemons:
+- AiBuildDaemon: Reads documents as input and stores them in Redis. The documents are split into text items, which are
+    stored as Redis hashes. The process is asynchronous.
+- AiQueryDaemon: Reads text items as input and searches for similar text items in Redis. The process is synchronous.
+
+Usage:
+```bash
+# Start the build daemon
+python -m mpnetv2.ai --daemon build
+
+# Start the query daemon
+python -m mpnetv2.ai --daemon query
+```
+"""
+
 import argparse
 import os
 
