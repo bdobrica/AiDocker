@@ -66,6 +66,8 @@ if __name__ == "__main__":
                 continue
             parts.append(f"<{param}>")
             defaults[param] = signature.parameters[param].default
+            if defaults[param] is inspect.Parameter.empty:
+                defaults[param] = ""
         endpoint_path = "/" + "/".join(part for part in parts if part)
         app.logger.info(
             "Registering endpoint %s / %s (parameters: %s) with queue %s",
