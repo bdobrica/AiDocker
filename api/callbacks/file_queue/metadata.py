@@ -18,7 +18,7 @@ from .helpers import (
 )
 
 
-def get_json(file_token: str) -> Response:
+def get_json(file_token: str = "") -> Response:
     """
     Checks the status of a file in the file queue:
     - reads the file metadata to check if the file has expired or not; files expire after API_CLEANER_FILE_LIFETIME; if
@@ -33,6 +33,13 @@ def get_json(file_token: str) -> Response:
     - path: /<endpoint>/<file_token>
     """
     lifetime = float(os.getenv("API_CLEANER_FILE_LIFETIME", "1800.0"))
+
+    if not file_token:
+        return Response(
+            json.dumps({"error": "missing file token", "version": __version__}),
+            status=400,
+            mimetype="application/json",
+        )
 
     meta_file = get_metadata_path(file_token)
     if not meta_file.is_file():
