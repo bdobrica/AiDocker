@@ -60,23 +60,18 @@ if __name__ == "__main__":
             load_zmq = True
         callback = getattr(module, callback_name)
         signature = inspect.signature(callback)
-        defaults = {}
         for param in signature.parameters:
             if param == "self":
                 continue
             parts.append(f"<{param}>")
-            defaults[param] = signature.parameters[param].default
-            if defaults[param] is inspect.Parameter.empty:
-                defaults[param] = ""
         endpoint_path = "/" + "/".join(part for part in parts if part)
         app.logger.info(
-            "Registering endpoint %s / %s (parameters: %s) with queue %s",
+            "Registering endpoint %s / %s with queue %s",
             endpoint_path,
             method,
-            defaults,
             endpoint["queue"],
         )
-        app.route(endpoint_path, methods=[method], defaults=defaults)(callback)
+        app.route(endpoint_path, methods=[method])(callback)
 
     if load_zmq:
         with app.app_context():
