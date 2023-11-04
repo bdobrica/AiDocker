@@ -42,6 +42,8 @@ if __name__ == "__main__":
     endpoints.extend(output)
 
     do_debug = os.getenv("DEBUG", "false").lower() in ("true", "1", "on")
+    if do_debug:
+        app.logger.setLevel(logging.DEBUG)
 
     load_zmq = False
     for endpoint in endpoints:
@@ -72,9 +74,6 @@ if __name__ == "__main__":
             zmq_mixin = ZeroQueueMixin()
             app.config["zmq_worker_timeout"] = zmq_mixin.worker_timeout
             app.config["zmq_client_address"] = zmq_mixin.client_address
-
-    if do_debug:
-        app.logger.setLevel(logging.DEBUG)
 
     @app.route("/", methods=["GET", "POST"])
     def get_root():
