@@ -18,7 +18,7 @@ from .helpers import (
 )
 
 
-def get_json(file_token: str) -> Response:
+def get_json(file_token: str = "") -> Response:
     """
     Checks the status of a file in the file queue:
     - reads the file metadata to check if the file has expired or not; files expire after API_CLEANER_FILE_LIFETIME; if
