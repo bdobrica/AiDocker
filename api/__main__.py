@@ -65,7 +65,7 @@ if __name__ == "__main__":
                 continue
             parts.append(f"<{param}>")
         endpoint_path = "/" + "/".join(part for part in parts if part)
-        app.logger.info("Registering endpoint %s / %s with queue %s", endpoint["endpoint"], method, endpoint["queue"])
+        app.logger.info("Registering endpoint %s / %s with queue %s", endpoint_path, method, endpoint["queue"])
         app.route(endpoint_path, methods=[method])(callback)
 
     if load_zmq:
