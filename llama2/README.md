@@ -7,7 +7,8 @@
 
 ## Use Case ##
 
-Given a conversation, get the next prompt (similar to ChatGPT).
+Given a conversation, get the next prompt, similar to OpenAI's ChatGPT. The interface is mostly the same as the one from ChatGPT, but the model is different.
+**Note:** The model requires a GPU with at least 16GB of memory to run properly. It can be run on a CPU, but it will be very slow.
 
 ## API EndPoints ##
 
