@@ -39,16 +39,22 @@ class AiQueryDaemon(Daemon):
         try:
             model_input = input.prepare()
             model_output = self.model.text_completion(
-                model_input.prompts,
+                model_input.messages,
                 max_gen_len=model_input.max_gen_len,
                 temperature=model_input.temperature,
                 top_p=model_input.top_p,
             )
-            results = []
-            for prompt, result in zip(model_input.prompts, model_output):
-                results.append({"text": prompt, "completion": result["generation"]})
 
-            return {"results": results}
+            return {
+                "choices": [
+                    {
+                        "message": {
+                            "content": model_output["generation"]["content"],
+                            "role": model_output["generation"]["role"],
+                        }
+                    }
+                ]
+            }
 
         except Exception as e:
             if os.getenv("DEBUG", "false").lower() in ("true", "1", "on"):
