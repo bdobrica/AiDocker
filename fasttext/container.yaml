@@ -1,6 +1,6 @@
 name: fasttext
 description: Given an text, detect the language of it.
-port: 5014
+port: 5015
 weights:
   - fasttext/lid.176.bin
 input:

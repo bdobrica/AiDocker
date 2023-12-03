@@ -1,0 +1,20 @@
+name: mirnet
+description: Given a dark image, correct the lighting and enhance the image.
+port: 5016
+weights:
+  - mirnet/model.h5
+input:
+  - endpoint: /put/image
+    queue: file
+    required:
+      image: image
+output:
+  - endpoint: /get/image
+    queue: file
+    type: image
+  - endpoint: /get/json
+    queue: file
+    type: json
+daemons:
+  - api
+  - ai
