@@ -159,7 +159,7 @@ To run the Python app inside the container, run:
 /opt/app/app.py
 ```
 
-# Copyright (C) 2021, 2022 Pro-Youth
+# Copyright (C) 2021, 2022, 2023, 2024 Pro-Youth
 
 AiDocker copyright belongs to [Asociatia Pro-Youth](https://www.pro-youth.ro), a Romanian not-for-profit organization established under Romanian's Government Emergency Ordinance 26/2000 amended. Having full ownership over this repository, Pro-Youth decided to release AiDocker as a free software under the GNU General Public License, version 3 as published by the Free Software Foundation: you can redistribute it and/or modify it under the terms of said license.
 
