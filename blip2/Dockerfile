@@ -11,7 +11,16 @@ RUN apt-get update && apt-get install -y python3-opencv
 
 ### COPYING FILES ###
 COPY blip2/requirements.txt /opt/app
-COPY blip2/blip2 /opt/app/blip2
+COPY blip2/config.json /opt/app/blip2/config.json
+COPY blip2/merges.txt /opt/app/blip2/merges.txt
+COPY blip2/model-00001-of-00002.safetensors /opt/app/blip2/model-00001-of-00002.safetensors
+COPY blip2/model-00002-of-00002.safetensors /opt/app/blip2/model-00002-of-00002.safetensors
+COPY blip2/model.safetensors.index.json /opt/app/blip2/model.safetensors.index.json
+COPY blip2/preprocessor_config.json /opt/app/blip2/preprocessor_config.json
+COPY blip2/special_tokens_map.json /opt/app/blip2/special_tokens_map.json
+COPY blip2/tokenizer_config.json /opt/app/blip2/tokenizer_config.json
+COPY blip2/tokenizer.json /opt/app/blip2/tokenizer.json
+COPY blip2/vocab.json /opt/app/blip2/vocab.json
 COPY blip2/ai.py /opt/app
 COPY daemon /opt/app/daemon
 COPY cleaner.py /opt/app
