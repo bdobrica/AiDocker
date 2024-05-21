@@ -1,0 +1,10 @@
+blip2/config.json
+blip2/merges.txt
+blip2/model-00001-of-00002.safetensors
+blip2/model-00002-of-00002.safetensors
+blip2/model.safetensors.index.json
+blip2/preprocessor_config.json
+blip2/special_tokens_map.json
+blip2/tokenizer_config.json
+blip2/tokenizer.json
+blip2/vocab.json

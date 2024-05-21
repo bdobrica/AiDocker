@@ -1,0 +1,5 @@
+flask
+numpy
+transformers[torch]
+pillow
+opencv-python
