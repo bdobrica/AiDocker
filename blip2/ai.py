@@ -44,7 +44,7 @@ class AIDaemon(Daemon):
             inputs = self.processor(im_orig, return_tensors="pt")
             preds = self.model.generate(**inputs)
 
-            results = [{"captions": self.processor.decode(pred[0], skip_special_tokens=True).strip()} for pred in preds]
+            results = [{"captions": self.processor.decode(pred, skip_special_tokens=True).strip()} for pred in preds]
 
             json_file = prepared_file.with_suffix(".json")
             with json_file.open("w") as f:
