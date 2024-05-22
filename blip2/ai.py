@@ -3,14 +3,11 @@ import json
 import os
 import random
 import signal
-import sys
 import time
 from pathlib import Path
 
 import cv2
 import numpy as np
-import torch
-from transformers import Blip2ForConditionalGeneration, Blip2Processor
 
 from daemon import Daemon
 
@@ -19,6 +16,12 @@ __version__ = "0.8.8"
 
 class AIDaemon(Daemon):
     def load(self):
+        import torch
+        from transformers import Blip2ForConditionalGeneration, Blip2Processor
+
+        # Try reproducing the results
+        torch.manual_seed(42)
+
         self.device = torch.device("cpu")
 
         MODEL_PATH = os.environ.get("MODEL_PATH", "/opt/app/blip2")
@@ -27,14 +30,9 @@ class AIDaemon(Daemon):
         self.model = Blip2ForConditionalGeneration.from_pretrained(MODEL_PATH, local_files_only=True)
 
     def ai(self, source_file, prepared_file, **metadata):
-        pid = os.fork()
-        if pid != 0:
-            return
-
+        # Deep Learning models are not fork-safe (so no multiprocessing)
         try:
-
             # Try reproducing the results
-            torch.manual_seed(42)
             np.random.seed(42)
             random.seed(42)
 
@@ -56,13 +54,11 @@ class AIDaemon(Daemon):
             pass
 
         source_file.unlink()
-        sys.exit()
 
     def queue(self):
         STAGED_PATH = os.environ.get("STAGED_PATH", "/tmp/ai/staged")
         SOURCE_PATH = os.environ.get("SOURCE_PATH", "/tmp/ai/source")
         PREPARED_PATH = os.environ.get("PREPARED_PATH", "/tmp/ai/prepared")
-        MAX_FORK = int(os.environ.get("MAX_FORK", 8))
         CHUNK_SIZE = int(os.environ.get("CHUNK_SIZE", 4096))
 
         staged_files = sorted(
@@ -70,10 +66,8 @@ class AIDaemon(Daemon):
             key=lambda f: f.stat().st_mtime,
         )
         source_files = [f for f in Path(SOURCE_PATH).glob("*") if f.is_file()]
-        source_files_count = len(source_files)
 
-        while source_files_count < MAX_FORK and staged_files:
-            source_files_count += 1
+        while not source_files and staged_files:
             staged_file = staged_files.pop(0)
 
             meta_file = staged_file.with_suffix(".json")
@@ -108,7 +102,7 @@ class AIDaemon(Daemon):
         signal.signal(signal.SIGCHLD, signal.SIG_IGN)
         while True:
             self.queue()
-            time.sleep(1.0)
+            time.sleep(0.1)
 
 
 if __name__ == "__main__":

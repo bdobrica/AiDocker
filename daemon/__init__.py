@@ -23,8 +23,6 @@ class Daemon:
         self.stdout = stdout
         self.stderr = stderr
 
-        self.load()
-
     def load(self):
         pass
 
@@ -34,11 +32,7 @@ class Daemon:
             if pid > 0:
                 sys.exit(0)
         except OSError as error:
-            sys.stderr.write(
-                "First fork failed: {errno} ({error})\n".format(
-                    errno=error.errno, error=error.strerror
-                )
-            )
+            sys.stderr.write("First fork failed: {errno} ({error})\n".format(errno=error.errno, error=error.strerror))
             sys.exit(1)
 
         os.chdir(str(self.chroot))
@@ -50,11 +44,7 @@ class Daemon:
             if pid > 0:
                 sys.exit(0)
         except OSError as error:
-            sys.stderr.write(
-                "Second fork failed: {errno} ({error})\n".format(
-                    errno=error.errno, error=error.strerror
-                )
-            )
+            sys.stderr.write("Second fork failed: {errno} ({error})\n".format(errno=error.errno, error=error.strerror))
             sys.exit(1)
 
         sys.stdout.flush()
@@ -101,14 +91,11 @@ class Daemon:
             pass
 
         if pid:
-            sys.stderr.write(
-                "Pidfile {pidfile} already exists. Daemon already running?\n".format(
-                    pidfile=self.pidfile
-                )
-            )
+            sys.stderr.write("Pidfile {pidfile} already exists. Daemon already running?\n".format(pidfile=self.pidfile))
             sys.exit(1)
 
         self.daemonize()
+        self.load()
         self.run()
 
     def stop(self):
@@ -120,11 +107,7 @@ class Daemon:
             pass
 
         if not pid:
-            sys.stderr.write(
-                "Pidfile {pidfile} does not exist. Daemon not running?\n".format(
-                    pidfile=self.pidfile
-                )
-            )
+            sys.stderr.write("Pidfile {pidfile} does not exist. Daemon not running?\n".format(pidfile=self.pidfile))
             sys.exit(1)
 
         try:
@@ -137,11 +120,7 @@ class Daemon:
                 if Path(self.pidfile).is_file():
                     os.remove(self.pidfile)
             else:
-                sys.stderr.write(
-                    "Trying to kill the daemon resulted in error: {error}.\n".format(
-                        error=error
-                    )
-                )
+                sys.stderr.write("Trying to kill the daemon resulted in error: {error}.\n".format(error=error))
                 sys.exit(1)
 
     def restart(self):
