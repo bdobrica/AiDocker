@@ -6,7 +6,6 @@ import time
 from typing import Any, Type
 
 from .aiinput import AiInput
-from .daemon import Daemon, PathLike
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG if os.getenv("DEBUG", "").lower() in ("1", "true", "yes") else logging.WARNING)
@@ -16,11 +15,11 @@ class AiForkDaemon(Daemon):
     def __init__(
         self,
         input_type: Type[AiInput],
-        pidfile: PathLike,
-        chroot: PathLike,
-        stdin: PathLike = os.devnull,
-        stdout: PathLike = os.devnull,
-        stderr: PathLike = os.devnull,
+        pidfile: os.PathLike,
+        chroot: os.PathLike,
+        stdin: os.PathLike = os.devnull,
+        stdout: os.PathLike = os.devnull,
+        stderr: os.PathLike = os.devnull,
     ):
         self.input_type = input_type
         super().__init__(pidfile=pidfile, chroot=chroot, stdin=stdin, stdout=stdout, stderr=stderr)

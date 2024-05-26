@@ -41,19 +41,17 @@ from typing import Union
 
 from .modelmixin import ModelMixin
 
-PathLike = Union[str, Path]
-
 __version__ = "0.9.0"
 
 
 class Daemon(ModelMixin):
     def __init__(
         self,
-        pidfile: PathLike,
-        chroot: PathLike,
-        stdin: PathLike = os.devnull,
-        stdout: PathLike = os.devnull,
-        stderr: PathLike = os.devnull,
+        pidfile: os.PathLike,
+        chroot: os.PathLike,
+        stdin: os.PathLike = os.devnull,
+        stdout: os.PathLike = os.devnull,
+        stderr: os.PathLike = os.devnull,
     ) -> None:
         """
         Initialize the daemon.

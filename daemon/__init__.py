@@ -4,7 +4,7 @@ from .aiforkdaemon import AiForkDaemon
 from .aiinput import AiInput
 from .aizerodaemon import AiZeroDaemon
 from .aizeroinput import AiZeroInput
-from .daemon import Daemon, PathLike
+from .daemon import Daemon
 from .filequeuemixin import FileQueueMixin
 from .zeroqueuemixin import ZeroQueueMixin
 
