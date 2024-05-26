@@ -6,6 +6,7 @@ import time
 from typing import Any, Type
 
 from .aiinput import AiInput
+from .daemon import Daemon
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG if os.getenv("DEBUG", "").lower() in ("1", "true", "yes") else logging.WARNING)
