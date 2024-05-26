@@ -5,83 +5,67 @@ import time
 from hashlib import md5, sha256
 from io import BytesIO
 from pathlib import Path
+from typing import List
 
-from cassandra.cluster import Cluster
 from flask import Flask, Response, request, send_file
-from minio import Minio
-from minio.error import S3Error
-from pika import BlockingConnection, ConnectionParameters
 
-__version__ = "0.8.6"
+__version__ = "0.8.13"
+
+try:
+    with open("/opt/app/mimetypes.json", "r") as fp:
+        MIMETYPES = json.load(fp)
+except:
+    MIMETYPES = {}
 
 app = Flask(__name__)
 
-cs_host = os.environ.get("CASSANDRA_HOST", "localhost")
-cs_port = int(os.environ.get("CASSANDRA_PORT", 9042))
-cs_database = os.environ.get("CASSANDRA_DATABASE", "ai")
-cs_cluster = Cluster([cs_host], port=cs_port)
-cs_session = cs_cluster.connect(cs_database, wait_for_all_pools=True)
 
-pk_host = os.environ.get("RABBITMQ_HOST", "localhost")
-pk_port = int(os.environ.get("RABBITMQ_PORT", 5672))
-pk_conn = BlockingConnection(ConnectionParameters(host=pk_host, port=pk_port))
-pk_channel = pk_conn.channel()
-
-mo_host = os.environ.get("MINIO_HOST", "localhost")
-mo_port = int(os.environ.get("MINIO_PORT", 9000))
-mo_access_key = os.environ.get("MINIO_ACCESS_KEY", "minio")
-mo_secret_key = os.environ.get("MINIO_SECRET_KEY", "minio123")
-mo_bucket = os.environ.get("MINIO_BUCKET", "ai")
-mo_client = Minio(
-    "{HOST}:{PORT}".format(HOST=mo_host, PORT=mo_port),
-    access_key=mo_access_key,
-    secret_key=mo_secret_key,
-)
+def get_metadata_path(file_token: str) -> Path:
+    STAGED_PATH = Path(os.getenv("STAGED_PATH", "/tmp/ai/staged"))
+    return STAGED_PATH / (file_token + ".json")
 
 
-def file_paths(image_token, image_extension=None):
-    STAGED_PATH = Path(os.environ.get("STAGED_PATH", "/tmp/ai/staged"))
-    SOURCE_PATH = Path(os.environ.get("SOURCE_PATH", "/tmp/ai/source"))
-    PREPARED_PATH = Path(os.environ.get("PREPARED_PATH", "/tmp/ai/prepared"))
-
-    meta_file = STAGED_PATH / (image_token + ".json")
-    if image_extension is None and meta_file.is_file():
-        with meta_file.open() as fp:
-            try:
-                image_meta = json.load(fp)
-            except:
-                image_meta = {}
-        image_extension = image_meta.get("extension", None)
-
-    json_file = PREPARED_PATH / (image_token + ".json")
-    if image_extension is not None:
-        staged_file = STAGED_PATH / (image_token + image_extension)
-        source_file = SOURCE_PATH / (image_token + image_extension)
-        prepared_file = PREPARED_PATH / (image_token + image_extension)
-    else:
-        staged_file = STAGED_PATH.glob(image_token + ".*")
-        source_file = SOURCE_PATH.glob(image_token + ".*")
-        prepared_file = PREPARED_PATH.glob(image_token + ".*")
-
-    return {
-        "meta_file": meta_file,
-        "json_file": json_file,
-        "staged_file": staged_file,
-        "source_file": source_file,
-        "prepared_file": prepared_file,
-    }
+def get_staged_path(file_token: str, file_suffix: str) -> Path:
+    STAGED_PATH = Path(os.getenv("STAGED_PATH", "/tmp/ai/staged"))
+    return STAGED_PATH / (file_token + "." + file_suffix.strip(".").lower())
 
 
-def clean_files(image_token, image_extension=None):
-    paths = file_paths(image_token, image_extension)
-    for path in paths.values():
-        if isinstance(path, Path):
-            if path.is_file():
-                path.unlink()
-        else:
-            for path_ in path:
-                if path_.is_file():
-                    path_.unlink()
+def get_json_path(file_token: str, file_suffix: str = "json") -> Path:
+    PREPARED_PATH = Path(os.getenv("PREPARED_PATH", "/tmp/ai/prepared"))
+    return PREPARED_PATH / (file_token + "." + file_suffix.strip(".").lower())
+
+
+def get_staged_paths(file_token: str) -> List[Path]:
+    STAGED_PATH = Path(os.getenv("STAGED_PATH", "/tmp/ai/staged"))
+    return [path for path in STAGED_PATH.glob(file_token + "*") if path.is_file() and path.suffix != ".json"]
+
+
+def get_source_paths(file_token: str) -> List[Path]:
+    SOURCE_PATH = Path(os.getenv("SOURCE_PATH", "/tmp/ai/source"))
+    return [path for path in SOURCE_PATH.glob(file_token + "*") if path.is_file() and path.suffix != ".json"]
+
+
+def get_prepared_paths(file_token: str) -> List[Path]:
+    PREPARED_PATH = Path(os.getenv("PREPARED_PATH", "/tmp/ai/prepared"))
+    return [path for path in PREPARED_PATH.glob(file_token + "*")]
+
+
+def clean_files(file_token: str) -> None:
+    paths = get_staged_paths(file_token) + get_source_paths(file_token) + get_prepared_paths(file_token)
+    for path in paths:
+        if path.exists():
+            path.unlink()
+    path = get_metadata_path(file_token)
+    if path.exists():
+        path.unlink()
+
+
+def get_url(file: Path) -> str:
+    for mimetype, suffix in MIMETYPES.items():
+        if file.suffix == suffix:
+            general_type, _ = mimetype.split("/")
+            return f"/get/{general_type}/{file.name}"
+    raise ValueError(f"Unknown file type: {file}")
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -91,87 +75,6 @@ def get_root():
         status=200,
         mimetype="application/json",
     )
-
-
-@app.route("/<model_name>/image", methods=["PUT"])
-def put_image(model_name):
-    image_file = request.files.get("image")
-    if not image_file:
-        return Response(
-            json.dumps({"error": "missing image"}),
-            status=400,
-            mimetype="application/json",
-        )
-
-    image_type = image_file.mimetype
-    image_data = image_file.read()
-
-    image_hash = (
-        {"MD5": md5, "SHA256": sha256}.get(
-            os.environ.get("API_IMAGE_HASHER", "SHA256").upper()
-        )
-        or sha256
-    )()
-    image_hash.update(image_data)
-    image_token = image_hash.hexdigest()
-
-    with open("/opt/app/mimetypes.json", "r") as fp:
-        image_extension = json.load(fp).get(image_type, ".jpg")
-
-    image_prefix = ""
-
-    image_metadata = {
-        **request.form,
-        **{
-            "token": image_token,
-            "type": image_type,
-            "url": "s3://{BUCKET}/{PREFIX}".format(
-                BUCKET=mo_bucket, PREFIX=image_prefix
-            ),
-            "extension": image_extension,
-            "upload_time": time.time(),
-            "processed": "false",
-        },
-    }
-
-    found = mo_client.bucket_exists(mo_bucket)
-    if not found:
-        mo_client.make_bucket(mo_bucket)
-    mo_client.fput_object(mo_bucket, image_prefix, BytesIO(image_data))
-
-    stmt = cs.session.prepare(
-        "INSERT INTO images({COLUMNS}) VALUES ({VALUES})".format(
-            COLUMNS=", ".join(image_metadata.keys()),
-            VALUES=", ".join(["?"] * len(image_metadata)),
-        ),
-        image_metadata.values(),
-    )
-    cs_session.execute(stmt)
-
-    pk_channel.basic_publish(
-        exchange="", routing_key=model_name, body=json.dumps(image_metadata)
-    )
-
-    return Response(
-        json.dumps({"token": image_token, "version": __version__}),
-        status=200,
-        mimetype="application/json",
-    )
-
-
-@app.route("/<model_name>/text", methods=["PUT"])
-def put_text(model_name):
-    pass
-
-
-@app.route("/<model_name>/image", methods=["GET"])
-def get_image(model_name):
-    pass
-
-
-@app.route("/<model_name>/json", methods=["GET"])
-def get_json(model_name):
-    pass
 
 
 @app.route("/put/image", methods=["POST"])
@@ -187,12 +90,7 @@ def put_image():
     image_type = image_file.mimetype
     image_data = image_file.read()
 
-    image_hash = (
-        {"MD5": md5, "SHA256": sha256}.get(
-            os.environ.get("API_IMAGE_HASHER", "SHA256").upper()
-        )
-        or sha256
-    )()
+    image_hash = ({"MD5": md5, "SHA256": sha256}.get(os.getenv("API_FILE_HASHER", "SHA256").upper()) or sha256)()
     image_hash.update(image_data)
     image_token = image_hash.hexdigest()
 
@@ -203,19 +101,16 @@ def put_image():
         **request.form,
         **{
             "type": image_type,
-            "extension": image_extension,
             "upload_time": time.time(),
             "processed": "false",
         },
     }
 
-    paths = file_paths(image_token, image_extension)
-
-    meta_file = paths["meta_file"]
+    meta_file = get_metadata_path(image_token)
     with meta_file.open("w") as fp:
         json.dump(image_metadata, fp)
 
-    staged_file = paths["staged_file"]
+    staged_file = get_staged_path(image_token, image_extension)
     with staged_file.open("wb") as fp:
         fp.write(image_data)
 
@@ -236,12 +131,7 @@ def put_text():
             mimetype="application/json",
         )
 
-    text_hash = (
-        {"MD5": md5, "SHA256": sha256}.get(
-            os.environ.get("API_TEXT_HASHER", "SHA256").upper()
-        )
-        or sha256
-    )()
+    text_hash = ({"MD5": md5, "SHA256": sha256}.get(os.getenv("API_TEXT_HASHER", "SHA256").upper()) or sha256)()
     text_hash.update(text_data.encode("utf8"))
     text_token = text_hash.hexdigest()
     text_extension = ".txt"
@@ -250,19 +140,16 @@ def put_text():
         **request.form,
         **{
             "type": "text/plain",
-            "extension": text_extension,
             "upload_time": time.time(),
             "processed": "false",
         },
     }
 
-    paths = file_paths(text_token, text_extension)
-
-    meta_file = paths["meta_file"]
+    meta_file = get_metadata_path(text_token)
     with meta_file.open("w") as fp:
         json.dump(text_metadata, fp)
 
-    staged_file = paths["staged_file"]
+    staged_file = get_staged_path(text_token, text_extension)
     with staged_file.open("w") as fp:
         fp.write(text_data)
 
@@ -275,92 +162,101 @@ def put_text():
 
 @app.route("/get/image/<image_file>", methods=["GET"])
 def get_image(image_file):
-    image_file_path = Path(image_file)
-    image_token = image_file_path.stem
-    image_extension = image_file_path.suffix
+    image_file = Path(image_file)
+    image_token = image_file.stem.split("_", 2)[0]
 
-    paths = file_paths(image_token, image_extension)
-    prepared_file = paths["prepared_file"]
+    prepared_files = get_prepared_paths(image_token)
 
-    if not prepared_file.is_file():
-        return Response("image not found", status=404)
+    if not prepared_files:
+        clean_files(image_token)
+        return Response(
+            json.dumps({"token": image_token, "error": "image not found"}),
+            status=404,
+            mimetype="application/json",
+        )
 
-    with prepared_file.open("rb") as fp:
+    found_file = None
+    for prepared_file in prepared_files:
+        if prepared_file.name == image_file.name:
+            found_file = prepared_file
+            break
+
+    if found_file is None:
+        clean_files(image_token)
+        return Response(
+            json.dumps({"token": image_token, "error": "image not found"}),
+            status=404,
+            mimetype="application/json",
+        )
+
+    with found_file.open("rb") as fp:
         image_data = fp.read()
+
+    found_file.unlink()
+    if len(prepared_files) == 1:
+        clean_files(image_token)
+
     if not image_data:
-        return Response("image output is empty", status=404)
+        return Response(
+            json.dumps({"token": image_token, "error": "image output is empty"}),
+            status=404,
+            mimetype="application/json",
+        )
 
-    meta_file = paths["meta_file"]
-    if meta_file.is_file():
-        with meta_file.open() as fp:
-            try:
-                image_metadata = json.load(fp)
-            except:
-                image_metadata = {}
-
-    image_type = image_metadata.get("type", "image/jpeg")
-
-    clean_files(image_token, image_extension)
+    image_type = None
+    for mimetype, suffix in MIMETYPES.items():
+        if prepared_file.suffix == suffix:
+            image_type = mimetype
+            break
+    if image_type is None:
+        return Response(
+            json.dumps({"token": image_token, "error": "unknown image type"}),
+            status=404,
+            mimetype="application/json",
+        )
 
     return send_file(
         BytesIO(image_data),
         mimetype=image_type,
         as_attachment=True,
-        download_name=image_token + image_extension,
+        download_name=image_file.name,
     )
 
 
 @app.route("/get/json", methods=["POST"])
 def get_json():
-    lifetime = float(os.environ.get("API_CLEANER_FILE_LIFETIME", "1800.0"))
+    lifetime = float(os.getenv("API_CLEANER_FILE_LIFETIME", "1800.0"))
 
-    image_token = request.json.get("token")
-    paths = file_paths(image_token)
+    file_token = request.json.get("token")
 
-    meta_file = paths["meta_file"]
+    meta_file = get_metadata_path(file_token)
     if not meta_file.is_file():
-        clean_files(image_token)
+        clean_files(file_token)
         return Response(
-            json.dumps(
-                {"error": "missing file metadata", "version": __version__}
-            ),
+            json.dumps({"error": "missing file metadata", "version": __version__}),
             status=400,
             mimetype="application/json",
         )
 
     try:
-        image_metadata = json.load(meta_file.open("r"))
+        file_metadata = json.load(meta_file.open("r"))
     except:
-        clean_files(image_token)
+        clean_files(file_token)
         return Response(
-            json.dumps(
-                {"error": "corrupted image metadata", "version": __version__}
-            ),
+            json.dumps({"error": "corrupted image metadata", "version": __version__}),
             status=400,
             mimetype="application/json",
         )
 
-    if float(image_metadata.get("upload_time", 0)) + lifetime < time.time():
-        clean_files(image_token)
+    if float(file_metadata.get("upload_time", 0)) + lifetime < time.time():
+        clean_files(file_token)
         return Response(
             json.dumps({"error": "token expired", "version": __version__}),
             status=400,
             mimetype="application/json",
         )
 
-    if image_metadata.get("extension") is None:
-        clean_files(image_token)
-        return Response(
-            json.dumps(
-                {"error": "invalid image extension", "version": __version__}
-            ),
-            status=400,
-            mimetype="application/json",
-        )
-
-    json_file = paths["json_file"]
-    prepared_file = paths["prepared_file"]
-
+    json_file = get_json_path(file_token)
     if json_file.is_file():
         with json_file.open("r") as fp:
             try:
@@ -369,7 +265,7 @@ def get_json():
                 json_data = {}
 
         if not json_data:
-            clean_files(image_token)
+            clean_files(file_token)
             return Response(
                 json.dumps(
                     {"error": "invalid model output", "version": __version__},
@@ -379,50 +275,45 @@ def get_json():
             )
 
         json_data.update(
-            {"token": image_token, "status": "success", "version": __version__}
+            {
+                "token": file_token,
+                "status": "success",
+                "version": __version__,
+                "inference_time": float(file_metadata.get("update_time", 0))
+                - float(file_metadata.get("upload_time", 0)),
+            }
         )
-        json_file.unlink()
+        clean_files(file_token)
 
+        return Response(json.dumps(json_data), status=200, mimetype="application/json")
+
+    prepared_files = get_prepared_paths(file_token)
+    if prepared_files:
+        output = {
+            "token": file_token,
+            "status": "success",
+            "version": __version__,
+            "inference_time": float(file_metadata.get("update_time", 0)) - float(file_metadata.get("upload_time", 0)),
+        }
+        if len(prepared_files) == 1:
+            output["url"] = get_url(prepared_files[0])
+        else:
+            output["urls"] = [get_url(file) for file in prepared_files]
+
+        return Response(json.dumps(output), status=200, mimetype="application/json")
+
+    source_files = get_source_paths(file_token)
+    if source_files:
         return Response(
-            json.dumps(json_data), status=200, mimetype="application/json"
-        )
-
-    staged_file = paths["staged_file"]
-    source_file = paths["source_file"]
-
-    if prepared_file.is_file():
-        if staged_file.is_file():
-            staged_file.unlink()
-
-        return Response(
-            json.dumps(
-                {
-                    "url": "/get/image/{image_token}.{image_extension}".format(
-                        image_token=image_token,
-                        image_extension=prepared_file.suffix[1:],
-                    ),
-                    "status": "success",
-                    "version": __version__,
-                }
-            ),
+            json.dumps({"wait": "true", "status": "processing", "version": __version__}),
             status=200,
             mimetype="application/json",
         )
 
-    if source_file.is_file():
+    staged_files = get_staged_paths(file_token)
+    if staged_files:
         return Response(
-            json.dumps(
-                {"wait": "true", "status": "processing", "version": __version__}
-            ),
-            status=200,
-            mimetype="application/json",
-        )
-
-    if staged_file.is_file():
-        return Response(
-            json.dumps(
-                {"wait": "true", "status": "not queued", "version": __version__}
-            ),
+            json.dumps({"wait": "true", "status": "not queued", "version": __version__}),
             status=200,
             mimetype="application/json",
         )
