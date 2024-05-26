@@ -1,15 +1,13 @@
 #!/usr/bin/env python3
 import json
 import os
-import random
 import signal
-import sys
 import time
 from pathlib import Path
 
 from daemon import Daemon
 
-__version__ = "0.8.0"
+__version__ = "0.9.0"
 
 
 class Cleaner(Daemon):
@@ -28,20 +26,14 @@ class Cleaner(Daemon):
                 except:
                     image_metadata = {}
 
-            if (
-                float(image_metadata.get("upload_time", 0)) + lifetime
-                < time.time()
-            ):
-                staged_file = meta_file.with_suffix(
-                    image_metadata.get("extension", ".jpg")
-                )
+            if float(image_metadata.get("upload_time", 0)) + lifetime < time.time():
+                staged_file = meta_file.with_suffix(image_metadata.get("extension", ".jpg"))
                 if staged_file.is_file():
                     staged_files.append(staged_file)
 
         staged_files += list(
             filter(
-                lambda f: f.is_file()
-                and f.stat().st_mtime + lifetime < time.time(),
+                lambda f: f.is_file() and f.stat().st_mtime + lifetime < time.time(),
                 Path(STAGED_PATH).glob("*"),
             )
         )
