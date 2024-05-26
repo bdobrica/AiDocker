@@ -15,7 +15,7 @@ import torch
 from daemon import Daemon
 from srfbnet import GMFN
 
-__version__ = "0.8.6"
+__version__ = "0.9.0"
 
 
 class AIDaemon(Daemon):
@@ -32,9 +32,7 @@ class AIDaemon(Daemon):
                 "MODEL_PATH",
                 "/opt/app/gmfn_x{scale}.pth",
             )
-            ckpt = torch.load(
-                MODEL_PATH.format(scale=scale), map_location=torch.device("cpu")
-            )
+            ckpt = torch.load(MODEL_PATH.format(scale=scale), map_location=torch.device("cpu"))
             model.load_state_dict(ckpt, strict=True)
             _ = model.eval()
 
@@ -75,11 +73,7 @@ class AIDaemon(Daemon):
         CHUNK_SIZE = int(os.environ.get("CHUNK_SIZE", 4096))
 
         staged_files = sorted(
-            [
-                f
-                for f in Path(STAGED_PATH).glob("*")
-                if f.is_file() and f.suffix != ".json"
-            ],
+            [f for f in Path(STAGED_PATH).glob("*") if f.is_file() and f.suffix != ".json"],
             key=lambda f: f.stat().st_mtime,
         )
         source_files = [f for f in Path(SOURCE_PATH).glob("*") if f.is_file()]
@@ -106,13 +100,9 @@ class AIDaemon(Daemon):
             }
 
             source_file = Path(SOURCE_PATH) / staged_file.name
-            prepared_file = Path(PREPARED_PATH) / (
-                staged_file.stem + image_metadata["extension"]
-            )
+            prepared_file = Path(PREPARED_PATH) / (staged_file.stem + image_metadata["extension"])
 
-            with staged_file.open("rb") as src_fp, source_file.open(
-                "wb"
-            ) as dst_fp:
+            with staged_file.open("rb") as src_fp, source_file.open("wb") as dst_fp:
                 while True:
                     chunk = src_fp.read(CHUNK_SIZE)
                     if not chunk:

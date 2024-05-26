@@ -13,7 +13,7 @@ import numpy as np
 from daemon import Daemon
 from nudenet import NudeDetector
 
-__version__ = "0.8.6"
+__version__ = "0.9.0"
 
 
 class AIDaemon(Daemon):
@@ -33,58 +33,41 @@ class AIDaemon(Daemon):
                 kwargs["fast"] = True
             results = model.detect(str(source_file), **kwargs)
             results = filter(
-                lambda item: item["score"]
-                > os.environ.get("API_THRESHOLD", 0.5),
+                lambda item: item["score"] > os.environ.get("API_THRESHOLD", 0.5),
                 results,
             )
 
-            API_NUDENET_KEEP_LABELS = os.environ.get(
-                "API_NUDENET_KEEP_LABELS", ""
-            )
+            API_NUDENET_KEEP_LABELS = os.environ.get("API_NUDENET_KEEP_LABELS", "")
             if API_NUDENET_KEEP_LABELS:
                 results = filter(
-                    lambda item: item["label"]
-                    in API_NUDENET_KEEP_LABELS.split(","),
+                    lambda item: item["label"] in API_NUDENET_KEEP_LABELS.split(","),
                     results,
                 )
-            API_NUDENET_DROP_LABELS = os.environ.get(
-                "API_NUDENET_DROP_LABELS", ""
-            )
+            API_NUDENET_DROP_LABELS = os.environ.get("API_NUDENET_DROP_LABELS", "")
             if API_NUDENET_DROP_LABELS:
                 results = filter(
-                    lambda item: item["label"]
-                    not in API_NUDENET_DROP_LABELS.split(","),
+                    lambda item: item["label"] not in API_NUDENET_DROP_LABELS.split(","),
                     results,
                 )
 
             # Do censoring
             img_copy = img_orig.copy()
             if metadata.get("censor", "no").lower() == "yes":
-                API_NUDENET_CENSOR_TYPE = os.environ.get(
-                    "API_NUDENET_CENSOR_TYPE", "blackbox"
-                )
+                API_NUDENET_CENSOR_TYPE = os.environ.get("API_NUDENET_CENSOR_TYPE", "blackbox")
                 if results:
                     for item in results:
                         box = tuple(item["box"])
                         if API_NUDENET_CENSOR_TYPE == "blackbox":
-                            img_copy = cv2.rectangle(
-                                img_copy, box[:2], box[2:], (0, 0, 0), -1
-                            )
+                            img_copy = cv2.rectangle(img_copy, box[:2], box[2:], (0, 0, 0), -1)
                         elif API_NUDENET_CENSOR_TYPE == "blur":
-                            img_box = img_copy[
-                                box[1] : box[3], box[0] : box[2], :
-                            ]
+                            img_box = img_copy[box[1] : box[3], box[0] : box[2], :]
                             box_height, box_width = img_box.shape[:2]
                             box_blur = (
                                 1 + 2 * (box_height // 2),
                                 1 + 2 * (box_width // 2),
                             )
-                            img_box = cv2.GaussianBlur(
-                                img_box, box_blur, cv2.BORDER_DEFAULT
-                            )
-                            img_copy[
-                                box[1] : box[3], box[0] : box[2], :
-                            ] = img_box
+                            img_box = cv2.GaussianBlur(img_box, box_blur, cv2.BORDER_DEFAULT)
+                            img_copy[box[1] : box[3], box[0] : box[2], :] = img_box
 
                 cv2.imwrite(str(prepared_file), img_copy)
             else:
@@ -106,11 +89,7 @@ class AIDaemon(Daemon):
         CHUNK_SIZE = int(os.environ.get("CHUNK_SIZE", 4096))
 
         staged_files = sorted(
-            [
-                f
-                for f in Path(STAGED_PATH).glob("*")
-                if f.is_file() and f.suffix != ".json"
-            ],
+            [f for f in Path(STAGED_PATH).glob("*") if f.is_file() and f.suffix != ".json"],
             key=lambda f: f.stat().st_mtime,
         )
         source_files = [f for f in Path(SOURCE_PATH).glob("*") if f.is_file()]
@@ -137,13 +116,9 @@ class AIDaemon(Daemon):
             }
 
             source_file = Path(SOURCE_PATH) / staged_file.name
-            prepared_file = Path(PREPARED_PATH) / (
-                staged_file.stem + image_metadata["extension"]
-            )
+            prepared_file = Path(PREPARED_PATH) / (staged_file.stem + image_metadata["extension"])
 
-            with staged_file.open("rb") as src_fp, source_file.open(
-                "wb"
-            ) as dst_fp:
+            with staged_file.open("rb") as src_fp, source_file.open("wb") as dst_fp:
                 while True:
                     chunk = src_fp.read(CHUNK_SIZE)
                     if not chunk:

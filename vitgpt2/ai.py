@@ -19,7 +19,7 @@ from transformers import (
 
 from daemon import Daemon
 
-__version__ = "0.8.6"
+__version__ = "0.9.0"
 
 
 class AIDaemon(Daemon):
@@ -30,19 +30,13 @@ class AIDaemon(Daemon):
 
         # The trick is to not initialize the model outside the forked process
         # It saves some time, but not much. At least no disk I/O
-        self.model_config = VisionEncoderDecoderConfig.from_pretrained(
-            MODEL_PATH, local_files_only=True
-        )
+        self.model_config = VisionEncoderDecoderConfig.from_pretrained(MODEL_PATH, local_files_only=True)
         self.model_sd = torch.load(
             os.path.join(MODEL_PATH, "pytorch_model.bin"),
             map_location=self.device,
         )
-        self.feature_extractor = ViTFeatureExtractor.from_pretrained(
-            MODEL_PATH, local_files_only=True
-        )
-        self.tokenizer = AutoTokenizer.from_pretrained(
-            MODEL_PATH, local_files_only=True
-        )
+        self.feature_extractor = ViTFeatureExtractor.from_pretrained(MODEL_PATH, local_files_only=True)
+        self.tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH, local_files_only=True)
 
     def ai(self, source_file, prepared_file, **metadata):
         pid = os.fork()
@@ -70,14 +64,10 @@ class AIDaemon(Daemon):
 
             # Inference
             gen_kwargs = {"max_length": max_length, "num_beams": num_beams}
-            pixel_values = self.feature_extractor(
-                images=[im_orig], return_tensors="pt"
-            ).pixel_values
+            pixel_values = self.feature_extractor(images=[im_orig], return_tensors="pt").pixel_values
             pixel_values = pixel_values.to(self.device)
             output_ids = model.generate(pixel_values, **gen_kwargs)
-            preds = self.tokenizer.batch_decode(
-                output_ids, skip_special_tokens=True
-            )
+            preds = self.tokenizer.batch_decode(output_ids, skip_special_tokens=True)
             results = [{"caption": pred.strip()} for pred in preds]
 
             json_file = prepared_file.with_suffix(".json")
@@ -98,11 +88,7 @@ class AIDaemon(Daemon):
         CHUNK_SIZE = int(os.environ.get("CHUNK_SIZE", 4096))
 
         staged_files = sorted(
-            [
-                f
-                for f in Path(STAGED_PATH).glob("*")
-                if f.is_file() and f.suffix != ".json"
-            ],
+            [f for f in Path(STAGED_PATH).glob("*") if f.is_file() and f.suffix != ".json"],
             key=lambda f: f.stat().st_mtime,
         )
         source_files = [f for f in Path(SOURCE_PATH).glob("*") if f.is_file()]
@@ -128,13 +114,9 @@ class AIDaemon(Daemon):
             }
 
             source_file = Path(SOURCE_PATH) / staged_file.name
-            prepared_file = Path(PREPARED_PATH) / (
-                staged_file.stem + image_metadata["extension"]
-            )
+            prepared_file = Path(PREPARED_PATH) / (staged_file.stem + image_metadata["extension"])
 
-            with staged_file.open("rb") as src_fp, source_file.open(
-                "wb"
-            ) as dst_fp:
+            with staged_file.open("rb") as src_fp, source_file.open("wb") as dst_fp:
                 while True:
                     chunk = src_fp.read(CHUNK_SIZE)
                     if not chunk:

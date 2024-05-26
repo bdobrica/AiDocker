@@ -14,7 +14,7 @@ import onnxruntime
 
 from daemon import Daemon
 
-__version__ = "0.8.6"
+__version__ = "0.9.0"
 
 
 class AIDaemon(Daemon):
@@ -77,9 +77,7 @@ class AIDaemon(Daemon):
             result = session.run([output_name], {input_name: im})
 
             matte = (np.squeeze(result[0]) * 255).astype("uint8")
-            matte = cv2.resize(
-                matte, dsize=(im_w, im_h), interpolation=cv2.INTER_AREA
-            )
+            matte = cv2.resize(matte, dsize=(im_w, im_h), interpolation=cv2.INTER_AREA)
             out_im[:, :, 3] = matte
             out_im = out_im.astype(float)
 
@@ -89,9 +87,7 @@ class AIDaemon(Daemon):
             color_re = re.compile(r"(^[A-Za-z0-9]{6}$)|(^[A-Za-z0-9]{8}$)")
             background_alpha = 0
             background_im = None
-            if background.startswith("http://") or background.startswith(
-                "https://"
-            ):
+            if background.startswith("http://") or background.startswith("https://"):
                 try:
                     req = request.urlopen(background)
                     arr = np.asarray(bytearray(req.read()), dtype=np.uint8)
@@ -104,10 +100,7 @@ class AIDaemon(Daemon):
                     if background_im.shape[2] == 4:
                         background_im = background_im.astype(float)
                         background_im = background_im[:, :, :3] * np.repeat(
-                            background_im[:, :, 3].reshape(
-                                out_im.shape[:2] + (1,)
-                            )
-                            / 255.0,
+                            background_im[:, :, 3].reshape(out_im.shape[:2] + (1,)) / 255.0,
                             3,
                             axis=2,
                         )
@@ -122,9 +115,7 @@ class AIDaemon(Daemon):
                     background_alpha = int(background[6:8], 16) / 255.0
                 else:
                     background_alpha = 1.0
-                background_im = np.full(
-                    (im_h, im_w, 3), [blue, green, red], dtype=np.float32
-                )
+                background_im = np.full((im_h, im_w, 3), [blue, green, red], dtype=np.float32)
 
             alpha_mask = np.repeat(
                 out_im[:, :, 3].reshape(out_im.shape[:2] + (1,)) / 255.0,
@@ -133,19 +124,12 @@ class AIDaemon(Daemon):
             )
             out_im[:, :, :3] = out_im[:, :, :3] * alpha_mask
 
-            if (
-                background_im is None
-                and metadata.get("type", "") != "image/png"
-            ):
-                background_im = np.full(
-                    (im_h, im_w, 3), [255.0, 255.0, 255.0], dtype=np.float32
-                )
+            if background_im is None and metadata.get("type", "") != "image/png":
+                background_im = np.full((im_h, im_w, 3), [255.0, 255.0, 255.0], dtype=np.float32)
                 background_alpha = 1.0
 
             if background_im is not None:
-                out_im[:, :, :3] = out_im[:, :, :3] + background_im[
-                    :, :, :3
-                ] * background_alpha * (1.0 - alpha_mask)
+                out_im[:, :, :3] = out_im[:, :, :3] + background_im[:, :, :3] * background_alpha * (1.0 - alpha_mask)
                 out_im[:, :, 3] = 255.0
 
             cv2.imwrite(str(prepared_file), out_im.astype("uint8"))
@@ -163,11 +147,7 @@ class AIDaemon(Daemon):
         CHUNK_SIZE = int(os.environ.get("CHUNK_SIZE", 4096))
 
         staged_files = sorted(
-            [
-                f
-                for f in Path(STAGED_PATH).glob("*")
-                if f.is_file() and f.suffix != ".json"
-            ],
+            [f for f in Path(STAGED_PATH).glob("*") if f.is_file() and f.suffix != ".json"],
             key=lambda f: f.stat().st_mtime,
         )
         source_files = [f for f in Path(SOURCE_PATH).glob("*") if f.is_file()]
@@ -193,13 +173,9 @@ class AIDaemon(Daemon):
             }
 
             source_file = Path(SOURCE_PATH) / staged_file.name
-            prepared_file = Path(PREPARED_PATH) / (
-                staged_file.stem + image_metadata["extension"]
-            )
+            prepared_file = Path(PREPARED_PATH) / (staged_file.stem + image_metadata["extension"])
 
-            with staged_file.open("rb") as src_fp, source_file.open(
-                "wb"
-            ) as dst_fp:
+            with staged_file.open("rb") as src_fp, source_file.open("wb") as dst_fp:
                 while True:
                     chunk = src_fp.read(CHUNK_SIZE)
                     if not chunk:

@@ -15,7 +15,7 @@ from transformers import CLIPTextModel, CLIPTokenizer
 
 from daemon import Daemon
 
-__version__ = "0.8.6"
+__version__ = "0.9.0"
 
 
 class AIDaemon(Daemon):
@@ -25,18 +25,12 @@ class AIDaemon(Daemon):
             MODEL_DEVICE = "cpu"
 
         self.device = torch.device(MODEL_DEVICE)
-        self.vae = AutoencoderKL.from_pretrained(
-            model_path, subfolder="vae", local_files_only=True
-        ).to(self.device)
-        self.tokenizer = CLIPTokenizer.from_pretrained(
-            model_path, subfolder="tokenizer", local_files_only=True
+        self.vae = AutoencoderKL.from_pretrained(model_path, subfolder="vae", local_files_only=True).to(self.device)
+        self.tokenizer = CLIPTokenizer.from_pretrained(model_path, subfolder="tokenizer", local_files_only=True)
+        self.text_encoder = CLIPTextModel.from_pretrained(model_path, subfolder="text_encoder", local_files_only=True)
+        self.unet = UNet2DConditionModel.from_pretrained(model_path, subfolder="unet", local_files_only=True).to(
+            self.device
         )
-        self.text_encoder = CLIPTextModel.from_pretrained(
-            model_path, subfolder="text_encoder", local_files_only=True
-        )
-        self.unet = UNet2DConditionModel.from_pretrained(
-            model_path, subfolder="unet", local_files_only=True
-        ).to(self.device)
         self.scheduler = PNDMScheduler(
             beta_start=0.00085,
             beta_end=0.012,
@@ -47,13 +41,9 @@ class AIDaemon(Daemon):
 
     def ai(self, source_file, prepared_file, **metadata):
         try:
-            MODEL_PATH = os.environ.get(
-                "MODEL_PATH", "/opt/app/stable-diffusion"
-            )
+            MODEL_PATH = os.environ.get("MODEL_PATH", "/opt/app/stable-diffusion")
 
-            MODEL_GUIDANCE_SCALE = float(
-                os.environ.get("MODEL_GUIDANCE_SCALE", 7.5)
-            )
+            MODEL_GUIDANCE_SCALE = float(os.environ.get("MODEL_GUIDANCE_SCALE", 7.5))
 
             # Initialize
             prompt = metadata.get("prompt", "")
@@ -72,9 +62,7 @@ class AIDaemon(Daemon):
                 truncation=True,
                 return_tensors="pt",
             )
-            text_embeddings = self.text_encoder(
-                text_input.input_ids.to(self.device)
-            )[0]
+            text_embeddings = self.text_encoder(text_input.input_ids.to(self.device))[0]
 
             max_length = text_input.input_ids.shape[-1]
             uncond_input = self.tokenizer(
@@ -83,9 +71,7 @@ class AIDaemon(Daemon):
                 max_length=max_length,
                 return_tensors="pt",
             )
-            uncond_embeddings = self.text_encoder(
-                uncond_input.input_ids.to(self.device)
-            )[0]
+            uncond_embeddings = self.text_encoder(uncond_input.input_ids.to(self.device))[0]
 
             text_embeddings = torch.cat([uncond_embeddings, text_embeddings])
             latents = torch.randn(
@@ -101,9 +87,7 @@ class AIDaemon(Daemon):
                 # expand the latents if we are doing classifier-free guidance to avoid doing two forward passes.
                 latent_model_input = torch.cat([latents] * 2)
 
-                latent_model_input = self.scheduler.scale_model_input(
-                    latent_model_input
-                )
+                latent_model_input = self.scheduler.scale_model_input(latent_model_input)
 
                 # predict the noise residual
                 with torch.no_grad():
@@ -115,14 +99,10 @@ class AIDaemon(Daemon):
 
                 # perform guidance
                 noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
-                noise_pred = noise_pred_uncond + MODEL_GUIDANCE_SCALE * (
-                    noise_pred_text - noise_pred_uncond
-                )
+                noise_pred = noise_pred_uncond + MODEL_GUIDANCE_SCALE * (noise_pred_text - noise_pred_uncond)
 
                 # compute the previous noisy sample x_t -> x_t-1
-                latents = self.scheduler.step(
-                    noise_pred, inference_step, latents
-                ).prev_sample
+                latents = self.scheduler.step(noise_pred, inference_step, latents).prev_sample
 
             # scale and decode the image latents with vae
             start = time.perf_counter()
@@ -132,11 +112,7 @@ class AIDaemon(Daemon):
             image = image.detach().cpu().permute(0, 2, 3, 1).numpy()
             images = (image * 255).round().astype("uint8")
             for idx, image in enumerate(images):
-                image_file = prepared_file.parent / (
-                    prepared_file.stem
-                    + "_{0:02x}".format(idx)
-                    + prepared_file.suffix
-                )
+                image_file = prepared_file.parent / (prepared_file.stem + "_{0:02x}".format(idx) + prepared_file.suffix)
                 cv2.imwrite(str(image_file), image)
 
             results = []
@@ -160,11 +136,7 @@ class AIDaemon(Daemon):
         CHUNK_SIZE = int(os.environ.get("CHUNK_SIZE", 4096))
 
         staged_files = sorted(
-            [
-                f
-                for f in Path(STAGED_PATH).glob("*")
-                if f.is_file() and f.suffix != ".json"
-            ],
+            [f for f in Path(STAGED_PATH).glob("*") if f.is_file() and f.suffix != ".json"],
             key=lambda f: f.stat().st_mtime,
         )
         source_files = [f for f in Path(SOURCE_PATH).glob("*") if f.is_file()]
@@ -190,13 +162,9 @@ class AIDaemon(Daemon):
             }
 
             source_file = Path(SOURCE_PATH) / staged_file.name
-            prepared_file = Path(PREPARED_PATH) / (
-                staged_file.stem + image_metadata["extension"]
-            )
+            prepared_file = Path(PREPARED_PATH) / (staged_file.stem + image_metadata["extension"])
 
-            with staged_file.open("rb") as src_fp, source_file.open(
-                "wb"
-            ) as dst_fp:
+            with staged_file.open("rb") as src_fp, source_file.open("wb") as dst_fp:
                 while True:
                     chunk = src_fp.read(CHUNK_SIZE)
                     if not chunk:

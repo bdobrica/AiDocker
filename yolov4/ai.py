@@ -14,7 +14,7 @@ import torch
 from daemon import Daemon
 from yolov4 import Darknet, non_max_suppression, scale_coords
 
-__version__ = "0.8.6"
+__version__ = "0.9.0"
 
 
 class AIDaemon(Daemon):
@@ -36,18 +36,14 @@ class AIDaemon(Daemon):
             # Load model
             model = Darknet(None, IMAGE_SIZE).cpu()
             try:
-                model.load_state_dict(
-                    torch.load(MODEL_PATH, map_location=device)["model"]
-                )
+                model.load_state_dict(torch.load(MODEL_PATH, map_location=device)["model"])
             except:
                 model.load_darknet_weights(MODEL_PATH)
             model.to(device).eval()
 
             # Get names and colors
             with Path(CLASSES_PATH).open("r") as f:
-                names = list(
-                    filter(None, f.read().split("\n"))
-                )  # filter removes empty strings (such as last line)
+                names = list(filter(None, f.read().split("\n")))  # filter removes empty strings (such as last line)
 
             img_orig = cv2.imread(str(source_file))
 
@@ -62,9 +58,7 @@ class AIDaemon(Daemon):
 
             # Resize the image with padded border
             ratio = ratio_, ratio_  # width, height ratios
-            new_unpad = int(round(shape[1] * ratio_)), int(
-                round(shape[0] * ratio_)
-            )
+            new_unpad = int(round(shape[1] * ratio_)), int(round(shape[0] * ratio_))
             dw, dh = (
                 new_shape[1] - new_unpad[0],
                 new_shape[0] - new_unpad[1],
@@ -73,9 +67,7 @@ class AIDaemon(Daemon):
             dw /= 2  # divide padding into 2 sides
             dh /= 2
             if shape[::-1] != new_unpad:  # resize
-                img = cv2.resize(
-                    img_orig, new_unpad, interpolation=cv2.INTER_LINEAR
-                )
+                img = cv2.resize(img_orig, new_unpad, interpolation=cv2.INTER_LINEAR)
             else:
                 img = img_orig.copy()
             top, bottom = int(round(dh - 0.1)), int(round(dh + 0.1))
@@ -102,9 +94,7 @@ class AIDaemon(Daemon):
             pred = model(img, augment=False)[0]
 
             # Do non-maximum suppression
-            pred = non_max_suppression(
-                pred, conf_thres=0.4, iou_thres=0.5, classes=None, agnostic=True
-            )
+            pred = non_max_suppression(pred, conf_thres=0.4, iou_thres=0.5, classes=None, agnostic=True)
 
             results = []
 
@@ -112,9 +102,7 @@ class AIDaemon(Daemon):
             for i, det in enumerate(pred):  # detections per image
                 gn = torch.tensor(img_orig.shape)[[1, 0, 1, 0]]
                 if det is not None and len(det):
-                    det[:, :4] = scale_coords(
-                        img.shape[2:], det[:, :4], img_orig.shape
-                    ).round()
+                    det[:, :4] = scale_coords(img.shape[2:], det[:, :4], img_orig.shape).round()
 
                     for *xyxy, conf, class_id in det:
                         det_x = float((xyxy[0] + xyxy[2]) / 2)  # x center
@@ -130,9 +118,7 @@ class AIDaemon(Daemon):
                                 "y": det_y,
                                 "w": det_w,
                                 "h": det_h,
-                                "area": det_w
-                                * det_h
-                                / (img_orig.shape[0] * img_orig.shape[1]),
+                                "area": det_w * det_h / (img_orig.shape[0] * img_orig.shape[1]),
                             }
                         )
 
@@ -151,9 +137,7 @@ class AIDaemon(Daemon):
                             thickness=2,
                         )
 
-                        text_size = cv2.getTextSize(
-                            names[int(class_id)], 0, fontScale=0.5, thickness=1
-                        )[0]
+                        text_size = cv2.getTextSize(names[int(class_id)], 0, fontScale=0.5, thickness=1)[0]
                         cv2.rectangle(
                             img_copy,
                             (
@@ -202,11 +186,7 @@ class AIDaemon(Daemon):
         CHUNK_SIZE = int(os.environ.get("CHUNK_SIZE", 4096))
 
         staged_files = sorted(
-            [
-                f
-                for f in Path(STAGED_PATH).glob("*")
-                if f.is_file() and f.suffix != ".json"
-            ],
+            [f for f in Path(STAGED_PATH).glob("*") if f.is_file() and f.suffix != ".json"],
             key=lambda f: f.stat().st_mtime,
         )
         source_files = [f for f in Path(SOURCE_PATH).glob("*") if f.is_file()]
@@ -232,13 +212,9 @@ class AIDaemon(Daemon):
             }
 
             source_file = Path(SOURCE_PATH) / staged_file.name
-            prepared_file = Path(PREPARED_PATH) / (
-                staged_file.stem + image_metadata["extension"]
-            )
+            prepared_file = Path(PREPARED_PATH) / (staged_file.stem + image_metadata["extension"])
 
-            with staged_file.open("rb") as src_fp, source_file.open(
-                "wb"
-            ) as dst_fp:
+            with staged_file.open("rb") as src_fp, source_file.open("wb") as dst_fp:
                 while True:
                     chunk = src_fp.read(CHUNK_SIZE)
                     if not chunk:
