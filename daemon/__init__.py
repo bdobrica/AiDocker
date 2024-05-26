@@ -8,7 +8,7 @@ from .daemon import Daemon, PathLike
 from .filequeuemixin import FileQueueMixin
 from .zeroqueuemixin import ZeroQueueMixin
 
-__version__ = "0.8.13"
+__version__ = "0.9.0"
 
 AiDaemon = AiForkDaemon
 AiLiveDaemon = AiZeroDaemon

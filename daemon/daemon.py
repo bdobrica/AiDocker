@@ -30,6 +30,7 @@ Example usage:
             print("usage: %s start|stop|restart" % sys.argv[0])
     ```
 """
+
 import atexit
 import os
 import sys
@@ -42,7 +43,7 @@ from .modelmixin import ModelMixin
 
 PathLike = Union[str, Path]
 
-__version__ = "0.8.13"
+__version__ = "0.9.0"
 
 
 class Daemon(ModelMixin):
