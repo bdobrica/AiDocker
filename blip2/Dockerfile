@@ -12,6 +12,7 @@ ENV NVARCH x86_64
 ENV NVIDIA_REQUIRE_CUDA "cuda>=${CUDA_MINOR_VERSION} brand=nvidiartx,driver>=${NVIDIA_MAJOR_DRIVER_VERSION},driver<$[NVIDIA_MAJOR_DRIVER_VERSION + 1]"
 ENV NV_CUDA_CUDART_VERSION "${CUDA_VERSION}"
 ENV NV_CUDA_COMPAT_PACKAGE cuda-compat-${CUDA_MINOR_VERSION/./-}
+ENV NV_CUDA_CUDART_PACKAGE cuda-cudart-${CUDA_MINOR_VERSION/./-}
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gnupg2 curl ca-certificates && \
     curl -fsSLO https://developer.download.nvidia.com/compute/cuda/repos/debian11/${NVARCH}/cuda-keyring_${NVIDIA_KEYRING_VERSION}_all.deb && \
@@ -20,9 +21,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    cuda-cudart-${CUDA_MINOR_VERSION/./-}=${NV_CUDA_CUDART_VERSION} \
-    ${NV_CUDA_COMPAT_PACKAGE} \
-    && ln -s cuda-${CUDA_MINOR_VERSION} /usr/local/cuda && \
+    "${NV_CUDA_CUDART_PACKAGE}"="${NV_CUDA_CUDART_VERSION}" \
+    "${NV_CUDA_COMPAT_PACKAGE}" \
+    && ln -s "cuda-${CUDA_MINOR_VERSION}" /usr/local/cuda && \
     rm -rf /var/lib/apt/lists/*
 
 RUN echo "/usr/local/nvidia/lib" >> /etc/ld.so.conf.d/nvidia.conf \
