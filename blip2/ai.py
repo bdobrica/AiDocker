@@ -22,12 +22,13 @@ class AIDaemon(Daemon):
         # Try reproducing the results
         torch.manual_seed(42)
 
-        self.device = torch.device("cpu")
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
         MODEL_PATH = os.environ.get("MODEL_PATH", "/opt/app/blip2")
 
         self.processor = Blip2Processor.from_pretrained(MODEL_PATH, local_files_only=True)
         self.model = Blip2ForConditionalGeneration.from_pretrained(MODEL_PATH, local_files_only=True)
+        self.model.to(self.device)
 
     def ai(self, source_file, prepared_file, **metadata):
         # Deep Learning models are not fork-safe (so no multiprocessing)
@@ -41,7 +42,7 @@ class AIDaemon(Daemon):
             im_orig = cv2.cvtColor(im_orig, cv2.COLOR_BGR2RGB)
 
             # Inference
-            inputs = self.processor(im_orig, return_tensors="pt")
+            inputs = self.processor(im_orig, return_tensors="pt").to(self.device)
             preds = self.model.generate(**inputs)
 
             results = [{"captions": self.processor.decode(pred, skip_special_tokens=True).strip()} for pred in preds]
