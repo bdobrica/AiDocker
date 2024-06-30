@@ -1,0 +1,4 @@
+flask
+pydantic
+requests
+sqlalchemy

@@ -1,0 +1,11 @@
+{% include 'header.html' %}
+
+{% if username %}
+<div class="logout">
+    <div class="logout_inner"><a href="/logout">Logout</a></div>
+</div>
+{% else %}
+{% include 'login_form.html' %}
+{% endif %}
+
+{% include 'footer.html' %}

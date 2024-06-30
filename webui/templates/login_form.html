@@ -1,0 +1,19 @@
+<div class="login">
+    <div class="login__title">Login</div>
+    <div class="login__form">
+        <form action="/login" method="POST">
+            <div class="login__form__field">
+                <label>Username</label>
+                <input type="text" name="username" placeholder="Username" value="{{ username }}" />
+            </div>
+            <div class="login__form__field">
+                <label>Password</label>
+                <input type="password" name="password" placeholder="Password" />
+            </div>
+            <div class="login__form__field">
+                <button class="send">Login</button>
+            </div>
+        </form>
+    </div>
+    <div class="login__error">{{ error }}</div>
+</div>
