@@ -4,6 +4,7 @@ import os
 import signal
 import sys
 import time
+import traceback
 from pathlib import Path
 
 import cv2
@@ -19,14 +20,28 @@ __version__ = "0.9.0"
 
 
 class AIDaemon(Daemon):
-    def ai(self, source_file, prepared_file, **metadata):
+    def load_metadata(self, meta_file: Path) -> dict:
+        if not meta_file.is_file():
+            return {}
+        with open(meta_file, "r") as fp:
+            return json.load(fp)
+
+    def update_metadata(self, meta_file: Path, data: dict) -> None:
+        metadata = self.load_metadata(meta_file)
+        if "update_time" not in metadata:
+            metadata["update_time"] = time.time()
+        metadata.update(data)
+        with open(meta_file, "w") as fp:
+            json.dump(metadata, fp)
+
+    def ai(self, source_file: Path, prepared_file: Path, meta_file: Path) -> None:
         pid = os.fork()
         if pid != 0:
             return
 
         try:
-            MODEL_PATH = os.environ.get("MODEL_PATH", "/opt/app/EfficientNetB3_224_weights.11-3.44.hdf5")
-            EFFICIENTNETB3_PATH = os.environ.get("EFFICIENTNETB3_PATH", "/opt/app/efficientnetb3_notop.h5")
+            MODEL_PATH = os.getenv("MODEL_PATH", "/opt/app/EfficientNetB3_224_weights.11-3.44.hdf5")
+            EFFICIENTNETB3_PATH = os.getenv("EFFICIENTNETB3_PATH", "/opt/app/efficientnetb3_notop.h5")
             IMAGE_SIZE = 224
             MARGIN = 0.4
 
@@ -96,18 +111,31 @@ class AIDaemon(Daemon):
             with json_file.open("w") as f:
                 json.dump({"results": results}, f)
 
+            self.update_metadata(
+                meta_file,
+                {
+                    "processed": "true",
+                },
+            )
         except Exception as e:
-            pass
+            if os.getenv("DEBUG", "false").lower() in ("true", "1", "on"):
+                print(traceback.format_exc())
+            self.update_metadata(
+                meta_file,
+                {
+                    "processed": "error",
+                },
+            )
 
         source_file.unlink()
         sys.exit()
 
-    def queue(self):
-        STAGED_PATH = os.environ.get("STAGED_PATH", "/tmp/ai/staged")
-        SOURCE_PATH = os.environ.get("SOURCE_PATH", "/tmp/ai/source")
-        PREPARED_PATH = os.environ.get("PREPARED_PATH", "/tmp/ai/prepared")
-        MAX_FORK = int(os.environ.get("MAX_FORK", 8))
-        CHUNK_SIZE = int(os.environ.get("CHUNK_SIZE", 4096))
+    def queue(self) -> None:
+        STAGED_PATH = os.getenv("STAGED_PATH", "/tmp/ai/staged")
+        SOURCE_PATH = os.getenv("SOURCE_PATH", "/tmp/ai/source")
+        PREPARED_PATH = os.getenv("PREPARED_PATH", "/tmp/ai/prepared")
+        MAX_FORK = int(os.getenv("MAX_FORK", 8))
+        CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", 4096))
 
         staged_files = sorted(
             [f for f in Path(STAGED_PATH).glob("*") if f.is_file() and f.suffix != ".json"],
@@ -121,22 +149,8 @@ class AIDaemon(Daemon):
             staged_file = staged_files.pop(0)
 
             meta_file = staged_file.with_suffix(".json")
-            if meta_file.is_file():
-                with meta_file.open("r") as fp:
-                    try:
-                        image_metadata = json.load(fp)
-                    except:
-                        image_metadata = {}
-            image_metadata = {
-                **{
-                    "extension": staged_file.suffix,
-                    "background": "",
-                },
-                **image_metadata,
-            }
-
             source_file = Path(SOURCE_PATH) / staged_file.name
-            prepared_file = Path(PREPARED_PATH) / (staged_file.stem + image_metadata["extension"])
+            prepared_file = Path(PREPARED_PATH) / (staged_file.stem + staged_file.suffix)
 
             with staged_file.open("rb") as src_fp, source_file.open("wb") as dst_fp:
                 while True:
@@ -146,17 +160,17 @@ class AIDaemon(Daemon):
                     dst_fp.write(chunk)
 
             staged_file.unlink()
-            self.ai(source_file, prepared_file, **image_metadata)
+            self.ai(source_file, prepared_file, meta_file)
 
-    def run(self):
+    def run(self) -> None:
         signal.signal(signal.SIGCHLD, signal.SIG_IGN)
         while True:
             self.queue()
-            time.sleep(1.0)
+            time.sleep(float(os.getenv("QUEUE_LATENCY", 1.0)))
 
 
 if __name__ == "__main__":
-    CHROOT_PATH = os.environ.get("CHROOT_PATH", "/opt/app")
-    PIDFILE_PATH = os.environ.get("PIDFILE_PATH", "/opt/app/run/ai.pid")
+    CHROOT_PATH = os.getenv("CHROOT_PATH", "/opt/app")
+    PIDFILE_PATH = os.getenv("PIDFILE_PATH", "/opt/app/run/ai.pid")
 
     AIDaemon(pidfile=PIDFILE_PATH, chroot=CHROOT_PATH).start()

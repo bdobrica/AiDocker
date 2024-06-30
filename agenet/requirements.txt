@@ -1,4 +1,5 @@
 flask
+pyyaml
 opencv-python
 numpy
 tensorflow-cpu
