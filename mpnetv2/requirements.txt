@@ -1,0 +1,11 @@
+flask
+pypdf2
+python-docx
+pyyaml
+pyzmq
+redis[hiredis]
+torch
+torchaudio
+torchvision
+transformers
+openai
