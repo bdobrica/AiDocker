@@ -1,0 +1,62 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,200&display=swap');
+@import url('./chat.css');
+@import url('./documents.css');
+@import url('./document.css');
+@import url('./login.css');
+
+body {
+    background: linear-gradient(to bottom left, #f9f9f9 100%, #FFFFFF 100%);
+}
+
+
+/** common items [ **/
+
+.logout {
+    text-align: center;
+}
+
+.logout__inner a {
+    color: #64b75e;
+}
+
+.ellipsis {
+    width: 5px;
+    height: 5px;
+    display: inline-block;
+    background: #b0b0b0;
+    border-radius: 50%;
+    animation: bounce 1.3s linear infinite;
+}
+
+.one {
+    animation-delay: 0.6s;
+}
+
+.two {
+    animation-delay: 0.5s;
+}
+
+.three {
+    animation-delay: 0.8s;
+}
+
+@keyframes bounce {
+    30% {
+        transform: translateY(-2px);
+    }
+
+    60% {
+        transform: translateY(0px);
+    }
+
+    80% {
+        transform: translateY(2px);
+    }
+
+    100% {
+        transform: translateY(0px);
+        opacity: 0.5;
+    }
+}
+
+/** ] common items **/
