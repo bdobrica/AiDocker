@@ -1,0 +1,31 @@
+name: mpnetv2
+description: Given an text, compute the embeddings for it.
+port: 5013
+weights:
+  - mpnet-base-v2/config.json
+  - mpnet-base-v2/pytorch_model.bin
+  - mpnet-base-v2/sentencepiece.bpe.model
+  - mpnet-base-v2/special_tokens_map.json
+  - mpnet-base-v2/tokenizer_config.json
+  - mpnet-base-v2/tokenizer.json
+input:
+  - endpoint: /put/document
+    queue: file
+    required:
+      document: document
+  - endpoint: /delete/document
+    queue: file
+    required:
+      token: token
+  - endpoint: /put/text
+    queue: zero
+    required:
+      text: text
+output:
+  - endpoint: /get/json
+    queue: file
+    type: json
+daemons:
+  - api
+  - ai/query
+  - ai/build
