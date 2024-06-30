@@ -31,18 +31,15 @@ def download_weights(weights_path: Path):
     with weights_path.open("r") as fp:
         for line in fp:
             line = line.strip()
-            print(line)
+            if line:
+                print(line)
 
 
 if __name__ == "__main__":
     current_dir = Path(__file__).parent
     models = []
     for model_path in current_dir.glob("*"):
-        if (
-            model_path.name[0] == "."
-            or not model_path.is_dir()
-            or not (model_path / "Dockerfile").is_file()
-        ):
+        if model_path.name[0] == "." or not model_path.is_dir() or not (model_path / "Dockerfile").is_file():
             continue
 
         model_name = model_path.name
