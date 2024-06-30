@@ -42,16 +42,17 @@ from typing import Union
 from .modelmixin import ModelMixin
 
 __version__ = "0.9.0"
+PathLike = Union[str, Path]
 
 
 class Daemon(ModelMixin):
     def __init__(
         self,
-        pidfile: os.PathLike,
-        chroot: os.PathLike,
-        stdin: os.PathLike = os.devnull,
-        stdout: os.PathLike = os.devnull,
-        stderr: os.PathLike = os.devnull,
+        pidfile: PathLike,
+        chroot: PathLike,
+        stdin: PathLike = os.devnull,
+        stdout: PathLike = os.devnull,
+        stderr: PathLike = os.devnull,
     ) -> None:
         """
         Initialize the daemon.

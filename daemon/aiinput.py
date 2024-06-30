@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 from typing import Any, Iterable, Optional
 
+from .daemon import PathLike
 from .filequeuemixin import FileQueueMixin
 
 
@@ -15,7 +16,7 @@ class AiInput(FileQueueMixin):
     def _move_staged_file(self) -> None:
         self.staged_file.rename(self.source_file)
 
-    def __init__(self, input_batch: Iterable[os.PathLike]) -> None:
+    def __init__(self, input_batch: Iterable[PathLike]) -> None:
         try:
             staged_file = next(iter(input_batch))
         except StopIteration:

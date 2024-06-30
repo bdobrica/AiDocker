@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 from typing import Any, Iterable, Optional
 
+from .daemon import PathLike
 from .filequeuemixin import FileQueueMixin
 
 
@@ -25,7 +26,7 @@ class AiBatch(FileQueueMixin):
         for source_file in self.source_files:
             self.set_metadata(source_file, {"processed": "false", "state": "queued"})
 
-    def __init__(self, staged_files: Iterable[os.PathLike]) -> None:
+    def __init__(self, staged_files: Iterable[PathLike]) -> None:
         """
         Initialize the batch.
         :param staged_files: The files that are part of the current batch.
