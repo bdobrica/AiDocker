@@ -1,0 +1,13 @@
+name: fasttext
+description: Given an text, detect the language of it.
+port: 5015
+weights:
+  - fasttext/lid.176.bin
+input:
+  - endpoint: /put/text
+    queue: zero
+    required:
+      text: text
+daemons:
+  - api
+  - ai
