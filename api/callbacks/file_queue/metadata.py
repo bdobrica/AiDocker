@@ -2,14 +2,14 @@
 File queue calls are asynchronous, so you need to poll the API to see if your file is ready. This contains the callback
 functions that you need to do that.
 """
+
 import json
 import os
 import time
 
-from flask import Response
-
 from .. import __version__
 from ..mimetypes import get_url
+from ..wrappers import ApiResponse
 from .helpers import (
     clean_files,
     get_metadata_path,
@@ -18,7 +18,7 @@ from .helpers import (
 )
 
 
-def get_json(file_token: str = "") -> Response:
+def get_json(file_token: str = "") -> ApiResponse:
     """
     Checks the status of a file in the file queue:
     - reads the file metadata to check if the file has expired or not; files expire after API_CLEANER_FILE_LIFETIME; if
@@ -35,38 +35,22 @@ def get_json(file_token: str = "") -> Response:
     lifetime = float(os.getenv("API_CLEANER_FILE_LIFETIME", "1800.0"))
 
     if not file_token:
-        return Response(
-            json.dumps({"error": "missing file token", "version": __version__}),
-            status=400,
-            mimetype="application/json",
-        )
+        return ApiResponse.from_dict({"error": "missing file token", "version": __version__}, status=400)
 
     meta_file = get_metadata_path(file_token)
     if not meta_file.is_file():
         clean_files(file_token)
-        return Response(
-            json.dumps({"error": "missing file metadata", "version": __version__}),
-            status=400,
-            mimetype="application/json",
-        )
+        return ApiResponse.from_dict({"error": "missing file metadata", "version": __version__}, status=400)
 
     try:
         file_metadata = json.load(meta_file.open("r"))
     except:
         clean_files(file_token)
-        return Response(
-            json.dumps({"error": "corrupted metadata", "version": __version__}),
-            status=400,
-            mimetype="application/json",
-        )
+        return ApiResponse.from_dict({"error": "corrupted metadata", "version": __version__}, status=400)
 
     if float(file_metadata.get("upload_time", 0)) + lifetime < time.time():
         clean_files(file_token)
-        return Response(
-            json.dumps({"error": "token expired", "version": __version__}),
-            status=400,
-            mimetype="application/json",
-        )
+        return ApiResponse.from_dict({"error": "token expired", "version": __version__}, status=400)
 
     json_file = get_prepared_path(file_token)
     if json_file.is_file():
@@ -78,13 +62,7 @@ def get_json(file_token: str = "") -> Response:
 
         if not json_data:
             clean_files(file_token)
-            return Response(
-                json.dumps(
-                    {"error": "invalid model output", "version": __version__},
-                    status=400,
-                    mimetype="application/json",
-                )
-            )
+            return ApiResponse.from_dict({"error": "invalid model output", "version": __version__}, status=400)
 
         json_data.update(
             {
@@ -98,7 +76,7 @@ def get_json(file_token: str = "") -> Response:
         )
         clean_files(file_token)
 
-        return Response(json.dumps(json_data), status=200, mimetype="application/json")
+        return ApiResponse.from_dict(json_data, status=200)
 
     file_metadata.update(
         {
@@ -114,4 +92,4 @@ def get_json(file_token: str = "") -> Response:
         else:
             file_metadata["urls"] = [get_url(file) for file in prepared_files]
 
-    return Response(json.dumps(file_metadata), status=200, mimetype="application/json")
+    return ApiResponse.from_dict(file_metadata, status=200)

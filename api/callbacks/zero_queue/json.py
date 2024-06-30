@@ -2,13 +2,14 @@ import json
 import time
 
 import zmq
-from flask import Response, current_app, request
+from flask import current_app, request
 
 from .. import __version__
+from ..wrappers import ApiResponse
 from .helpers import Socket
 
 
-def get_json() -> Response:
+def get_json() -> ApiResponse:
     with Socket() as socket:
         current_app.logger.debug("Sending request: %s", request.json)
         socket.send_json(request.json)
@@ -22,7 +23,10 @@ def get_json() -> Response:
             socket.close()
             current_app.logger.debug("Worker connection timeout")
 
-        response["version"] = __version__
-        response["latency"] = time.perf_counter() - start_time
+        if not isinstance(response, dict):
+            response = {"error": "invalid response"}
 
-        return Response(json.dumps(response, default=str), mimetype="application/json")
+        response["version"] = __version__
+        response["latency"] = "%.2f" % (time.perf_counter() - start_time)
+
+        return ApiResponse.from_dict(response)

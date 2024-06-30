@@ -1,22 +1,24 @@
 """
 Document processing callbacks using the file queue.
 """
+
 import json
 import logging
 import os
 import time
 from hashlib import md5, sha256
 
-from flask import Response, request
+from flask import request
 
 from .. import __version__
 from ..mimetypes import get_extension
+from ..wrappers import ApiResponse
 from .helpers import get_metadata_path, get_staged_path
 
 logger = logging.getLogger(__name__)
 
 
-def put_document() -> Response:
+def put_document() -> ApiResponse:
     """
     Upload a document to the file queue.
     The document will be hashed using API_FILE_HASHER (default: SHA256) and stored at /tmp/ai/staged/<hash>.<extension>.
@@ -33,11 +35,7 @@ def put_document() -> Response:
     """
     document_file = request.files.get("document")
     if not document_file:
-        return Response(
-            json.dumps({"error": "missing document"}),
-            status=400,
-            mimetype="application/json",
-        )
+        return ApiResponse.from_dict({"error": "missing document"}, status=400)
 
     document_type = document_file.mimetype
     document_data = document_file.read()
@@ -69,14 +67,10 @@ def put_document() -> Response:
     with staged_file.open("wb") as fp:
         fp.write(document_data)
 
-    return Response(
-        json.dumps({"token": document_token, "version": __version__}),
-        status=200,
-        mimetype="application/json",
-    )
+    return ApiResponse.from_dict({"token": document_token})
 
 
-def delete_document(document_token: str) -> Response:
+def delete_document(document_token: str) -> ApiResponse:
     """
     Does not actually delete the document, but marks it for deletion by creating an empty application/x-delete file
     with the same token as the document under /tmp/ai/staged/<token>.delete path.
@@ -89,13 +83,11 @@ def delete_document(document_token: str) -> Response:
         - other: any other metadata to store with the document.
     """
     if not document_token:
-        return Response(
-            json.dumps({"error": "missing token"}),
-            status=400,
-            mimetype="application/json",
-        )
+        return ApiResponse.from_dict({"error": "missing token"}, status=400)
 
     if request.mimetype == "application/json":
+        if not isinstance(request.json, dict):
+            return ApiResponse.from_dict({"error": "invalid json data"}, status=400)
         other_data = request.json
     elif request.mimetype == "application/x-www-form-urlencoded":
         other_data = request.form
@@ -119,8 +111,4 @@ def delete_document(document_token: str) -> Response:
     with staged_file.open("w") as fp:
         fp.write("")
 
-    return Response(
-        json.dumps({"token": document_token, "version": __version__}),
-        status=200,
-        mimetype="application/json",
-    )
+    return ApiResponse.from_dict({"token": document_token})

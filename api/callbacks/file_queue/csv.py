@@ -1,21 +1,23 @@
 """
 CSV processing callbacks using the file queue.
 """
+
 import json
 import os
 import time
 from hashlib import md5, sha256
-from io import BytesIO
 from pathlib import Path
+from typing import Union
 
-from flask import Response, request, send_file
+from flask import request
 
 from .. import __version__
 from ..mimetypes import get_mimetype
+from ..wrappers import ApiResponse
 from .helpers import clean_files, get_metadata_path, get_prepared_paths, get_staged_path
 
 
-def put_csv() -> Response:
+def put_csv() -> ApiResponse:
     """
     Upload a CSV file to the file queue.
     The CSV file will be hashed using API_FILE_HASHER (default: SHA256) and stored at /tmp/ai/staged/<hash>.<extension>.
@@ -32,11 +34,7 @@ def put_csv() -> Response:
     """
     csv_file = request.files.get("csv")
     if not csv_file:
-        return Response(
-            json.dumps({"error": "missing csv"}),
-            status=400,
-            mimetype="application/json",
-        )
+        return ApiResponse.from_dict({"error": "missing csv"}, status=400)
 
     csv_type = csv_file.mimetype
     csv_data = csv_file.read()
@@ -65,14 +63,10 @@ def put_csv() -> Response:
     with staged_file.open("wb") as fp:
         fp.write(csv_data)
 
-    return Response(
-        json.dumps({"token": csv_token, "version": __version__}),
-        status=200,
-        mimetype="application/json",
-    )
+    return ApiResponse.from_dict({"token": csv_token})
 
 
-def get_csv(csv_file: str) -> Response:
+def get_csv(csv_file: Union[str, Path]) -> ApiResponse:
     """
     Download a CSV file from the file queue.
     The CSV file will be retrieved from /tmp/ai/prepared/<hash>.<extension> and deleted.
@@ -89,11 +83,7 @@ def get_csv(csv_file: str) -> Response:
 
     if not prepared_files:
         clean_files(csv_token)
-        return Response(
-            json.dumps({"token": csv_token, "error": "csv not found"}),
-            status=404,
-            mimetype="application/json",
-        )
+        return ApiResponse({"token": csv_token, "error": "csv not found"}, status=404)
 
     found_file = None
     for prepared_file in prepared_files:
@@ -103,11 +93,7 @@ def get_csv(csv_file: str) -> Response:
 
     if found_file is None:
         clean_files(csv_token)
-        return Response(
-            json.dumps({"token": csv_token, "error": "csv not found"}),
-            status=404,
-            mimetype="application/json",
-        )
+        return ApiResponse.from_dict({"token": csv_token, "error": "csv not found"}, status=404)
 
     with found_file.open("rb") as fp:
         csv_data = fp.read()
@@ -117,25 +103,12 @@ def get_csv(csv_file: str) -> Response:
         clean_files(csv_token)
 
     if not csv_data:
-        return Response(
-            json.dumps({"token": csv_token, "error": "csv output is empty"}),
-            status=404,
-            mimetype="application/json",
-        )
+        return ApiResponse.from_dict({"token": csv_token, "error": "csv output is empty"}, status=404)
 
     csv_type = None
     try:
         csv_type = get_mimetype(csv_file)
     except ValueError:
-        return Response(
-            json.dumps({"token": csv_token, "error": "unknown csv type"}),
-            status=404,
-            mimetype="application/json",
-        )
+        return ApiResponse.from_dict({"token": csv_token, "error": "unknown csv type"}, status=404)
 
-    return send_file(
-        BytesIO(csv_data),
-        mimetype=csv_type,
-        as_attachment=True,
-        download_name=csv_file.name,
-    )
+    return ApiResponse.from_raw_bytes(csv_data, csv_type, csv_file.name)

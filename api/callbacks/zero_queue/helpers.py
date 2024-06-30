@@ -11,7 +11,7 @@ class Socket:
     def _context(self) -> zmq.Context:
         main_module = sys.modules["__main__"]
         if not hasattr(main_module, "_context"):
-            main_module._context = zmq.Context()
+            setattr(main_module, "_context", zmq.Context())
 
             def cleanup() -> None:
                 main_module = sys.modules["__main__"]

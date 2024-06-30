@@ -22,7 +22,10 @@ def put_text() -> Response:
             socket.close()
             current_app.logger.debug("Worker connection timeout")
 
+        if not isinstance(response, dict):
+            response = {"error": "invalid response"}
+
         response["version"] = __version__
-        response["latency"] = time.perf_counter() - start_time
+        response["latency"] = "%.2f" % (time.perf_counter() - start_time)
 
         return Response(json.dumps(response, default=str), mimetype="application/json")

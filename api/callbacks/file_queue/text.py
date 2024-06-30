@@ -1,21 +1,23 @@
 """
 Text processing callbacks using the file queue.
 """
+
 import json
 import os
 import time
 from hashlib import md5, sha256
-from io import BytesIO
 from pathlib import Path
+from typing import Union
 
-from flask import Response, request, send_file
+from flask import request
 
 from .. import __version__
 from ..mimetypes import get_mimetype
+from ..wrappers import ApiResponse
 from .helpers import clean_files, get_metadata_path, get_prepared_paths, get_staged_path
 
 
-def put_text() -> Response:
+def put_text() -> ApiResponse:
     """
     Create a text file in the file queue from a string passed in the request.
     The text file will be hashed using API_TEXT_HASHER (default: SHA256) and stored at /tmp/ai/staged/<hash>.txt.
@@ -32,27 +34,24 @@ def put_text() -> Response:
         - text: the text to upload
         - other: any other metadata to store with the text.
     """
+    text_data = None
+    other_data = {}
     if request.mimetype == "application/json":
+        if not isinstance(request.json, dict):
+            return ApiResponse.from_dict({"error": "invalid JSON data"}, status=400)
         text_data = request.json.get("text", "")
         other_data = {k: v for k, v in request.json.items() if k != "text"}
     elif request.mimetype == "multipart/form-data":
         text_data = request.form.get("text", "")
         other_data = {k: v for k, v in request.form.items() if k != "text"}
     elif request.mimetype == "application/x-www-form-urlencoded":
-        text_data = request.files.get("text")
-        if text_data:
-            text_data = text_data.read()
+        raw_data = request.files.get("text")
+        if raw_data:
+            text_data = raw_data.read().decode("utf8")
         other_data = request.form
-    else:
-        text_data = None
-        other_data = {}
 
     if not text_data:
-        return Response(
-            json.dumps({"error": "missing text"}),
-            status=400,
-            mimetype="application/json",
-        )
+        return ApiResponse.from_dict({"error": "missing text"}, status=400)
 
     text_hash = ({"MD5": md5, "SHA256": sha256}.get(os.getenv("API_TEXT_HASHER", "SHA256").upper()) or sha256)()
     text_hash.update(text_data.encode("utf8"))
@@ -76,14 +75,10 @@ def put_text() -> Response:
     with staged_file.open("w") as fp:
         fp.write(text_data)
 
-    return Response(
-        json.dumps({"token": text_token, "version": __version__}),
-        status=200,
-        mimetype="application/json",
-    )
+    return ApiResponse({"token": text_token, "version": __version__}, status=200)
 
 
-def get_text(text_file: str) -> Response:
+def get_text(text_file: Union[str, Path]) -> ApiResponse:
     """
     Return a text file from the file queue.
     If the text file has been processed, the text is returned. The function is intended to be called with the URL/URLs
@@ -99,11 +94,7 @@ def get_text(text_file: str) -> Response:
     prepared_files = get_prepared_paths(text_token)
 
     if not prepared_files:
-        return Response(
-            json.dumps({"token": text_token, "error": "text not found"}),
-            status=404,
-            mimetype="application/json",
-        )
+        return ApiResponse.from_dict({"token": text_token, "error": "text not found"}, status=404)
 
     found_file = None
     for prepared_file in prepared_files:
@@ -113,11 +104,7 @@ def get_text(text_file: str) -> Response:
 
     if found_file is None:
         clean_files(text_token)
-        return Response(
-            json.dumps({"token": text_token, "error": "text not found"}),
-            status=404,
-            mimetype="application/json",
-        )
+        return ApiResponse.from_dict({"token": text_token, "error": "text not found"}, status=404)
 
     with found_file.open("rb") as fp:
         text_data = fp.read()
@@ -127,25 +114,12 @@ def get_text(text_file: str) -> Response:
         clean_files(text_token)
 
     if not text_data:
-        return Response(
-            json.dumps({"token": text_token, "error": "text output is empty"}),
-            status=404,
-            mimetype="application/json",
-        )
+        return ApiResponse.from_dict({"token": text_token, "error": "text output is empty"}, status=404)
 
     text_type = None
     try:
-        text_type = get_mimetype(prepared_file.suffix)
+        text_type = get_mimetype(found_file)
     except ValueError:
-        return Response(
-            json.dumps({"token": text_token, "error": "unknown text type"}),
-            status=404,
-            mimetype="application/json",
-        )
+        return ApiResponse.from_dict({"token": text_token, "error": "unknown text type"}, status=404)
 
-    return send_file(
-        BytesIO(text_data),
-        mimetype=text_type,
-        as_attachment=True,
-        download_name=text_token.name,
-    )
+    return ApiResponse.from_raw_bytes(text_data, text_type, text_file.name)

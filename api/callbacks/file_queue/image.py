@@ -1,24 +1,26 @@
 """
 Image file queue callbacks.
 """
+
 import json
 import logging
 import os
 import time
 from hashlib import md5, sha256
-from io import BytesIO
 from pathlib import Path
+from typing import Union
 
-from flask import Response, request, send_file
+from flask import request
 
 from .. import __version__
 from ..mimetypes import get_extension, get_mimetype
+from ..wrappers import ApiResponse
 from .helpers import clean_files, get_metadata_path, get_prepared_paths, get_staged_path
 
 logger = logging.getLogger(__name__)
 
 
-def put_image() -> Response:
+def put_image() -> ApiResponse:
     """
     Upload an image to the file queue.
     The image will be hashed using API_FILE_HASHER (default: SHA256) and stored at /tmp/ai/staged/<hash>.<extension>.
@@ -35,11 +37,7 @@ def put_image() -> Response:
     """
     image_file = request.files.get("image")
     if not image_file:
-        return Response(
-            json.dumps({"error": "missing image"}),
-            status=400,
-            mimetype="application/json",
-        )
+        return ApiResponse.from_dict({"error": "missing image"}, status=400)
 
     image_type = image_file.mimetype
     image_data = image_file.read()
@@ -71,14 +69,10 @@ def put_image() -> Response:
     with staged_file.open("wb") as fp:
         fp.write(image_data)
 
-    return Response(
-        json.dumps({"token": image_token, "version": __version__}),
-        status=200,
-        mimetype="application/json",
-    )
+    return ApiResponse.from_dict({"token": image_token})
 
 
-def get_image(image_file: str) -> Response:
+def get_image(image_file: Union[str, Path]) -> ApiResponse:
     """
     Get an image from the file queue.
     If the image has been processed, the image is returned. The function is intended to be called with the URL/URLs
@@ -96,11 +90,7 @@ def get_image(image_file: str) -> Response:
 
     if not prepared_files:
         clean_files(image_token)
-        return Response(
-            json.dumps({"token": image_token, "error": "image not found"}),
-            status=404,
-            mimetype="application/json",
-        )
+        return ApiResponse.from_dict({"token": image_token, "error": "image not found"}, status=404)
 
     found_file = None
     for prepared_file in prepared_files:
@@ -110,11 +100,7 @@ def get_image(image_file: str) -> Response:
 
     if found_file is None:
         clean_files(image_token)
-        return Response(
-            json.dumps({"token": image_token, "error": "image not found"}),
-            status=404,
-            mimetype="application/json",
-        )
+        return ApiResponse.from_dict({"token": image_token, "error": "image not found"}, status=404)
 
     with found_file.open("rb") as fp:
         image_data = fp.read()
@@ -124,25 +110,12 @@ def get_image(image_file: str) -> Response:
         clean_files(image_token)
 
     if not image_data:
-        return Response(
-            json.dumps({"token": image_token, "error": "image output is empty"}),
-            status=404,
-            mimetype="application/json",
-        )
+        return ApiResponse.from_dict({"token": image_token, "error": "image output is empty"}, status=404)
 
     image_type = None
     try:
-        image_type = get_mimetype(image_data)
+        image_type = get_mimetype(image_file)
     except ValueError:
-        return Response(
-            json.dumps({"token": image_token, "error": "unknown image type"}),
-            status=404,
-            mimetype="application/json",
-        )
+        return ApiResponse.from_dict({"token": image_token, "error": "unknown image type"}, status=404)
 
-    return send_file(
-        BytesIO(image_data),
-        mimetype=image_type,
-        as_attachment=True,
-        download_name=image_file.name,
-    )
+    return ApiResponse.from_raw_bytes(image_data, image_type, image_file.name)
