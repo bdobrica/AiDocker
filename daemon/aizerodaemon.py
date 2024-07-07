@@ -11,8 +11,8 @@ from typing import Any, Dict
 
 import zmq
 
+from .aifileinput import AiInput
 from .aiforkdaemon import AiForkDaemon
-from .aiinput import AiInput
 from .zeroqueuemixin import ZeroQueueMixin
 
 logger = logging.getLogger(__name__)
@@ -46,6 +46,7 @@ class AiZeroDaemon(AiForkDaemon, ZeroQueueMixin):
         errors: int = 0
 
         while True:
+            model_output = {}
             try:
                 socket_payload = socket.recv_json()
                 logging.debug("Received payload: %s", socket_payload)

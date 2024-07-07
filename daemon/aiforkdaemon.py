@@ -3,7 +3,7 @@ import multiprocessing as mp
 import os
 import signal
 import time
-from typing import Any, Type
+from typing import Any, Optional, Type
 
 from .aiinput import AiInput
 from .daemon import Daemon, PathLike
@@ -23,6 +23,7 @@ class AiForkDaemon(Daemon):
         stderr: PathLike = os.devnull,
     ):
         self.input_type = input_type
+        self.worker_id: Optional[int] = None
         super().__init__(pidfile=pidfile, chroot=chroot, stdin=stdin, stdout=stdout, stderr=stderr)
 
     @property
@@ -36,12 +37,15 @@ class AiForkDaemon(Daemon):
         logger.info("Restarting worker %s", worker_id)
         self.workers_pool.append(worker_id)
 
-    def fork_worker(self, worker_id: int, staged_batch: Any) -> None:
+    def fork_worker(self, worker_id: int, staged_batch: Any) -> int:
         logger.info("Starting worker %s processing %s", worker_id, staged_batch)
+
+        self.worker_id = worker_id
 
         model_input = self.input_type(staged_batch)
         model_output = self.ai(model_input.prepare())
         model_input.serve(model_output)
+        return worker_id
 
     def queue(self):
         mp_context = mp.get_context("fork")
@@ -49,9 +53,9 @@ class AiForkDaemon(Daemon):
         self.workers_pool = list(range(self.workers_number))
 
         with mp_context.Pool(processes=self.workers_number) as pool:
-            while self.workers_pool and (input_batch := self.input_type.get_input_batch(batch_size=1)):
+            while self.workers_pool and (input := self.input_type.get_input()):
                 worker_id = self.workers_pool.pop(0)
-                pool.apply_async(self.fork_worker, [worker_id, input_batch], callback=self.requeue_worker)
+                pool.apply_async(self.fork_worker, [worker_id, input], callback=self.requeue_worker)
 
     def run(self):
         signal.signal(signal.SIGCHLD, signal.SIG_IGN)

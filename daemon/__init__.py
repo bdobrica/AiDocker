@@ -1,5 +1,7 @@
 from .aibatch import AiBatch
 from .aibatchdaemon import AiBatchDaemon
+from .aifilebatch import AiFileBatch
+from .aifileinput import AiFileInput
 from .aiforkdaemon import AiForkDaemon
 from .aiinput import AiInput
 from .aizerodaemon import AiZeroDaemon
@@ -16,6 +18,8 @@ AiLiveDaemon = AiZeroDaemon
 __all__ = [
     "AiBatch",
     "AiBatchDaemon",
+    "AiFileBatch",
+    "AiFileInput",
     "AiForkDaemon",
     "AiInput",
     "AiZeroDaemon",

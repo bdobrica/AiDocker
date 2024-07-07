@@ -211,7 +211,7 @@ class Daemon(ModelMixin):
         self.stop()
         self.start()
 
-    def run(self):
+    def run(self) -> None:
         """
         Method to be overwritten by subclasses.
         This method will be called after the daemon is daemonized.

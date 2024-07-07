@@ -10,7 +10,10 @@ from .zeroqueuemixin import ZeroQueueMixin
 
 class ZMQDaemon(Daemon, ZeroQueueMixin):
     def get_zmq_address(self, env_var: str, default_value: Optional[str] = None) -> str:
-        socket_path = Path(os.getenv(env_var, default_value)).with_suffix(self.model_suffix)
+        socket_env_var = os.getenv(env_var, default_value)
+        if not socket_env_var:
+            raise ValueError(f"Environment variable {env_var} is not set")
+        socket_path = Path(socket_env_var).with_suffix(self.model_suffix)
         socket_path.parent.mkdir(parents=True, exist_ok=True)
         return f"ipc://{socket_path.absolute().as_posix()}"
 
