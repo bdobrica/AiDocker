@@ -16,13 +16,13 @@ import json
 import logging
 import os
 from pathlib import Path
+from types import ModuleType
+from typing import Optional
 
 import yaml
-from flask import Flask, Response, g
+from flask import Flask, Response
 
-from daemon import ZeroQueueMixin
-
-from .callbacks import __version__, file_queue, zero_queue
+from .callbacks import __version__, file_queue, kafka_queue, rabbit_queue, zero_queue
 
 app = Flask(__name__)
 
@@ -50,8 +50,10 @@ if __name__ == "__main__":
         parts = endpoint["endpoint"].strip("/").split("/")
         method = parts[0].upper()
         callback_name = "_".join(parts[:2])
-        module = {
+        module: Optional[ModuleType] = {
             "file": file_queue,
+            "kafka": kafka_queue,
+            "rabbit": rabbit_queue,
             "zero": zero_queue,
         }.get(endpoint["queue"], None)
         if module is None or not hasattr(module, callback_name):
@@ -73,12 +75,8 @@ if __name__ == "__main__":
         )
         app.route(endpoint_path, methods=[method])(callback)
 
-    if load_zmq:
-        with app.app_context():
-            app.logger.info("Loading ZeroMQ")
-            zmq_mixin = ZeroQueueMixin()
-            app.config["zmq_worker_timeout"] = zmq_mixin.worker_timeout
-            app.config["zmq_client_address"] = zmq_mixin.client_address
+        if hasattr(module, "load"):
+            module.load(app)
 
     @app.route("/", methods=["GET", "POST"])
     def get_root():

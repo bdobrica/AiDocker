@@ -89,6 +89,8 @@ def delete_document(document_token: str) -> ApiResponse:
         if not isinstance(request.json, dict):
             return ApiResponse.from_dict({"error": "invalid json data"}, status=400)
         other_data = request.json
+        if not isinstance(other_data, dict):
+            raise ValueError("Request JSON data must be a dictionary")
     elif request.mimetype == "application/x-www-form-urlencoded":
         other_data = request.form
     else:

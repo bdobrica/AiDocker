@@ -1,3 +1,4 @@
+import json
 from io import BytesIO
 from pathlib import Path
 from typing import Union
@@ -19,11 +20,12 @@ class ApiResponse(Response):
         Create a response from a dictionary.
         """
         return ApiResponse(
-            response=data,
+            response=json.dumps(data).encode("utf-8"),
             status=status,
             mimetype="application/json",
             headers={
                 "X-API-Version": __version__,
+                "Encoding": "utf-8",
             },
         )
 

@@ -8,15 +8,14 @@ It produces a module-object called MIMETYPES, which is a list of dictionaries wi
 YAML definition files are searched for first, then JSON definition files. The first file found is used.
 (see `read_mimetypes` for more details)
 """
+
 import json
-from functools import partial
+from functools import lru_cache, partial
 from pathlib import Path
+from typing import Dict, List
 
 import yaml
 from yaml.loader import SafeLoader
-
-APP_PATH = Path("/opt/app")
-MIMETYPES = []
 
 
 def read_mimetypes(file: Path) -> list:
@@ -65,13 +64,25 @@ def read_mimetypes(file: Path) -> list:
     return []
 
 
+@lru_cache
+def load_mimetypes() -> List[Dict[str, str]]:
+    mimetypes = []
+    prefix = Path(__file__).parent.parent / "data"
+    for file in ["mimetypes.yaml", "mimetypes.json"]:
+        mimetypes = read_mimetypes(prefix / file)
+        if mimetypes:
+            return mimetypes
+    raise FileNotFoundError(f"No mimetypes file found in {prefix}.")
+
+
 def get_extension(mimetype: str) -> str:
     """
     Return the working (internal) extension for a given mimetype.
     :param mimetype: the mimetype to get the extension for, e.g. `text/csv`
     :return: the extension, e.g. `.csv`
     """
-    for mimetype_ in MIMETYPES:
+    mimetypes = load_mimetypes()
+    for mimetype_ in mimetypes:
         if mimetype == mimetype_["type"]:
             return mimetype_["ext"]
     raise ValueError(f"Unknown file type: {mimetype}")
@@ -83,7 +94,8 @@ def get_mimetype(file: Path) -> str:
     :param file: the file to get the mimetype for, e.g. `test.csv`
     :return: the mimetype, e.g. `text/csv`
     """
-    for mimetype in MIMETYPES:
+    mimetypes = load_mimetypes()
+    for mimetype in mimetypes:
         if file.suffix == mimetype["ext"]:
             return mimetype["type"]
     raise ValueError(f"Unknown file type: {file}")
@@ -95,13 +107,8 @@ def get_url(file: Path) -> str:
     :param file: the file to get the URL for
     :return: the URL
     """
-    for mimetype in MIMETYPES:
+    mimetypes = load_mimetypes()
+    for mimetype in mimetypes:
         if file.suffix == mimetype["ext"]:
             return f"/get/{mimetype['file']}/{file.name}"
     raise ValueError(f"Unknown file type: {file}")
-
-
-for file in ["mimetypes.yaml", "mimetypes.json"]:
-    MIMETYPES = read_mimetypes(APP_PATH / file)
-    if MIMETYPES:
-        break

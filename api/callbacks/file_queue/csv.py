@@ -12,7 +12,7 @@ from typing import Union
 from flask import request
 
 from .. import __version__
-from ..mimetypes import get_mimetype
+from ..mimetypes import get_extension, get_mimetype
 from ..wrappers import ApiResponse
 from .helpers import clean_files, get_metadata_path, get_prepared_paths, get_staged_path
 
@@ -43,8 +43,7 @@ def put_csv() -> ApiResponse:
     csv_hash.update(csv_data)
     csv_token = csv_hash.hexdigest()
 
-    with open("/opt/app/mimetypes.json", "r") as fp:
-        csv_extension = json.load(fp).get(csv_type, ".csv")
+    csv_extension = get_extension(csv_type)
 
     csv_metadata = {
         **request.form,
