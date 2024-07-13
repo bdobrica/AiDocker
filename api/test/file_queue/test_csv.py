@@ -1,9 +1,11 @@
+import io
 import json
 import logging
 import os
 import tempfile
 import time
 from pathlib import Path
+from typing import IO, Iterator, Tuple
 
 import pytest
 from flask import Flask
@@ -19,7 +21,7 @@ CSV_CONTENT = """a,b,c
 
 
 @pytest.fixture()
-def app():
+def app() -> Iterator[Flask]:
     app = Flask(__name__)
     app.config.update(
         {
@@ -32,7 +34,7 @@ def app():
 
 
 @pytest.fixture()
-def csv_fp():
+def csv_fp() -> Iterator[IO[bytes]]:
     with tempfile.NamedTemporaryFile(suffix=".csv") as fp:
         fp.write(CSV_CONTENT.encode("utf-8"))
         fp.seek(0)
@@ -40,7 +42,7 @@ def csv_fp():
 
 
 @pytest.fixture()
-def file_queue():
+def file_queue() -> Iterator[Tuple[str, str, str]]:
     staged_path = os.getenv("STAGED_PATH")
     prepared_path = os.getenv("PREPARED_PATH")
     source_path = os.getenv("SOURCE_PATH")
@@ -52,7 +54,7 @@ def file_queue():
         yield staged_path, source_path, prepared_path
 
 
-def test_put_csv(file_queue, app, csv_fp):
+def test_put_csv(file_queue: Tuple[str, str, str], app: Flask, csv_fp: IO[bytes]) -> None:
     staged_path, _, _ = file_queue
     with app.test_client() as client:
         upload_time = time.time()
@@ -64,6 +66,7 @@ def test_put_csv(file_queue, app, csv_fp):
         assert response.status_code == 200
         assert response.headers["Content-Type"] == "application/json"
         assert response.headers["X-API-Version"] == __version__
+        assert response.json is not None
         assert response.json.get("token") is not None
         token = response.json["token"]
         logging.info("File token: %s", token)
@@ -82,7 +85,7 @@ def test_put_csv(file_queue, app, csv_fp):
             assert abs(metadata.get("upload_time") - upload_time) < 1.0
 
 
-def test_get_csv(file_queue, app, csv_fp):
+def test_get_csv(file_queue: Tuple[str, str, str], app: Flask, csv_fp: IO[bytes]) -> None:
     staged_path, _, prepared_path = file_queue
     with app.test_client() as client:
         logging.info("Uploading CSV file ...")
@@ -90,6 +93,7 @@ def test_get_csv(file_queue, app, csv_fp):
 
         logging.info("Checking response ...")
         assert response.status_code == 200
+        assert response.json is not None
         assert response.json.get("token") is not None
         token = response.json["token"]
         logging.info("File token: %s", token)
