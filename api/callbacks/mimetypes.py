@@ -12,13 +12,13 @@ YAML definition files are searched for first, then JSON definition files. The fi
 import json
 from functools import lru_cache, partial
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Union
 
 import yaml
 from yaml.loader import SafeLoader
 
 
-def read_mimetypes(file: Path) -> list:
+def read_mimetypes(mimetype_file: Union[str, Path]) -> list:
     """
     Mimetypes are specified in a YAML or JSON file by providing a standard extension and a file reference that allows selection of the correct callback. Here's an example:
     ```yaml
@@ -41,13 +41,14 @@ def read_mimetypes(file: Path) -> list:
     :param file: the file to read
     :return: the list of mimetypes
     """
+    minetype_file = Path(mimetype_file) if not isinstance(mimetype_file, Path) else mimetype_file
     reader = {
         ".json": json.load,
         ".yaml": partial(yaml.load, Loader=SafeLoader),
     }
     try:
-        with file.open("r") as fp:
-            result = reader[file.suffix.lower()](fp)
+        with minetype_file.open("r") as fp:
+            result = reader[minetype_file.suffix.lower()](fp)
             if isinstance(result, dict):
                 return [
                     {
@@ -88,27 +89,29 @@ def get_extension(mimetype: str) -> str:
     raise ValueError(f"Unknown file type: {mimetype}")
 
 
-def get_mimetype(file: Path) -> str:
+def get_mimetype(file_name: Union[str, Path]) -> str:
     """
     Get the mimetype for a given file using the extension.
     :param file: the file to get the mimetype for, e.g. `test.csv`
     :return: the mimetype, e.g. `text/csv`
     """
     mimetypes = load_mimetypes()
+    file_name = Path(file_name) if not isinstance(file_name, Path) else file_name
     for mimetype in mimetypes:
-        if file.suffix == mimetype["ext"]:
+        if file_name.suffix == mimetype["ext"]:
             return mimetype["type"]
-    raise ValueError(f"Unknown file type: {file}")
+    raise ValueError(f"Unknown file type for suffix: {file_name.suffix}")
 
 
-def get_url(file: Path) -> str:
+def get_url(file_name: Union[str, Path]) -> str:
     """
     Given a file, return the URL to retrieve it.
     :param file: the file to get the URL for
     :return: the URL
     """
     mimetypes = load_mimetypes()
+    file_name = Path(file_name) if not isinstance(file_name, Path) else file_name
     for mimetype in mimetypes:
-        if file.suffix == mimetype["ext"]:
-            return f"/get/{mimetype['file']}/{file.name}"
-    raise ValueError(f"Unknown file type: {file}")
+        if file_name.suffix == mimetype["ext"]:
+            return f"/get/{mimetype['file']}/{file_name.name}"
+    raise ValueError(f"Unknown file type for suffix: {file_name.suffix}")
