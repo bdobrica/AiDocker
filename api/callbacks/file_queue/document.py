@@ -7,6 +7,8 @@ import logging
 import os
 import time
 from hashlib import md5, sha256
+from pathlib import Path
+from typing import Optional, Union
 
 from flask import request
 
@@ -70,20 +72,26 @@ def put_document() -> ApiResponse:
     return ApiResponse.from_dict({"token": document_token})
 
 
-def delete_document(document_token: str) -> ApiResponse:
+def delete_document(document_file: Optional[Union[str, Path]]) -> ApiResponse:
     """
     Does not actually delete the document, but marks it for deletion by creating an empty application/x-delete file
     with the same token as the document under /tmp/ai/staged/<token>.delete path.
     Request details:
     - method: DELETE
-    - path: /<endpoint>/<document_token>
+    - path: /<endpoint>/<document_file>
     - form data (optional):
         - other: any other metadata to store with the document.
     - json data (optional):
         - other: any other metadata to store with the document.
     """
+    if not document_file:
+        return ApiResponse.from_dict({"error": "missing document file"}, status=400)
+
+    document_file = Path(document_file)
+    document_token = document_file.stem.split("_", 1)[0]
+
     if not document_token:
-        return ApiResponse.from_dict({"error": "missing token"}, status=400)
+        return ApiResponse.from_dict({"error": "could not extract document token"}, status=400)
 
     if request.mimetype == "application/json":
         if not isinstance(request.json, dict):

@@ -25,7 +25,7 @@ def app() -> Iterator[Flask]:
         }
     )
     app.post(("/put/document"))(put_document)
-    app.get(("/delete/document/<document>"))(delete_document)
+    app.get(("/delete/document/<document_file>"))(delete_document)
     yield app
 
 
@@ -89,3 +89,39 @@ def test_put_document(file_queue, app, document_fp):
             assert metadata.get("type") == document_mimetype
             assert metadata.get("processed") == "false"
             assert abs(metadata.get("upload_time") - upload_time) < 1.0
+
+
+def test_delete_document(file_queue, app, document_fp):
+    staged_path, _, _ = file_queue
+    document_fp.seek(0)
+
+    with app.test_client() as client:
+        upload_time = time.time()
+
+        logging.info("Uploading the document file %s ...", document_fp.name)
+        response = client.post("/put/document", data={"document": document_fp})
+
+        logging.info("Checking response ...")
+        assert response.status_code == 200
+        assert response.headers["Content-Type"] == "application/json"
+        assert response.headers["X-API-Version"] == __version__
+        assert response.json.get("token") is not None
+        token = response.json["token"]
+        suffix = Path(document_fp.name).suffix.lower()
+        logging.info("File token: %s", token)
+
+        document_file = Path(token).with_suffix(suffix)
+
+        logging.info("Deleting document %s ...", document_fp.name)
+        response = client.get(f"/delete/document/{document_file}")
+
+        logging.info("Checking response ...")
+        assert response.status_code == 200
+        assert response.headers["Content-Type"] == "application/json"
+        assert response.headers["X-API-Version"] == __version__
+        assert response.json.get("token") == token
+        assert response.json.get("error") is None
+
+        logging.info("Checking if the .delete file was created ...")
+        assert Path(f"{staged_path}/{token}.delete").exists()
+        assert Path(f"{staged_path}/{token}.json").exists()
