@@ -54,7 +54,7 @@ def file_queue() -> Iterator[Tuple[str, str, str]]:
         yield staged_path, source_path, prepared_path
 
 
-def test_put_document(file_queue, app, document_fp):
+def test_put_document(file_queue: Tuple[str, str, str], app: Flask, document_fp: IO[bytes]) -> None:
     staged_path, _, _ = file_queue
     document_content = document_fp.read()
     document_fp.seek(0)
@@ -69,6 +69,7 @@ def test_put_document(file_queue, app, document_fp):
         assert response.status_code == 200
         assert response.headers["Content-Type"] == "application/json"
         assert response.headers["X-API-Version"] == __version__
+        assert response.json is not None
         assert response.json.get("token") is not None
         token = response.json["token"]
         logging.info("File token: %s", token)
@@ -91,7 +92,7 @@ def test_put_document(file_queue, app, document_fp):
             assert abs(metadata.get("upload_time") - upload_time) < 1.0
 
 
-def test_delete_document(file_queue, app, document_fp):
+def test_delete_document(file_queue: Tuple[str, str, str], app: Flask, document_fp: IO[bytes]) -> None:
     staged_path, _, _ = file_queue
     document_fp.seek(0)
 
@@ -105,6 +106,7 @@ def test_delete_document(file_queue, app, document_fp):
         assert response.status_code == 200
         assert response.headers["Content-Type"] == "application/json"
         assert response.headers["X-API-Version"] == __version__
+        assert response.json is not None
         assert response.json.get("token") is not None
         token = response.json["token"]
         suffix = Path(document_fp.name).suffix.lower()
@@ -119,6 +121,7 @@ def test_delete_document(file_queue, app, document_fp):
         assert response.status_code == 200
         assert response.headers["Content-Type"] == "application/json"
         assert response.headers["X-API-Version"] == __version__
+        assert response.json is not None
         assert response.json.get("token") == token
         assert response.json.get("error") is None
 

@@ -83,8 +83,14 @@ def get_image(image_file: Union[str, Path]) -> ApiResponse:
     :param image_file: the image file to get
     :return: the image
     """
+    if not image_file:
+        return ApiResponse.from_dict({"error": "missing image file"}, status=400)
+
     image_file = Path(image_file)
     image_token = image_file.stem.split("_", 2)[0]
+
+    if not image_token:
+        return ApiResponse.from_dict({"token": image_token, "error": "missing image token"}, status=400)
 
     prepared_files = get_prepared_paths(image_token)
 
