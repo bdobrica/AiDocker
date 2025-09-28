@@ -1,0 +1,16 @@
+name: birefnet
+description: Given an image, extract the background of the image and keep only what is considered foregrownd.
+port: 5015
+weights:
+  - birefnet/birefnet.pth
+input:
+  endpoint: /put/image
+  required:
+    image: image
+  parameters:
+    background:
+      - color
+      - url
+output:
+  endpoint: /get/image
+  type: image

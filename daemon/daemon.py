@@ -12,7 +12,7 @@ Example usage:
         def run(self) -> None:
             while True:
                 do_something()
-    
+
     if __name__ == "__main__":
         daemon = MyDaemon(pidfile="/tmp/mydaemon.pid", chroot="/")
         if len(sys.argv) == 2:
@@ -30,6 +30,7 @@ Example usage:
             print("usage: %s start|stop|restart" % sys.argv[0])
     ```
 """
+
 import atexit
 import os
 import sys
@@ -211,7 +212,7 @@ class Daemon(ModelMixin):
         self.stop()
         self.start()
 
-    def run(self):
+    def run(self) -> None:
         """
         Method to be overwritten by subclasses.
         This method will be called after the daemon is daemonized.
