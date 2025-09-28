@@ -5,6 +5,7 @@ kornia
 numpy
 opencv-python
 pyyaml
+pyzmq
 scikit-image
 scipy
 timm
