@@ -48,9 +48,13 @@ RUN mkdir -p /tmp/ai/prepared
 ### INSTALLING BASE PYTHON PACKAGES ###
 RUN apt-get update && apt-get install -y python3-opencv
 
+### INSTALLING OTHER REQUIRED PACKAGES ###
+COPY birefnet/requirements.txt /opt/app
+RUN python3 -m pip install --upgrade pip
+RUN python3 -m pip install -r /opt/app/requirements.txt
+
 ### COPYING FILES ###
 COPY birefnet/container.yaml /opt/app
-COPY birefnet/requirements.txt /opt/app
 COPY birefnet/birefnet /opt/app/birefnet
 COPY birefnet/ai.py /opt/app
 COPY birefnet/birefnet.pth /opt/app
@@ -65,10 +69,6 @@ RUN chmod +x /opt/app/ai.py
 RUN chmod +x /opt/app/cleaner.py
 RUN chmod +x /opt/app/api.py
 RUN chmod +x /opt/app/entry.sh
-
-### INSTALLING OTHER REQUIRED PACKAGES ###
-RUN python3 -m pip install --upgrade pip
-RUN python3 -m pip install -r /opt/app/requirements.txt
 
 ### WORKERS CONFIGURATION ###
 ENV MAX_FORK=${MAX_FORK}
