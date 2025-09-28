@@ -7,6 +7,9 @@ ARG CUDA_VERSION=12.6.1          # for ENV + symlink
 ARG CUDART_VERSION=12.6.77-1     # apt version string for cuda-cudart-<MM>
 ARG CUDA_COMPAT_PKG=cuda-compat-12-6
 
+### SETTINGS FOR AI WORKERS ###
+ARG MAX_FORK=1
+
 ENV NVARCH=${NVARCH}
 ### SIMPLE GUARD TO ENSURE COMPATIBILITY BETWEEN HOST AND CONTAINER DRIVERS ###
 ENV NVIDIA_REQUIRE_CUDA="cuda>=${CUDA_VERSION%.*}"
@@ -64,6 +67,9 @@ RUN chmod +x /opt/app/entry.sh
 ### INSTALLING OTHER REQUIRED PACKAGES ###
 RUN python3 -m pip install --upgrade pip
 RUN python3 -m pip install -r /opt/app/requirements.txt
+
+### WORKERS CONFIGURATION ###
+ENV MAX_FORK=${MAX_FORK}
 
 ### RUNNING THE SCRIPT ###
 ENTRYPOINT ["/opt/app/entry.sh"]
