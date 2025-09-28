@@ -1,0 +1,12 @@
+einops
+flask
+huggingface-hub
+kornia
+numpy
+opencv-python
+pyyaml
+scikit-image
+scipy
+timm
+torch
+torchvision

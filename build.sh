@@ -44,8 +44,8 @@ function build_container {
                 if [ ! -f "${weight_file}" ]; then
                     echo "Creating directory $(dirname ${weight_file})"
                     mkdir -p $(dirname ${weight_file})
-                    echo "Downloading ${line} to ${weight_file} ..."
-                    wget "https://ublo.ro/wp-content/mirror/${line}" -O ${weight_file}
+                    echo "Downloading ${weight} to ${weight_file} ..."
+                    wget "https://ublo.ro/wp-content/mirror/${weight}" -O ${weight_file}
                 else
                     echo "Found ${weight_file}, skipping download"
                 fi
