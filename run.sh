@@ -90,18 +90,22 @@ function run_container {
 
     if [ "${debug_mode}" = true ]; then
         echo "Running ${model_name} on port ${port} in debug mode ..."
+        set -x
         $docker run \
             ${docker_args[@]} \
             -e DEBUG=true \
             -it \
             --entrypoint /bin/bash \
             ${model_name}
+        set +x
     else
         echo "Running ${model_name} on port ${port} ..."
+        set -x
         $docker run \
             ${docker_args[@]} \
             -d \
             ${model_name} ${container_args[@]}
+        set +x
     fi
 }
 
