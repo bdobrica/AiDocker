@@ -23,7 +23,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 ### INSTALLING NVIDIA CUDA FOR DEBIAN BOOKWORM (RUNTIME ONLY) ###
 ENV CUDA_VERSION=${CUDA_VERSION}
+ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    jq build-essential python3-dev \
     cuda-cudart-${CUDA_MM}=${CUDART_VERSION} \
     ${CUDA_COMPAT_PKG} && \
     ln -s /usr/local/cuda-${CUDA_VERSION%.*} /usr/local/cuda && \
