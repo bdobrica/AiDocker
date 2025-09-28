@@ -55,12 +55,13 @@ class AIDaemon(Daemon):
             )
             ckpt = torch.load(MODEL_PATH, map_location=self.device)
             model.load_state_dict(ckpt, strict=True)
+            _ = model.to(self.device)
             _ = model.eval()
 
             # Image processing
             transform_image = transforms.Compose(
                 [
-                    transforms.ToTensor(),
+                    transforms.ToPILImage(),
                     transforms.Resize((1024, 1024)),
                     transforms.ToTensor(),
                     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
@@ -83,7 +84,7 @@ class AIDaemon(Daemon):
             # Inference
             im_t = transform_image(im).unsqueeze(0).to(self.device)  # type: ignore
             with torch.no_grad():
-                mask_t = model(im_t).sigmoid().cpu()[0].squeeze().clip(0, 1)
+                mask_t = model(im_t)[-1].sigmoid().cpu()[0].squeeze().clip(0, 1)
 
             mask = cv2.resize((mask_t * 255.0).to(torch.uint8).numpy(), (im_w, im_h), interpolation=cv2.INTER_LINEAR)
 
