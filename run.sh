@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -x
+
 # --events-backend=file
 debug_mode=false
 container=""
@@ -32,7 +34,7 @@ function detect_cuda {
             return
         fi
         echo "Free GPU memory found, using GPU"
-        docker_args+=("--gpus" "all")
+        docker_args+=("--runtime=nvidia" "--gpus" "all")
     else
         echo "nvidia-smi not found, using CPU"
         return

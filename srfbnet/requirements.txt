@@ -1,6 +1,7 @@
 flask
-pyyaml
 numpy
 opencv-python
+pyyaml
+pyzmq
 torch
 torchvision

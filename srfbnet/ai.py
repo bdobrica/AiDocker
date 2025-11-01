@@ -72,7 +72,8 @@ class AIDaemon(Daemon):
             # Inference
             im = np.ascontiguousarray(im.transpose((2, 0, 1)))
             im_t = torch.from_numpy(im[np.newaxis, :, :, :]).float()
-            out_im_t = model.forward(im_t)
+            with torch.no_grad():
+                out_im_t = model.forward(im_t)
             if isinstance(out_im_t, list):
                 out_im_t = out_im_t[-1]
             out_im_t = out_im_t.data[0].float().cpu()
@@ -87,7 +88,7 @@ class AIDaemon(Daemon):
                     "processed": "true",
                 },
             )
-        except Exception as e:
+        except Exception:
             if os.getenv("DEBUG", "false").lower() in ("true", "1", "on"):
                 print(traceback.format_exc())
             self.update_metadata(

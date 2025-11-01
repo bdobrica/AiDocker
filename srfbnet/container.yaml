@@ -7,6 +7,7 @@ weights:
   - srfbnet/gmfn_x4.pth
 input:
   endpoint: /put/image
+  queue: file
   required:
     image: image
   parameters:
@@ -14,3 +15,6 @@ input:
 output:
   endpoint: /get/image
   type: image
+daemons:
+  - api
+  - ai

@@ -19,9 +19,7 @@ def activation(act_type="relu", inplace=True, slope=0.2, n_prelu=1):
     elif act_type == "prelu":
         layer = nn.PReLU(num_parameters=n_prelu, init=slope)
     else:
-        raise NotImplementedError(
-            "[ERROR] Activation layer [%s] is not implemented!" % act_type
-        )
+        raise NotImplementedError("[ERROR] Activation layer [%s] is not implemented!" % act_type)
     return layer
 
 
@@ -31,9 +29,7 @@ def norm(n_feature, norm_type="bn"):
     if norm_type == "bn":
         layer = nn.BatchNorm2d(n_feature)
     else:
-        raise NotImplementedError(
-            "[ERROR] Normalization layer [%s] is not implemented!" % norm_type
-        )
+        raise NotImplementedError("[ERROR] Normalization layer [%s] is not implemented!" % norm_type)
     return layer
 
 
@@ -48,19 +44,14 @@ def pad(pad_type, padding):
     elif pad_type == "replicate":
         layer = nn.ReplicationPad2d(padding)
     else:
-        raise NotImplementedError(
-            "[ERROR] Padding layer [%s] is not implemented!" % pad_type
-        )
+        raise NotImplementedError("[ERROR] Padding layer [%s] is not implemented!" % pad_type)
     return layer
 
 
 def sequential(*args):
     if len(args) == 1:
         if isinstance(args[0], OrderedDict):
-            raise NotImplementedError(
-                "[ERROR] %s.sequential() does not support OrderedDict"
-                % sys.modules[__name__]
-            )
+            raise NotImplementedError("[ERROR] %s.sequential() does not support OrderedDict" % sys.modules[__name__])
         else:
             return args[0]
     modules = []
@@ -87,9 +78,7 @@ def ConvBlock(
     pad_type="zero",
     mode="CNA",
 ):
-    assert mode in ["CNA", "NAC"], (
-        "[ERROR] Wrong mode in [%s]!" % sys.modules[__name__]
-    )
+    assert mode in ["CNA", "NAC"], "[ERROR] Wrong mode in [%s]!" % sys.modules[__name__]
 
     if valid_padding:
         padding = get_valid_padding(kernel_size, dilation)
@@ -763,9 +752,7 @@ def DeconvBlock(
     pad_type="zero",
     mode="CNA",
 ):
-    assert mode in ["CNA", "NAC"], (
-        "[ERROR] Wrong mode in [%s]!" % sys.modules[__name__]
-    )
+    assert mode in ["CNA", "NAC"], "[ERROR] Wrong mode in [%s]!" % sys.modules[__name__]
 
     p = pad(pad_type, padding) if pad_type and pad_type != "zero" else None
     deconv = nn.ConvTranspose2d(

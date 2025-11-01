@@ -1,33 +1,44 @@
-FROM python:3.9-slim-bullseye
+FROM python:3.12-slim-bookworm
 
-ENV NVARCH x86_64
+### SETTING UP NVIDIA CUDA FOR DEBIAN BOOKWORM ###
+# Check: https://developer.download.nvidia.com/compute/cuda/repos/debian12/x86_64/index.html
+ARG NVARCH=x86_64
+ARG CUDA_MM=13-0                 # e.g., 12-4, 12-5, 12-6...
+ARG CUDA_VERSION=13.0.88         # for ENV + symlink
+ARG CUDART_VERSION=13.0.88-1     # apt version string for cuda-cudart-<MM>
+ARG CUDA_COMPAT_PKG=cuda-compat-13-0
 
-ENV NVIDIA_REQUIRE_CUDA "cuda>=11.8 brand=tesla,driver>=450,driver<451 brand=tesla,driver>=470,driver<471 brand=unknown,driver>=470,driver<471 brand=nvidia,driver>=470,driver<471 brand=nvidiartx,driver>=470,driver<471 brand=geforce,driver>=470,driver<471 brand=geforcertx,driver>=470,driver<471 brand=quadro,driver>=470,driver<471 brand=quadrortx,driver>=470,driver<471 brand=titan,driver>=470,driver<471 brand=titanrtx,driver>=470,driver<471 brand=unknown,driver>=510,driver<511 brand=nvidia,driver>=510,driver<511 brand=nvidiartx,driver>=510,driver<511 brand=geforce,driver>=510,driver<511 brand=geforcertx,driver>=510,driver<511 brand=quadro,driver>=510,driver<511 brand=quadrortx,driver>=510,driver<511 brand=titan,driver>=510,driver<511 brand=titanrtx,driver>=510,driver<511 brand=unknown,driver>=515,driver<516 brand=nvidia,driver>=515,driver<516 brand=nvidiartx,driver>=515,driver<516 brand=geforce,driver>=515,driver<516 brand=geforcertx,driver>=515,driver<516 brand=quadro,driver>=515,driver<516 brand=quadrortx,driver>=515,driver<516 brand=titan,driver>=515,driver<516 brand=titanrtx,driver>=515,driver<516"
-ENV NV_CUDA_CUDART_VERSION 11.8.89-1
-ENV NV_CUDA_COMPAT_PACKAGE cuda-compat-11-8
+### SETTINGS FOR AI WORKERS ###
+ARG MAX_FORK=1
+ARG QUEUE_LATENCY=0.1
+
+ENV NVARCH=${NVARCH}
+### SIMPLE GUARD TO ENSURE COMPATIBILITY BETWEEN HOST AND CONTAINER DRIVERS ###
+ENV NVIDIA_REQUIRE_CUDA="cuda>=${CUDA_VERSION%.*}"
+
+### SETTING UP NVIDIA CUDA FOR DEBIAN BOOKWORM ###
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gnupg2 curl ca-certificates && \
-    curl -fsSLO https://developer.download.nvidia.com/compute/cuda/repos/debian11/${NVARCH}/cuda-keyring_1.0-1_all.deb && \
-    dpkg -i cuda-keyring_1.0-1_all.deb && \
-    apt-get purge --autoremove -y curl \
-    && rm -rf /var/lib/apt/lists/*
-
-ENV CUDA_VERSION 11.8.0
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    cuda-cudart-11-8=${NV_CUDA_CUDART_VERSION} \
-    ${NV_CUDA_COMPAT_PACKAGE} \
-    && ln -s cuda-11.8 /usr/local/cuda && \
+    ca-certificates curl gnupg2 && \
+    curl -fsSLO https://developer.download.nvidia.com/compute/cuda/repos/debian12/${NVARCH}/cuda-keyring_1.1-1_all.deb && \
+    dpkg -i cuda-keyring_1.1-1_all.deb && \
     rm -rf /var/lib/apt/lists/*
 
-RUN echo "/usr/local/nvidia/lib" >> /etc/ld.so.conf.d/nvidia.conf \
-    && echo "/usr/local/nvidia/lib64" >> /etc/ld.so.conf.d/nvidia.conf
+### INSTALLING NVIDIA CUDA FOR DEBIAN BOOKWORM (RUNTIME ONLY) ###
+ENV CUDA_VERSION=${CUDA_VERSION}
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    jq build-essential python3-dev \
+    cuda-cudart-${CUDA_MM}=${CUDART_VERSION} \
+    ${CUDA_COMPAT_PKG} && \
+    ln -s /usr/local/cuda-${CUDA_VERSION%.*} /usr/local/cuda && \
+    rm -rf /var/lib/apt/lists/*
 
-ENV PATH /usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
-ENV LD_LIBRARY_PATH /usr/local/nvidia/lib:/usr/local/nvidia/lib64
-
+### SETTING UP NVIDIA CONTAINER TOOLKIT ###
 ENV NVIDIA_VISIBLE_DEVICES all
 ENV NVIDIA_DRIVER_CAPABILITIES compute,utility
+
+ENV LD_LIBRARY_PATH /usr/local/nvidia/lib:/usr/local/nvidia/lib64${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+ENV PATH /usr/local/nvidia/bin:${PATH}
 
 ### CREATING FOLDERS ###
 RUN mkdir -p /opt/app/run
@@ -38,9 +49,13 @@ RUN mkdir -p /tmp/ai/prepared
 ### INSTALLING BASE PYTHON PACKAGES ###
 RUN apt-get update && apt-get install -y python3-opencv
 
+### INSTALLING OTHER REQUIRED PACKAGES ###
+COPY srfbnet/requirements.txt /opt/app
+RUN python3 -m pip install --upgrade pip
+RUN python3 -m pip install -r /opt/app/requirements.txt
+
 ### COPYING FILES ###
 COPY srfbnet/container.yaml /opt/app
-COPY srfbnet/requirements.txt /opt/app
 COPY srfbnet/srfbnet /opt/app/srfbnet
 COPY srfbnet/ai.py /opt/app
 COPY srfbnet/gmfn_x2.pth /opt/app
@@ -58,9 +73,9 @@ RUN chmod +x /opt/app/cleaner.py
 RUN chmod +x /opt/app/api.py
 RUN chmod +x /opt/app/entry.sh
 
-### INSTALLING OTHER REQUIRED PACKAGES ###
-RUN python3 -m pip install --upgrade pip
-RUN python3 -m pip install -r /opt/app/requirements.txt
+### WORKERS CONFIGURATION ###
+ENV MAX_FORK ${MAX_FORK}
+ENV QUEUE_LATENCY ${QUEUE_LATENCY}
 
 ### RUNNING THE SCRIPT ###
 ENTRYPOINT ["/opt/app/entry.sh"]

@@ -63,12 +63,8 @@ class GFMRDB(nn.Module):
 
                 # refining the lowest-level features
                 if idx < self.num_refine_feats:
-                    select_feat = self.GFMs_list[0](
-                        torch.cat(last_feats_list, 1)
-                    )
-                    input_feat = self.GFMs_list[1](
-                        torch.cat((select_feat, input_feat), 1)
-                    )
+                    select_feat = self.GFMs_list[0](torch.cat(last_feats_list, 1))
+                    input_feat = self.GFMs_list[1](torch.cat((select_feat, input_feat), 1))
 
                 input_feat = b(input_feat)
                 cur_feats_list.append(input_feat)
@@ -179,9 +175,7 @@ class GMFN(nn.Module):
 
         for _ in range(self.num_steps):
             last_feats_list = self.block(init_feat, last_feats_list)
-            out = torch.add(
-                up_lr_img, self.conv_out(self.out(last_feats_list[-1]))
-            )
+            out = torch.add(up_lr_img, self.conv_out(self.out(last_feats_list[-1])))
             out = self.add_mean(out)
             sr_imgs.append(out)
 
@@ -207,6 +201,4 @@ class GMFN(nn.Module):
                         )
             elif strict:
                 if name.find("out") == -1:
-                    raise KeyError(
-                        'unexpected key "{}" in state_dict'.format(name)
-                    )
+                    raise KeyError('unexpected key "{}" in state_dict'.format(name))
